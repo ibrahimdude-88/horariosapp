@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Utilidades - Sistema de Horarios</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .button {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            margin: 10px 0;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-reset {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-reset:hover {
+            background: #dc2626;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(239, 68, 68, 0.3);
+        }
+
+        .btn-view {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .btn-view:hover {
+            background: #2563eb;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-export {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-export:hover {
+            background: #059669;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-import {
+            background: #f59e0b;
+            color: white;
+        }
+
+        .btn-import:hover {
+            background: #d97706;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(245, 158, 11, 0.3);
+        }
+
+        .info-box {
+            background: #f0f9ff;
+            border-left: 4px solid #3b82f6;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+
+        .warning-box {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+
+        .success-box {
+            background: #dcfce7;
+            border-left: 4px solid #10b981;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+            display: none;
+        }
+
+        pre {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-size: 12px;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .file-label {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            margin: 10px 0;
+            border: 2px dashed #d1d5db;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .file-label:hover {
+            border-color: #f59e0b;
+            background: #fef3c7;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🛠️ Utilidades del Sistema</h1>
+        <p class="subtitle">Herramientas para gestionar los datos de la aplicación</p>
+
+        <div class="info-box">
+            <strong>ℹ️ Información:</strong><br>
+            Estas herramientas te permiten gestionar los datos almacenados en tu navegador.
+        </div>
+
+        <button class="button btn-view" onclick="viewData()">
+            👁️ Ver Datos Actuales
+        </button>
+
+        <button class="button btn-export" onclick="exportData()">
+            💾 Exportar Datos (Backup)
+        </button>
+
+        <label for="importFile" class="file-label">
+            📁 Seleccionar archivo para importar
+        </label>
+        <input type="file" id="importFile" accept=".json" onchange="importData(event)">
+
+        <div class="warning-box">
+            <strong>⚠️ Advertencia:</strong><br>
+            Resetear los datos eliminará toda la información actual y cargará los datos de prueba iniciales.
+        </div>
+
+        <button class="button btn-reset" onclick="resetData()">
+            🔄 Resetear a Datos Iniciales
+        </button>
+
+        <div id="successMsg" class="success-box">
+            <strong>✅ Operación exitosa!</strong>
+        </div>
+
+        <div id="dataDisplay" style="margin-top: 20px;"></div>
+    </div>
+
+    <script>
+        function viewData() {
+            const data = localStorage.getItem('horariosAppData');
+            const display = document.getElementById('dataDisplay');
+
+            if (data) {
+                const parsed = JSON.parse(data);
+                display.innerHTML = `
+                    <h3>📊 Datos Almacenados:</h3>
+                    <pre>${JSON.stringify(parsed, null, 2)}</pre>
+                `;
+            } else {
+                display.innerHTML = `
+                    <div class="warning-box">
+                        <strong>⚠️ No hay datos guardados</strong><br>
+                        Abre la aplicación principal para cargar los datos iniciales.
+                    </div>
+                `;
+            }
+        }
+
+        function exportData() {
+            const data = localStorage.getItem('horariosAppData');
+
+            if (!data) {
+                alert('No hay datos para exportar');
+                return;
+            }
+
+            const blob = new Blob([data], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `horarios-backup-${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            showSuccess();
+        }
+
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    localStorage.setItem('horariosAppData', JSON.stringify(data));
+                    showSuccess();
+                    alert('✅ Datos importados correctamente!\n\nRecarga la aplicación principal para ver los cambios.');
+                } catch (error) {
+                    alert('❌ Error al importar: Archivo inválido');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function resetData() {
+            if (confirm('¿Estás seguro de que quieres resetear todos los datos?\n\nEsto eliminará:\n- Asignaciones personalizadas\n- Cambios de guardia\n- Vacaciones programadas\n- Títulos editados\n\nY cargará los datos de prueba iniciales.')) {
+                localStorage.removeItem('horariosAppData');
+                showSuccess();
+                alert('✅ Datos reseteados!\n\nAbre la aplicación principal para cargar los datos iniciales.');
+                document.getElementById('dataDisplay').innerHTML = '';
+            }
+        }
+
+        function showSuccess() {
+            const msg = document.getElementById('successMsg');
+            msg.style.display = 'block';
+            setTimeout(() => {
+                msg.style.display = 'none';
+            }, 3000);
+        }
+
+        // Mostrar datos al cargar
+        window.onload = function () {
+            viewData();
+        };
+    </script>
+</body>
+
+</html>

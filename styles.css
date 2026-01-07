@@ -439,6 +439,117 @@ h1 {
     border: 1px solid var(--descanso-border);
 }
 
+.location-badge.vacation {
+    background: #fef3c7;
+    color: #92400e;
+    border: 1px solid #f59e0b;
+}
+
+.vacation-cell {
+    background-color: #fffbeb !important;
+}
+
+.vacation-badge-small {
+    display: inline-block;
+    background: #fef3c7;
+    color: #92400e;
+    font-size: 0.7rem;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    margin-top: 0.25rem;
+    font-weight: 600;
+}
+
+.badge-vacation {
+    background: #f59e0b;
+    color: white;
+    font-size: 0.7rem;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    font-weight: 700;
+}
+
+.vacation-text {
+    color: #92400e;
+    font-weight: 600;
+    font-style: italic;
+}
+
+.day-card.vacation {
+    border: 2px solid #f59e0b;
+    background: linear-gradient(to bottom right, #ffffff, #fef3c7);
+}
+
+.row-vacation td {
+    background-color: #fffbeb !important;
+}
+
+body.dark-mode .row-vacation td {
+    background-color: rgba(245, 158, 11, 0.2) !important;
+}
+
+body.dark-mode .vacation-cell {
+    background-color: rgba(245, 158, 11, 0.2) !important;
+}
+
+body.dark-mode .vacation-badge-small {
+    background: rgba(245, 158, 11, 0.3);
+    color: #fbbf24;
+}
+
+body.dark-mode .location-badge.vacation {
+    background: rgba(245, 158, 11, 0.3);
+    color: #fbbf24;
+}
+
+/* Location Change Styles */
+.location-change-cell {
+    background-color: #eff6ff !important;
+}
+
+.location-change-indicator {
+    display: block;
+    font-size: 0.7rem;
+    color: #1e40af;
+    font-weight: 600;
+    margin-top: 0.25rem;
+}
+
+.badge-location-change {
+    background: #3b82f6;
+    color: white;
+    font-size: 0.7rem;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    font-weight: 700;
+}
+
+.location-change-text {
+    display: block;
+    font-size: 0.75rem;
+    color: #1e40af;
+    font-weight: 600;
+    margin-top: 0.25rem;
+    font-style: italic;
+}
+
+.day-card.location-change {
+    border: 2px solid #3b82f6;
+    background: linear-gradient(to bottom right, #ffffff, #eff6ff);
+}
+
+body.dark-mode .location-change-cell {
+    background-color: rgba(59, 130, 246, 0.2) !important;
+}
+
+body.dark-mode .location-change-indicator {
+    color: #60a5fa;
+}
+
+body.dark-mode .location-change-text {
+    color: #60a5fa;
+}
+
 /* Person Cell */
 .person-cell {
     font-weight: 600;

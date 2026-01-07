@@ -9,10 +9,6 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
-    <!-- Firebase SDKs -->
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
-
     <link rel="stylesheet" href="styles.css">
 </head>
 
@@ -95,8 +91,13 @@
                             </svg>
                         </button>
                     </div>
-                    <div style="display: flex; gap: 1rem;">
+                    <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
                         <button id="manageAssignmentsBtn" class="btn-secondary">Gestionar Asignaciones</button>
+                        <button id="manageVacationsBtn" class="btn-secondary">Gestionar Vacaciones</button>
+                        <button id="manageLocationChangesBtn" class="btn-secondary">Cambio de Ubicación</button>
+                        <button id="manageEventsBtn" class="btn-secondary">📅 Eventos y Avisos</button>
+                        <button id="changePasswordBtn" class="btn-secondary"
+                            style="background: var(--primary); color: white;">🔐 Cambiar Contraseña</button>
                         <button id="todayBtnConfig" class="today-btn">Ir a Hoy</button>
                     </div>
                 </div>
@@ -172,6 +173,8 @@
                     <button id="todayBtnGen" class="today-btn">Ir a Hoy</button>
                 </div>
 
+                <div id="eventsBannerGen"></div>
+
                 <div class="general-view">
                     <div class="main-schedule-section">
                         <h3 data-editable-id="section-gen-full">Vista General Completa</h3>
@@ -180,7 +183,6 @@
                                 <thead>
                                     <tr>
                                         <th>Persona</th>
-                                        <th>Horario Base</th>
                                         <th>Lunes</th>
                                         <th>Martes</th>
                                         <th>Miércoles</th>
@@ -228,10 +230,6 @@
             </div>
             <div class="modal-body">
                 <div class="form-group">
-                    <label>Usuario</label>
-                    <input type="text" id="loginUser" placeholder="admin">
-                </div>
-                <div class="form-group">
                     <label>Contraseña</label>
                     <input type="password" id="loginPass" placeholder="••••••">
                 </div>
@@ -276,6 +274,146 @@
             <div class="modal-footer">
                 <button class="btn-secondary close-modal">Cancelar</button>
                 <button id="saveSwapBtn" class="btn-primary">Guardar Cambio</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Vacations Modal -->
+    <div id="vacationsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Gestionar Vacaciones</h2>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <!-- Dynamic content -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary close-modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Location Change Modal -->
+    <div id="locationChangeModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Cambio de Ubicación</h2>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <!-- Dynamic content -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary close-modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Change Password Modal -->
+    <div id="changePasswordModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Cambiar Contraseña de Administrador</h2>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Contraseña Actual</label>
+                    <input type="password" id="currentPassword" placeholder="Ingresa tu contraseña actual">
+                </div>
+                <div class="form-group">
+                    <label>Nueva Contraseña</label>
+                    <input type="password" id="newPassword" placeholder="Ingresa la nueva contraseña">
+                </div>
+                <div class="form-group">
+                    <label>Confirmar Nueva Contraseña</label>
+                    <input type="password" id="confirmPassword" placeholder="Confirma la nueva contraseña">
+                </div>
+                <div id="passwordError" style="display: none; color: var(--danger); margin-top: 0.5rem;"></div>
+                <div id="passwordSuccess" style="display: none; color: var(--success); margin-top: 0.5rem;">
+                    ✅ Contraseña cambiada exitosamente
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary close-modal">Cancelar</button>
+                <button id="savePasswordBtn" class="btn-primary">Cambiar Contraseña</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div id="confirmModal" class="modal">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-header">
+                <h2 id="confirmTitle">Confirmar</h2>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p id="confirmMessage" style="margin: 0;"></p>
+            </div>
+            <div class="modal-footer">
+                <button id="confirmCancelBtn" class="btn-secondary">Cancelar</button>
+                <button id="confirmOkBtn" class="btn-primary" style="background: var(--danger);">Eliminar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Events Management Modal -->
+    <div id="eventsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Gestionar Eventos y Avisos</h2>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Fecha</label>
+                    <input type="date" id="eventDate">
+                </div>
+                <div class="form-group">
+                    <label>Tipo de Evento</label>
+                    <select id="eventType">
+                        <option value="notice">Aviso General (Azul)</option>
+                        <option value="holiday">Día Festivo / Asueto (Verde)</option>
+                        <option value="alert">Alerta Importante (Rojo)</option>
+                        <option value="payday">Quincena (Dorado)</option>
+                    </select>
+                </div>
+
+                <!-- Campos para horario especial de guardia (solo visible para holiday) -->
+                <div id="guardiaTimeContainer"
+                    style="display: none; background: rgba(16, 185, 129, 0.1); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid rgba(16, 185, 129, 0.3);">
+                    <label
+                        style="color: var(--success); font-weight: bold; margin-bottom: 0.5rem; display: block;">Horario
+                        Especial Guardia (Opcional)</label>
+                    <div style="display: flex; gap: 1rem;">
+                        <div style="flex: 1;">
+                            <label style="font-size: 0.8rem;">Entrada</label>
+                            <input type="time" id="guardiaStart">
+                        </div>
+                        <div style="flex: 1;">
+                            <label style="font-size: 0.8rem;">Salida</label>
+                            <input type="time" id="guardiaEnd">
+                        </div>
+                    </div>
+                    <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.5rem; margin-bottom: 0;">Si se
+                        deja vacío, se usa el horario normal.</p>
+                </div>
+
+                <div class="form-group">
+                    <label>Mensaje del Evento</label>
+                    <input type="text" id="eventText" placeholder="Ej: Juntá de equipo a las 10am">
+                </div>
+
+                <h4 style="margin-top: 2rem; margin-bottom: 1rem;">Eventos Próximos</h4>
+                <div id="eventsList" style="max-height: 200px; overflow-y: auto;">
+                    <!-- Lista de eventos generada por JS -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary close-modal">Cerrar</button>
+                <button id="saveEventBtn" class="btn-primary">Guardar Evento</button>
             </div>
         </div>
     </div>
