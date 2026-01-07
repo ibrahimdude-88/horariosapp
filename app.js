@@ -115,6 +115,7 @@ const elements = {
     manageAssignmentsBtn: document.getElementById('manageAssignmentsBtn'),
     manageVacationsBtn: document.getElementById('manageVacationsBtn'),
     manageLocationChangesBtn: document.getElementById('manageLocationChangesBtn'),
+    resetDatabaseBtn: document.getElementById('resetDatabaseBtn'),
     configTabBtn: document.getElementById('configTabBtn'),
     // Week Displays
     weekDisplays: {
@@ -321,6 +322,15 @@ function setupEventListeners() {
 
     if (elements.manageLocationChangesBtn) {
         elements.manageLocationChangesBtn.addEventListener('click', openManageLocationChanges);
+    }
+
+    if (elements.resetDatabaseBtn) {
+        elements.resetDatabaseBtn.addEventListener('click', () => {
+            showConfirmDialog('⚠️ ¿ESTÁS SEGURO? Esto borrará TODOS los datos (empleados, horarios, eventos) de la base de datos permanentemente.', () => {
+                // Doble confirmación por seguridad
+                showConfirmDialog('¿Realmente seguro? No se puede deshacer.', resetDatabase);
+            });
+        });
     }
 
     // Botón de gestión de eventos
@@ -2194,6 +2204,28 @@ function switchTab(tabName) {
 
     if (tabBtn) tabBtn.classList.add('active');
     if (tabContent) tabContent.classList.add('active');
+}
+
+function resetDatabase() {
+    const emptyState = {
+        assignments: {},
+        employees: [],
+        weeklyOverrides: {},
+        customTitles: {},
+        vacations: {},
+        locationChanges: {},
+        events: {}
+    };
+
+    db.ref('appData').set(emptyState)
+        .then(() => {
+            alert('✅ Base de datos reseteada correctamente.');
+            window.location.reload();
+        })
+        .catch(error => {
+            console.error('Error borrando base de datos:', error);
+            alert('Error borrando datos. Revisa la consola.');
+        });
 }
 
 // Start
