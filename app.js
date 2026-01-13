@@ -1,9 +1,18 @@
 // ==========================================
-// CONFIGURACIÓN DE ALMACENAMIENTO LOCAL
+// CONFIGURACIÓN DE FIREBASE
 // ==========================================
 
-// Firebase desconectado - Usando localStorage para pruebas
-console.log("✅ Usando localStorage para almacenamiento de datos");
+const firebaseConfig = {
+    apiKey: "AIzaSyAByMa3YyhoHCrXTX_ZsH4TW00mxdly-GY",
+    authDomain: "horariosapp-483a1.firebaseapp.com",
+    databaseURL: "https://horariosapp-483a1-default-rtdb.firebaseio.com",
+    projectId: "horariosapp-483a1",
+    storageBucket: "horariosapp-483a1.firebasestorage.app",
+    messagingSenderId: "495004744128",
+    appId: "1:495004744128:web:9293d6c06419b4d9c5f025"
+};
+
+let db; // Referencia a la base de datos
 
 // ==========================================
 // DATOS ESTÁTICOS Y ESTADO
@@ -138,27 +147,8 @@ let currentSwapData = null;
 // ==========================================
 
 // ==========================================
-// CONFIGURACIÓN DE FIREBASE
-// ==========================================
-
-const firebaseConfig = {
-    apiKey: "AIzaSyAByMa3YyhoHCrXTX_ZsH4TW00mxdly-GY",
-    authDomain: "horariosapp-483a1.firebaseapp.com",
-    databaseURL: "https://horariosapp-483a1-default-rtdb.firebaseio.com",
-    projectId: "horariosapp-483a1",
-    storageBucket: "horariosapp-483a1.firebasestorage.app",
-    messagingSenderId: "495004744128",
-    appId: "1:495004744128:web:9293d6c06419b4d9c5f025"
-};
-
-let db; // Referencia a la base de datos
-
-// ==========================================
 // DATOS ESTÁTICOS Y ESTADO
 // ==========================================
-// ... scheduleData se mantiene igual, no lo toco aquí si está fuera del reemplazo
-// (pero mi startline/endline debe cubrir el inicio del archivo o solo la parte de storage)
-// Voy a asumir que el usuario quiere mantener scheduleData, así que ajustaré StartLine.
 
 /* state definido más abajo */
 
@@ -229,6 +219,8 @@ function loadFromFirebase() {
         // Re-renderizar la interfaz cada vez que llegan datos
         applyCustomTitles();
         renderAll();
+        // Si el modal de eventos está abierto, refrescar la lista
+        try { renderEventsList(); } catch (e) { }
     }, (error) => {
         console.error("Error leyendo de Firebase:", error);
     });
@@ -248,7 +240,10 @@ function saveToLocalStorage() { // Mantengo el nombre para no romper llamadas ex
 
     db.ref('appData').set(dataToSave)
         .then(() => console.log("☁️ Datos guardados en Firebase"))
-        .catch(e => console.error("Error guardando en Firebase:", e));
+        .catch(e => {
+            console.error("Error guardando en Firebase:", e);
+            alert("⚠️ Error al guardar cambios.\nPosible causa: Permisos de Firebase insuficientes.");
+        });
 }
 
 function initTheme() {
@@ -709,9 +704,9 @@ function renderAll() {
     renderIndividualView();
     renderGeneralView();
 
-    // Renderizar banners de eventos
-    renderEventsBanner('eventsBannerInd');
-    renderEventsBanner('eventsBannerGen');
+    // Renderizar banners de eventos (V3 Diagnóstico)
+    renderEventsBannerV3('eventsBannerInd');
+    renderEventsBannerV3('eventsBannerGen');
 }
 
 function updateHeaders() {
@@ -867,8 +862,10 @@ function renderDayCells(schedule, personName = null, weekOffset = null) {
             const isoDay = String(currentDay.getDate()).padStart(2, '0');
             const dateKey = `${year}-${month}-${isoDay}`;
 
-            if (state.events[dateKey] && state.events[dateKey].type === 'holiday') {
-                holidayEvents[i] = state.events[dateKey];
+            const eventsOnDate = getEventsForDate(dateKey);
+            const holiday = eventsOnDate.find(e => e.type === 'holiday');
+            if (holiday) {
+                holidayEvents[i] = holiday;
             }
         }
     }
@@ -1044,8 +1041,10 @@ window.renderSelectedIndividual = function (personName) {
             const isoDay = String(currentDay.getDate()).padStart(2, '0');
             const dateKey = `${year}-${month}-${isoDay}`;
 
-            if (state.events[dateKey] && state.events[dateKey].type === 'holiday') {
-                holidayEvents[i] = state.events[dateKey];
+            const eventsOnDate = getEventsForDate(dateKey);
+            const holiday = eventsOnDate.find(e => e.type === 'holiday');
+            if (holiday) {
+                holidayEvents[i] = holiday;
             }
         }
     }
@@ -1478,8 +1477,8 @@ function renderVacationsList() {
                 <div style="margin-bottom: 1.5rem; padding: 1rem; background: var(--bg-body); border-radius: var(--radius-sm); border: 1px solid var(--border);">
                     <strong style="display: block; margin-bottom: 0.75rem; color: var(--primary);">${employee}</strong>
                     ${vacations.map((vac, index) => {
-                const start = new Date(vac.startDate).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
-                const end = new Date(vac.endDate).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
+                const start = parseLocalDate(vac.startDate).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
+                const end = parseLocalDate(vac.endDate).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
                 return `
                             <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; background: white; border-radius: 4px; margin-bottom: 0.5rem;">
                                 <span>🏖️ ${start} - ${end}</span>
@@ -1839,6 +1838,18 @@ function renderLocationChangesList() {
     });
 }
 
+// Helper para buscar eventos por fecha (compatible ID/Fecha)
+function getEventsForDate(dateStr) {
+    if (!state.events) return [];
+    const events = [];
+    Object.entries(state.events).forEach(([key, value]) => {
+        // Si tiene .date (nuevo) o la clave es fecha (viejo)
+        const d = value.date || (key.match(/^\d{4}-\d{2}-\d{2}$/) ? key : null);
+        if (d === dateStr) events.push(value);
+    });
+    return events;
+}
+
 // Función para renderizar el banner de eventos en las vistas principales
 function renderEventsBanner(containerId) {
     const container = document.getElementById(containerId);
@@ -1857,14 +1868,24 @@ function renderEventsBanner(containerId) {
 
     const eventsToShow = [];
 
-    Object.keys(state.events).forEach(dateStr => {
-        const eventDate = parseLocalDate(dateStr);
+    Object.entries(state.events).forEach(([key, value]) => {
+        if (!value) return;
 
-        if (eventDate >= weekStart && eventDate <= weekEnd) {
-            eventsToShow.push({
-                date: eventDate,
-                ...state.events[dateStr]
-            });
+        // Compatibilidad: value.date (nuevo) o key (viejo)
+        const dateStr = value.date || (typeof key === 'string' && key.match(/^\d{4}-\d{2}-\d{2}$/) ? key : null);
+
+        if (!dateStr) return;
+
+        try {
+            const eventDate = parseLocalDate(dateStr);
+            if (eventDate >= weekStart && eventDate <= weekEnd) {
+                eventsToShow.push({
+                    date: eventDate,
+                    ...value
+                });
+            }
+        } catch (e) {
+            console.error(e);
         }
     });
 
@@ -1926,6 +1947,14 @@ function renderEventsBanner(containerId) {
 // ==========================================
 
 function openManageEvents() {
+    // Listener para borrar todos los eventos (Configurado al principio por seguridad)
+    const deleteBtn = document.getElementById('deleteAllEventsBtn');
+    if (deleteBtn) {
+        const newDeleteBtn = deleteBtn.cloneNode(true);
+        deleteBtn.parentNode.replaceChild(newDeleteBtn, deleteBtn);
+        newDeleteBtn.addEventListener('click', deleteAllEvents);
+    }
+
     const modal = document.getElementById('eventsModal');
     modal.classList.add('active');
 
@@ -1943,7 +1972,13 @@ function openManageEvents() {
     // Resetear visibilidad
     toggleGuardiaFields();
 
-    renderEventsList();
+    // Renderizar lista (protegido con try-catch para no detener la ejecución si falla)
+    try {
+        renderEventsList();
+    } catch (e) {
+        console.error("Error renderizando lista de eventos:", e);
+        document.getElementById('eventsList').innerHTML = '<p class="text-danger">Error mostrando eventos. Usa "Borrar Todo" para limpiar.</p>';
+    }
 }
 
 // Función auxiliar para mostrar/ocultar campos de guardia
@@ -1974,8 +2009,9 @@ function saveEvent() {
     // Inicializar objeto de eventos si no existe
     if (!state.events) state.events = {};
 
-    // Objeto evento base
+    // Objeto evento completo con fecha
     const eventData = {
+        date: date,
         text: text,
         type: type
     };
@@ -1985,29 +2021,44 @@ function saveEvent() {
         const gStart = document.getElementById('guardiaStart').value;
         const gEnd = document.getElementById('guardiaEnd').value;
         if (gStart && gEnd) {
-            // Formatear a AM/PM para consistencia
             eventData.guardiaStart = convertToAMPM(gStart);
             eventData.guardiaEnd = convertToAMPM(gEnd);
         }
     }
 
-    // Guardar evento
-    state.events[date] = eventData;
+    // Guardar evento usando push para generar ID único
+    const newRef = db.ref('appData/events').push();
+    console.log("Intentando guardar evento:", eventData);
 
-    saveToLocalStorage();
-    renderEventsList();
-    renderAll(); // Para actualizar banners
+    newRef.set(eventData)
+        .then(() => {
+            console.log('✅ Evento creado en Firebase con ID:', newRef.key);
 
-    // Limpiar texto
-    document.getElementById('eventText').value = '';
+            // Actualización visual local (protegida)
+            try {
+                if (!state.events) state.events = {};
+                state.events[newRef.key] = eventData;
+                renderEventsList();
+                renderAll();
+            } catch (e) {
+                console.warn("Error visual actualizando interfaz (no crítico):", e);
+            }
 
-    // Feedback visual
-    const btn = document.getElementById('saveEventBtn');
-    const originalText = btn.textContent;
-    btn.textContent = '✅ Guardado';
-    setTimeout(() => {
-        btn.textContent = originalText;
-    }, 1500);
+            // Limpiar texto
+            document.getElementById('eventText').value = '';
+
+            // Feedback visual
+            const btn = document.getElementById('saveEventBtn');
+            const originalText = btn.textContent;
+            btn.textContent = '✅ Guardado';
+            setTimeout(() => {
+                btn.textContent = originalText;
+            }, 1500);
+        })
+        .catch(error => {
+            console.error('Error creando evento:', error);
+            alert('Error al crear evento:\n' + error.message + '\n\nVerifica tu conexión y permisos.');
+        });
 }
 
 // Helper para convertir HH:mm (24h) a hh:mm AM/PM
@@ -2029,21 +2080,25 @@ function renderEventsList() {
         return;
     }
 
-    // Ordenar fechas
-    const sortedDates = Object.keys(state.events).sort();
+    // Convertir a array manejando compatibilidad
+    // Datos nuevos: ID -> { date: '...', ... }
+    // Datos viejos: DATE -> { ... }
+    const eventsArray = Object.entries(state.events).map(([key, value]) => {
+        const date = value.date || (key.match(/^\d{4}-\d{2}-\d{2}$/) ? key : null);
+        return {
+            id: key,
+            ...value,
+            date: date
+        };
+    }).filter(e => e.date);
+
+    // Ordenar por fecha
+    eventsArray.sort((a, b) => a.date.localeCompare(b.date));
 
     let html = '';
-    const now = new Date();
-    const yesterday = new Date(now);
-    yesterday.setDate(now.getDate() - 1);
-    const yesterdayStr = yesterday.toISOString().split('T')[0];
 
-    sortedDates.forEach(date => {
-        // No mostrar eventos pasados (opcional, pero ayuda a limpiar la lista)
-        // if (date < yesterdayStr) return;
-
-        const event = state.events[date];
-        const dateObj = parseLocalDate(date); // Usamos nuestra función segura
+    eventsArray.forEach(event => {
+        const dateObj = parseLocalDate(event.date);
         const dateFormatted = dateObj.toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
 
         let typeLabel = '';
@@ -2061,29 +2116,42 @@ function renderEventsList() {
                 <div>
                     <div style="font-size: 0.8rem; color: var(--text-muted);">${dateFormatted} <span style="background: ${typeColor}20; color: ${typeColor}; padding: 2px 6px; border-radius: 4px; margin-left: 0.5rem; font-weight: bold;">${typeLabel}</span></div>
                     <div style="font-weight: 500;">${event.text}</div>
+                    ${event.guardiaStart ? `<div style="font-size: 0.75rem; color: #059669; margin-top: 2px;">🕒 Guardia: ${event.guardiaStart} - ${event.guardiaEnd}</div>` : ''}
                 </div>
-                <button class="btn-remove-event btn-icon" data-date="${date}" style="color: var(--danger); opacity: 0.7;">
+                <button class="btn-remove-event btn-icon" onclick="forceDeleteOneEvent('${event.id}')" style="color: var(--danger); opacity: 0.7;">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"></path></svg>
                 </button>
             </div>
         `;
     });
 
-    container.innerHTML = html || '<p class="text-muted" style="text-align: center;">Solo hay eventos pasados.</p>';
+    container.innerHTML = html || '<p class="text-muted" style="text-align: center;">No hay eventos visibles.</p>';
 
-    // Agregar listeners
+    // Listener de borrado por ID
     container.querySelectorAll('.btn-remove-event').forEach(btn => {
         btn.addEventListener('click', function () {
-            const date = this.dataset.date;
+            const eventId = this.dataset.id;
+            console.log("Intentando borrar evento con ID:", eventId);
             showConfirmDialog('¿Eliminar este evento?', () => {
-                delete state.events[date];
-                saveToLocalStorage();
-                renderEventsList();
-                renderAll();
+                const eventRef = db.ref('appData/events/' + eventId);
+
+                eventRef.remove()
+                    .then(() => {
+                        console.log('✅ Evento eliminado');
+                        if (state.events[eventId]) delete state.events[eventId];
+                        renderEventsList();
+                        renderAll();
+                    })
+                    .catch(error => {
+                        console.error('Error al eliminar:', error);
+                        alert('❌ Error al eliminar.\nPosible causa: Permisos denegados en Firebase.');
+                    });
             });
         });
     });
 }
+
+
 
 // ==========================================
 // MODAL DE CONFIRMACIÓN PERSONALIZADO
@@ -2226,6 +2294,256 @@ function resetDatabase() {
             console.error('Error borrando base de datos:', error);
             alert('Error borrando datos. Revisa la consola.');
         });
+}
+
+function deleteAllEvents() {
+    showConfirmDialog('⚠️ ¿ESTÁS SEGURO?\nEsto borrará TODOS los eventos registrados.\nEsta acción no se puede deshacer.', () => {
+        const eventsRef = db.ref('appData/events');
+        eventsRef.remove()
+            .then(() => {
+                console.log('✅ Todos los eventos eliminados');
+                state.events = {};
+                renderEventsList();
+                renderAll();
+            })
+            .catch(error => {
+                console.error('Error al eliminar eventos:', error);
+                alert('❌ Error al eliminar eventos.\nRevisa permisos.');
+            });
+    });
+}
+
+// Función de emergencia para borrar eventos
+function forceDeleteEvents() {
+    if (confirm('ATENCIÓN: Se borrarán TODOS los eventos y avisos.\n¿Estás seguro de continuar?')) {
+        db.ref('appData/events').remove()
+            .then(() => {
+                alert('✅ Eventos eliminados correctamente.\nLa página se recargará.');
+                window.location.reload();
+            })
+            .catch(e => alert('Error al borrar: ' + e.message));
+    }
+}
+window.forceDeleteEvents = forceDeleteEvents;
+
+// Versión robusta de renderEventsBanner usando strings YYYY-MM-DD
+function renderEventsBannerV2(containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    container.innerHTML = '';
+
+    if (!state.events || Object.keys(state.events).length === 0) return;
+
+    const weekStart = getWeekStartDate(state.currentWeekOffset);
+    const weekEnd = getWeekEndDate(state.currentWeekOffset);
+
+    const toISODate = (d) => {
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
+
+    const weekStartStr = toISODate(weekStart);
+    const weekEndStr = toISODate(weekEnd);
+
+    const eventsToShow = [];
+
+    Object.entries(state.events).forEach(([key, value]) => {
+        if (!value) return;
+        const dateStr = value.date || (typeof key === 'string' && key.match(/^\d{4}-\d{2}-\d{2}$/) ? key : null);
+
+        if (dateStr && dateStr >= weekStartStr && dateStr <= weekEndStr) {
+            eventsToShow.push({
+                date: parseLocalDate(dateStr),
+                ...value
+            });
+        }
+    });
+
+    if (eventsToShow.length === 0) {
+        // Mostrar mensaje si no hay eventos para confirmar que la lógica funciona
+        // Esto ayuda al usuario a saber que no hay eventos en ese rango específico
+        container.innerHTML = `<div style="padding: 0.5rem; margin-bottom: 1rem; border: 1px dashed var(--border); color: var(--text-muted); text-align: center; font-size: 0.8rem; border-radius: var(--radius-sm);">
+            No hay avisos programados para la semana del ${weekStartStr} al ${weekEndStr}
+        </div>`;
+        return;
+    }
+
+    // Ordenar por fecha
+    eventsToShow.sort((a, b) => a.date - b.date);
+
+    let html = '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">';
+
+    eventsToShow.forEach(event => {
+        const dateFormatted = event.date.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
+        let bgColor = '', icon = '', animationClass = 'animate-pulse';
+
+        switch (event.type) {
+            case 'holiday': bgColor = 'linear-gradient(135deg, #059669 0%, #10b981 100%)'; icon = '🎉'; break;
+            case 'alert': bgColor = 'linear-gradient(135deg, #dc2626 0%, #ef4444 100%)'; icon = '⚠️'; break;
+            case 'payday': bgColor = 'linear-gradient(135deg, #d97706 0%, #f59e0b 100%)'; icon = '💰'; break;
+            default: bgColor = 'linear-gradient(135deg, #2563eb 0%, #3b82f6 100%)'; icon = 'ℹ️';
+        }
+
+        html += `
+            <div style="background: ${bgColor}; color: white; padding: 1rem; border-radius: var(--radius-md); box-shadow: var(--shadow-md); display: flex; align-items: center; justify-content: space-between; position: relative; overflow: hidden; min-height: 80px;">
+                <div style="display: flex; align-items: center; gap: 1rem; position: relative; z-index: 2; width: 100%;">
+                    <span style="font-size: 2rem;">${icon}</span>
+                    <div style="flex: 1;">
+                        <h3 style="margin: 0; font-size: 0.9rem; opacity: 0.9; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.25rem;">${dateFormatted}</h3>
+                        <p class="${animationClass}" style="margin: 0; font-size: 1.1rem; font-weight: bold; line-height: 1.2;">${event.text}</p>
+                    </div>
+                </div>
+                <div style="position: absolute; top: -10px; right: -10px; opacity: 0.15; font-size: 6rem; transform: rotate(15deg); pointer-events: none;">${icon}</div>
+            </div>
+        `;
+    });
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+// Función de borrado individual robusta
+function forceDeleteOneEvent(eventId) {
+    if (confirm('¿Eliminar este evento?')) {
+        db.ref('appData/events/' + eventId).remove()
+            .then(() => {
+                // Eliminación exitosa
+                console.log("Evento eliminado:", eventId);
+                // Si la actualización en tiempo real falla, forzamos update local
+                if (state.events && state.events[eventId]) {
+                    delete state.events[eventId];
+                }
+                // Forzar renderizado siempre para feedback inmediato
+                try {
+                    renderEventsList();
+                    renderAll();
+                } catch (e) { }
+            })
+            .catch(e => alert('Error al borrar: ' + e.message));
+    }
+}
+window.forceDeleteOneEvent = forceDeleteOneEvent;
+
+// Diagnóstico
+function showDebugInfo() {
+    const info = {
+        weekOffset: state.currentWeekOffset,
+        eventsCount: state.events ? Object.keys(state.events).length : 0,
+        eventsKeys: state.events ? Object.keys(state.events) : [],
+        dataSample: state.events
+    };
+    alert(JSON.stringify(info, null, 2));
+    console.log("DEBUG INFO:", info);
+}
+window.showDebugInfo = showDebugInfo;
+
+// Versión V3: Diagnóstico Visual Extremo
+function renderEventsBannerV3(containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) {
+        console.error("Contenedor Banner no encontrado:", containerId);
+        return;
+    }
+
+    // Asegurar visibilidad básica
+    container.style.display = 'block';
+    container.style.marginBottom = '1.5rem';
+
+    // Obtener eventos
+    const events = state.events || {};
+    const eventsCount = Object.keys(events).length;
+
+    // Fechas actuales
+    const weekStart = getWeekStartDate(state.currentWeekOffset);
+    const weekEnd = getWeekEndDate(state.currentWeekOffset);
+
+    let weekStartStr, weekEndStr;
+    try {
+        const toISODate = (d) => {
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        };
+        weekStartStr = toISODate(weekStart);
+        weekEndStr = toISODate(weekEnd);
+    } catch (e) {
+        container.innerHTML = '<div style="color:red; padding:10px; border:1px solid red">Error fechas banner: ' + e.message + '</div>';
+        return;
+    }
+
+    // Si no hay eventos en todo el sistema
+    if (eventsCount === 0) {
+        // container.innerHTML = ''; // Opción silenciosa
+        // Opción diagnóstica:
+        container.innerHTML = `<div style="padding: 10px; background: #f9f9f9; border: 1px dashed #ccc; color: #aaa; text-align: center; font-size: 0.8em;">
+            Sistema de avisos activo. Sin eventos registrados.
+        </div>`;
+        return;
+    }
+
+    const eventsToShow = [];
+    Object.entries(events).forEach(([key, value]) => {
+        if (!value) return;
+        const dateStr = value.date || (typeof key === 'string' && key.match(/^\d{4}-\d{2}-\d{2}$/) ? key : null);
+
+        // Comparación de Strings ISO
+        if (dateStr && dateStr >= weekStartStr && dateStr <= weekEndStr) {
+            eventsToShow.push({
+                dateStr: dateStr,
+                dateObj: parseLocalDate(dateStr),
+                ...value
+            });
+        }
+    });
+
+    // Si no hay en esta semana
+    if (eventsToShow.length === 0) {
+        container.innerHTML = `<div style="padding: 10px; background: #f9f9f9; border: 1px dashed #ccc; color: #aaa; text-align: center; font-size: 0.8em;">
+            No hay avisos para esta semana (${weekStartStr} al ${weekEndStr})<br>
+            <small>Total eventos en sistema: ${eventsCount}</small>
+        </div>`;
+        return;
+    }
+
+    // Renderizar eventos encontrados
+    eventsToShow.sort((a, b) => a.dateStr.localeCompare(b.dateStr));
+
+    let html = '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem;">';
+
+    eventsToShow.forEach(event => {
+        let dateFormatted = event.dateStr;
+        try {
+            dateFormatted = event.dateObj.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
+        } catch (e) { }
+
+        let bgColor = '', icon = '', animationClass = 'animate-pulse';
+
+        switch (event.type) {
+            case 'holiday': bgColor = 'linear-gradient(135deg, #059669 0%, #10b981 100%)'; icon = '🎉'; break;
+            case 'alert': bgColor = 'linear-gradient(135deg, #dc2626 0%, #ef4444 100%)'; icon = '⚠️'; break;
+            case 'payday': bgColor = 'linear-gradient(135deg, #d97706 0%, #f59e0b 100%)'; icon = '💰'; break;
+            default: bgColor = 'linear-gradient(135deg, #2563eb 0%, #3b82f6 100%)'; icon = 'ℹ️';
+        }
+
+        html += `
+            <div style="background: ${bgColor}; color: white; padding: 1rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: space-between; position: relative; overflow: hidden; min-height: 80px;">
+                <div style="display: flex; align-items: center; gap: 1rem; position: relative; z-index: 2; width: 100%;">
+                    <span style="font-size: 2rem;">${icon}</span>
+                    <div style="flex: 1;">
+                        <h3 style="margin: 0; font-size: 0.9rem; opacity: 0.9; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.25rem;">${dateFormatted}</h3>
+                        <p class="${animationClass}" style="margin: 0; font-size: 1.1rem; font-weight: bold; line-height: 1.2;">${event.text}</p>
+                    </div>
+                </div>
+                <div style="position: absolute; top: -10px; right: -10px; opacity: 0.15; font-size: 6rem; transform: rotate(15deg); pointer-events: none;">${icon}</div>
+            </div>
+        `;
+    });
+    html += '</div>';
+
+    container.innerHTML = html;
 }
 
 // Start
