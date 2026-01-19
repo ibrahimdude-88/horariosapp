@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Generador de Favicon Ti_St Futurista</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 900px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #1a1a2e;
+            color: white;
+        }
+
+        .container {
+            background: #16213e;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(99, 102, 241, 0.3);
+        }
+
+        canvas {
+            border: 2px solid #6366f1;
+            border-radius: 15px;
+            margin: 20px 0;
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.5);
+        }
+
+        button {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            margin: 10px;
+            transition: transform 0.2s;
+        }
+
+        button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(139, 92, 246, 0.6);
+        }
+
+        .preview {
+            display: flex;
+            gap: 30px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 30px 0;
+        }
+
+        .preview-item {
+            text-align: center;
+        }
+
+        h1 {
+            color: #a5f3fc;
+            text-align: center;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #8b5cf6;
+            margin-bottom: 30px;
+        }
+
+        .instructions {
+            background: rgba(99, 102, 241, 0.1);
+            padding: 20px;
+            border-left: 4px solid #6366f1;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+
+        .instructions ol {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+
+        .instructions li {
+            margin: 8px 0;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>✨ Ti_St Futurista</h1>
+        <p class="subtitle">Generador de Iconos con Efecto Neón</p>
+
+        <div class="instructions">
+            <strong>📋 Instrucciones:</strong>
+            <ol>
+                <li>Haz clic en cada botón para descargar los iconos</li>
+                <li>Guarda los archivos en la raíz de tu proyecto (donde está index.html)</li>
+                <li>Sube todo a GitHub y recarga tu sitio</li>
+            </ol>
+        </div>
+
+        <div class="preview">
+            <div class="preview-item">
+                <h3>192x192 (iOS/Android)</h3>
+                <canvas id="canvas192" width="192" height="192"></canvas>
+                <br>
+                <button onclick="downloadIcon(192)">⬇️ Descargar icon-192.png</button>
+            </div>
+
+            <div class="preview-item">
+                <h3>512x512 (PWA)</h3>
+                <canvas id="canvas512" width="512" height="512"></canvas>
+                <br>
+                <button onclick="downloadIcon(512)">⬇️ Descargar icon-512.png</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function drawIcon(canvas, size) {
+            const ctx = canvas.getContext('2d');
+
+            // Clear canvas
+            ctx.clearRect(0, 0, size, size);
+
+            // Gradient background
+            const gradient = ctx.createLinearGradient(0, 0, size, size);
+            gradient.addColorStop(0, '#6366f1');
+            gradient.addColorStop(0.5, '#7c3aed');
+            gradient.addColorStop(1, '#8b5cf6');
+
+            // Background with rounded corners
+            const radius = size * 0.2;
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.moveTo(radius, 0);
+            ctx.lineTo(size - radius, 0);
+            ctx.quadraticCurveTo(size, 0, size, radius);
+            ctx.lineTo(size, size - radius);
+            ctx.quadraticCurveTo(size, size, size - radius, size);
+            ctx.lineTo(radius, size);
+            ctx.quadraticCurveTo(0, size, 0, size - radius);
+            ctx.lineTo(0, radius);
+            ctx.quadraticCurveTo(0, 0, radius, 0);
+            ctx.closePath();
+            ctx.fill();
+
+            // Grid pattern (subtle)
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+            ctx.lineWidth = size * 0.005;
+            const gridSize = size / 8;
+            for (let i = 1; i < 8; i++) {
+                ctx.beginPath();
+                ctx.moveTo(i * gridSize, 0);
+                ctx.lineTo(i * gridSize, size);
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.moveTo(0, i * gridSize);
+                ctx.lineTo(size, i * gridSize);
+                ctx.stroke();
+            }
+
+            // Holographic accent circles
+            const accentGradient = ctx.createRadialGradient(size * 0.8, size * 0.2, 0, size * 0.8, size * 0.2, size * 0.3);
+            accentGradient.addColorStop(0, 'rgba(165, 243, 252, 0.3)');
+            accentGradient.addColorStop(1, 'rgba(165, 243, 252, 0)');
+            ctx.fillStyle = accentGradient;
+            ctx.fillRect(0, 0, size, size);
+
+            // Text with glow effect
+            const fontSize = size * 0.28;
+            ctx.font = `bold ${fontSize}px "Arial Rounded MT Bold", Arial, sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+
+            // Outer glow (cyan)
+            ctx.shadowColor = '#a5f3fc';
+            ctx.shadowBlur = size * 0.08;
+            ctx.fillStyle = '#a5f3fc';
+            ctx.fillText('Ti_St', size / 2, size / 2);
+
+            // Middle glow (white)
+            ctx.shadowColor = 'white';
+            ctx.shadowBlur = size * 0.04;
+            ctx.fillStyle = 'white';
+            ctx.fillText('Ti_St', size / 2, size / 2);
+
+            // Main text (white with slight shadow)
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+            ctx.shadowBlur = size * 0.01;
+            ctx.shadowOffsetY = size * 0.008;
+            ctx.fillStyle = 'white';
+            ctx.fillText('Ti_St', size / 2, size / 2);
+
+            // Small decorative elements
+            ctx.shadowBlur = 0;
+            ctx.shadowOffsetY = 0;
+
+            // Calendar icon (bottom)
+            const iconSize = size * 0.12;
+            const iconX = size * 0.25;
+            const iconY = size * 0.78;
+
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+            ctx.fillRect(iconX - iconSize / 2, iconY - iconSize / 2, iconSize, iconSize * 0.8);
+            ctx.fillRect(iconX - iconSize / 3, iconY - iconSize / 2 - iconSize * 0.1, iconSize * 0.15, iconSize * 0.15);
+            ctx.fillRect(iconX + iconSize / 6, iconY - iconSize / 2 - iconSize * 0.1, iconSize * 0.15, iconSize * 0.15);
+
+            // Clock icon (bottom right)
+            const clockX = size * 0.75;
+            const clockY = size * 0.78;
+            const clockRadius = size * 0.06;
+
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+            ctx.lineWidth = size * 0.008;
+            ctx.beginPath();
+            ctx.arc(clockX, clockY, clockRadius, 0, Math.PI * 2);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(clockX, clockY);
+            ctx.lineTo(clockX, clockY - clockRadius * 0.6);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(clockX, clockY);
+            ctx.lineTo(clockX + clockRadius * 0.5, clockY);
+            ctx.stroke();
+
+            // Accent dots
+            ctx.fillStyle = 'rgba(165, 243, 252, 0.5)';
+            ctx.beginPath();
+            ctx.arc(size * 0.15, size * 0.15, size * 0.015, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.arc(size * 0.88, size * 0.12, size * 0.012, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.arc(size * 0.12, size * 0.88, size * 0.018, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        function downloadIcon(size) {
+            const canvas = document.getElementById(`canvas${size}`);
+            const link = document.createElement('a');
+            link.download = `icon-${size}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+
+        // Draw icons on load
+        window.onload = function () {
+            drawIcon(document.getElementById('canvas192'), 192);
+            drawIcon(document.getElementById('canvas512'), 512);
+        };
+    </script>
+</body>
+
+</html>
