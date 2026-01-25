@@ -35,10 +35,68 @@
                         <line x1="3" y1="10" x2="21" y2="10"></line>
                     </svg>
                     <h1 data-editable-id="main-title">Horarios Rotativos 2026</h1>
+                    <div id="weather-widget" class="weather-widget" style="display: none;">
+                        <span id="weather-icon">Loading...</span>
+                        <span id="weather-city">...</span>
+                        <span id="weather-temp">--°C</span>
+                        <span id="weather-desc">...</span>
+                        <span id="weather-rain">☔ --%</span>
+                    </div>
                 </div>
+                <style>
+                    .weather-widget {
+                        display: inline-flex;
+                        align-items: center;
+                        gap: 10px;
+                        background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+                        padding: 6px 15px;
+                        border-radius: 20px;
+                        font-size: 0.9rem;
+                        color: white !important;
+                        margin-left: 15px;
+                        border: 1px solid rgba(255, 255, 255, 0.2);
+                        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+                        transition: all 0.5s ease;
+                        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+                    }
+
+                    .weather-widget span {
+                        white-space: nowrap;
+                    }
+
+                    #weather-city {
+                        font-weight: 700;
+                        color: #fef3c7;
+                        /* Amarillo muy suave */
+                    }
+
+                    #weather-temp {
+                        font-weight: 700;
+                    }
+
+                    #weather-rain {
+                        font-size: 0.8em;
+                        opacity: 0.9;
+                    }
+
+                    @media (max-width: 768px) {
+                        .weather-widget {
+                            margin-top: 10px;
+                            margin-left: 0;
+                            width: 100%;
+                            justify-content: center;
+                        }
+                    }
+                </style>
                 <p class="subtitle" data-editable-id="sub-title">Sistema de gestión de turnos semanales</p>
             </div>
             <div class="header-actions">
+                <button id="aboutBtn" class="theme-toggle" title="Acerca de la App">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24">
+                        <path d="M16 18l6-6-6-6"></path>
+                        <path d="M8 6l-6 6 6 6"></path>
+                    </svg>
+                </button>
                 <button id="loginBtn" class="theme-toggle" title="Iniciar Sesión Admin">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24">
                         <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
@@ -500,6 +558,60 @@
             <div class="modal-footer">
                 <button class="btn-secondary close-modal">Cerrar</button>
                 <button id="saveEventBtn" class="btn-primary">Guardar Evento</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- About Modal -->
+    <div id="aboutModal" class="modal">
+        <div class="modal-content" style="max-width: 450px; text-align: center;">
+            <div class="modal-header">
+                <h2>💻 Acerca de la App</h2>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div
+                    style="background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%); width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem; color: white; box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.3);">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="40" height="40">
+                        <path d="M16 18l6-6-6-6"></path>
+                        <path d="M8 6l-6 6 6 6"></path>
+                    </svg>
+                </div>
+
+                <h3 style="margin-bottom: 0.5rem; color: var(--text-main);">Designed by <span
+                        style="color: var(--primary);">ibrahimdude</span></h3>
+                <p style="color: var(--text-muted); margin-bottom: 2rem;">Sistema de gestión de horarios rotativos.</p>
+
+                <h4 style="margin-bottom: 1rem; color: var(--text-main); text-align: left;">🛠️ Tecnologías Utilizadas:
+                </h4>
+                <ul
+                    style="text-align: left; list-style: none; padding: 0; margin-bottom: 2rem; display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem;">
+                    <li
+                        style="background: rgba(99, 102, 241, 0.1); padding: 8px 12px; border-radius: 8px; font-size: 0.9rem; color: var(--text-main);">
+                        <span style="color: #e34c26;">🟠</span> HTML5</li>
+                    <li
+                        style="background: rgba(99, 102, 241, 0.1); padding: 8px 12px; border-radius: 8px; font-size: 0.9rem; color: var(--text-main);">
+                        <span style="color: #264de4;">🔵</span> CSS3 (Outfit)</li>
+                    <li
+                        style="background: rgba(99, 102, 241, 0.1); padding: 8px 12px; border-radius: 8px; font-size: 0.9rem; color: var(--text-main);">
+                        <span style="color: #f7df1e;">🟡</span> JavaScript ES6+</li>
+                    <li
+                        style="background: rgba(99, 102, 241, 0.1); padding: 8px 12px; border-radius: 8px; font-size: 0.9rem; color: var(--text-main);">
+                        <span style="color: #ffca28;">🔥</span> Firebase</li>
+                    <li
+                        style="background: rgba(99, 102, 241, 0.1); padding: 8px 12px; border-radius: 8px; font-size: 0.9rem; color: var(--text-main); grid-column: span 2;">
+                        <span style="color: #6366f1;">☀️</span> Open-Meteo API</li>
+                </ul>
+
+                <a href="https://github.com/ibrahimdude-88/horariosapp/" target="_blank" class="btn-primary"
+                    style="display: flex; align-items: center; justify-content: center; gap: 10px; text-decoration: none; width: 100%;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                        <path
+                            d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22">
+                        </path>
+                    </svg>
+                    Ver Repositorio
+                </a>
             </div>
         </div>
     </div>

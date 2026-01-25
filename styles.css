@@ -37,14 +37,20 @@
     --descanso-text: #64748b;
     --descanso-border: #cbd5e1;
 
-    /* Dark Mode Variables */
+    /* Dark Mode Premium Palette */
     --bg-body-dark: #0f172a;
-    --bg-card-dark: #1e293b;
-    --text-main-dark: #f1f5f9;
-    --text-muted-dark: #94a3b8;
-    --border-dark: #334155;
-    --surface-dark: rgba(30, 41, 59, 0.98);
-    --input-bg-dark: #0f172a;
+    --bg-gradient-dark: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    --bg-card-dark: rgba(30, 41, 59, 0.7);
+    /* Glassmorphism */
+    --surface-dark: rgba(30, 41, 59, 0.95);
+
+    --text-main-dark: #f8fafc;
+    --text-muted-dark: #cbd5e1;
+
+    --border-dark: rgba(255, 255, 255, 0.1);
+    --input-bg-dark: rgba(15, 23, 42, 0.6);
+
+    --shadow-dark-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
 }
 
 * {
@@ -67,7 +73,31 @@ body {
 /* Dark Mode Styles - GLOBAL OVERRIDES */
 body.dark-mode {
     background: var(--bg-body-dark);
+    background-image: var(--bg-gradient-dark);
     color: var(--text-main-dark);
+}
+
+/* Fix About Modal in Dark Mode */
+body.dark-mode #aboutModal h2,
+body.dark-mode #aboutModal h3,
+body.dark-mode #aboutModal h4,
+body.dark-mode #aboutModal p,
+body.dark-mode #aboutModal li,
+body.dark-mode #aboutModal span {
+    color: white !important;
+}
+
+body.dark-mode #aboutModal li {
+    background: rgba(255, 255, 255, 0.1) !important;
+}
+
+body.dark-mode #aboutModal .modal-content {
+    background: rgba(30, 41, 59, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+body.dark-mode .subtitle {
+    color: var(--text-muted-dark);
 }
 
 body.dark-mode .header,
@@ -76,12 +106,20 @@ body.dark-mode .table-container,
 body.dark-mode .location-card,
 body.dark-mode .day-card,
 body.dark-mode .person-selector-container,
-body.dark-mode .modal-content,
-body.dark-mode .modal-header,
-body.dark-mode .modal-footer {
+body.dark-mode .modal-content {
     background: var(--bg-card-dark);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     border-color: var(--border-dark);
     color: var(--text-main-dark);
+    box-shadow: var(--shadow-dark-md);
+}
+
+body.dark-mode .modal-header,
+body.dark-mode .modal-footer {
+    background: rgba(15, 23, 42, 0.5);
+    /* Darker header/footer for modals */
+    border-color: var(--border-dark);
 }
 
 body.dark-mode .tab-button {
@@ -90,13 +128,14 @@ body.dark-mode .tab-button {
 
 body.dark-mode .tab-button:hover {
     background: rgba(255, 255, 255, 0.1);
-    color: var(--text-main-dark);
+    color: white;
 }
 
 body.dark-mode .schedule-table th {
-    background: #0f172a;
+    background: rgba(15, 23, 42, 0.8);
     color: var(--text-muted-dark);
     border-color: var(--border-dark);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 }
 
 body.dark-mode .schedule-table td {
@@ -105,15 +144,23 @@ body.dark-mode .schedule-table td {
 }
 
 body.dark-mode .schedule-table tr:hover td {
-    background: #334155;
+    background: rgba(255, 255, 255, 0.05);
 }
 
 body.dark-mode .nav-btn,
 body.dark-mode .today-btn,
 body.dark-mode .btn-secondary {
-    background: var(--bg-card-dark);
+    background: rgba(255, 255, 255, 0.05);
     border-color: var(--border-dark);
     color: var(--text-main-dark);
+}
+
+body.dark-mode .nav-btn:hover,
+body.dark-mode .today-btn:hover,
+body.dark-mode .btn-secondary:hover {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
 }
 
 body.dark-mode input,
@@ -121,15 +168,23 @@ body.dark-mode select,
 body.dark-mode textarea {
     background: var(--input-bg-dark);
     border-color: var(--border-dark);
-    color: var(--text-main-dark);
+    color: white;
+}
+
+body.dark-mode input:focus,
+body.dark-mode select:focus,
+body.dark-mode textarea:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25);
 }
 
 body.dark-mode .time {
-    color: var(--text-main-dark);
+    color: white;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 }
 
 body.dark-mode .person-cell {
-    color: var(--text-main-dark);
+    color: white;
 }
 
 body.dark-mode .btn-icon {
@@ -140,6 +195,54 @@ body.dark-mode .btn-icon {
 body.dark-mode .btn-icon:hover {
     background: rgba(255, 255, 255, 0.1);
     color: var(--primary);
+    border-color: var(--primary);
+}
+
+/* Force text visibility for headers and labels in Dark Mode */
+body.dark-mode h1,
+body.dark-mode h2,
+body.dark-mode h3,
+body.dark-mode h4,
+body.dark-mode h5,
+body.dark-mode h6 {
+    color: var(--text-main-dark) !important;
+}
+
+body.dark-mode label {
+    color: var(--text-muted-dark);
+}
+
+body.dark-mode .week-info h2 {
+    color: white;
+}
+
+body.dark-mode .week-info span {
+    background: rgba(99, 102, 241, 0.2);
+    color: #a5b4fc;
+}
+
+/* Fix table text contrast */
+body.dark-mode .schedule-table th {
+    color: #94a3b8;
+    /* Slate 400 */
+}
+
+body.dark-mode .location-header {
+    color: white;
+}
+
+/* Fix specific badges contrast */
+body.dark-mode .location-badge.descanso {
+    background: rgba(148, 163, 184, 0.15);
+    /* Slate with opacity */
+    color: #cbd5e1;
+    /* Slate 300 */
+    border-color: #334155;
+}
+
+body.dark-mode .person-cell.unassigned {
+    color: #64748b;
+    /* Slate 500 */
 }
 
 /* Row Swap Highlight Dark Mode */
@@ -191,6 +294,7 @@ h1 {
     font-weight: 700;
     background: linear-gradient(to right, var(--primary-dark), var(--primary));
     -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
     letter-spacing: -0.02em;
 }
@@ -633,6 +737,11 @@ body.dark-mode .location-change-text {
     background: linear-gradient(to bottom right, #ffffff, #eef2ff);
 }
 
+body.dark-mode .day-card.today {
+    background: linear-gradient(to bottom right, rgba(30, 41, 59, 1), rgba(30, 58, 138, 0.3));
+    border-color: #6366f1;
+}
+
 .day-name {
     display: flex;
     justify-content: space-between;
@@ -640,6 +749,10 @@ body.dark-mode .location-change-text {
     margin-bottom: 1rem;
     font-size: 1.1rem;
     color: var(--text-main);
+}
+
+body.dark-mode .day-name {
+    color: white;
 }
 
 .badge-today {

@@ -3196,16 +3196,13 @@ window.saveEmployeeProfile = function (employeeId) {
         return;
     }
 
-    if (!email) {
-        alert('⚠️ El email es obligatorio para el envío automático de horarios');
-        return;
-    }
-
-    // Validar formato de email
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-        alert('⚠️ Por favor ingresa un email válido');
-        return;
+    // Validar formato de email SOLO si se escribió algo
+    if (email) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            alert('⚠️ Por favor ingresa un email válido');
+            return;
+        }
     }
 
     // Guardar perfil
@@ -3216,7 +3213,7 @@ window.saveEmployeeProfile = function (employeeId) {
     state.employeeProfiles[employeeId] = {
         displayName: displayName,
         phone: phone,
-        email: email,
+        email: email, // Si está vacío, se guardará como cadena vacía
         notes: notes
     };
 
@@ -3236,3 +3233,123 @@ function getEmployeeDisplayName(employeeId) {
 // Start
 init();
 
+
+/* =========================================
+   WIDGET DE CLIMA
+   ========================================= */
+
+const weatherCities = [
+    { name: 'Monterrey', lat: 25.6667, lon: -100.3167 },
+    { name: 'Guadalupe', lat: 25.6768, lon: -100.2564 },
+    { name: 'García', lat: 25.8117, lon: -100.5922 },
+    { name: 'San Pedro', lat: 25.6573, lon: -100.4013 }
+];
+
+let currentCityIndex = 0;
+let weatherCache = {};
+
+function initWeatherWidget() {
+    fetchWeatherData();
+    // Actualizar datos cada 15 minutos
+    setInterval(fetchWeatherData, 15 * 60 * 1000);
+    // Rotar ciudad cada 5 segundos
+    setInterval(rotateWeatherCity, 5000);
+}
+
+function fetchWeatherData() {
+    weatherCities.forEach(city => {
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${city.lat}&longitude=${city.lon}&current=temperature_2m,precipitation,weather_code&hourly=precipitation_probability&timezone=auto&forecast_days=1`;
+        
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                if (data && data.current) {
+                    // Obtener probabilidad de lluvia de la hora actual
+                    const currentHour = new Date().getHours();
+                    const precipitationProb = data.hourly && data.hourly.precipitation_probability ? data.hourly.precipitation_probability[currentHour] : 0;
+                    
+                    weatherCache[city.name] = {
+                        temp: Math.round(data.current.temperature_2m),
+                        condition: getWeatherDescription(data.current.weather_code),
+                        icon: getWeatherIcon(data.current.weather_code),
+                        rain: Math.max(precipitationProb, data.current.precipitation > 0 ? 100 : 0) // Si llueve ahora es 100%, sino la probabilidad
+                    };
+                    
+                    // Si es la primera carga y estamos en esta ciudad, mostrarla
+                    if (city.name === weatherCities[currentCityIndex].name) {
+                        updateWeatherUI();
+                    }
+                }
+            })
+            .catch(error => console.error('Error fetching weather:', error));
+    });
+}
+
+function rotateWeatherCity() {
+    currentCityIndex = (currentCityIndex + 1) % weatherCities.length;
+    updateWeatherUI();
+}
+
+function updateWeatherUI() {
+    const city = weatherCities[currentCityIndex];
+    const data = weatherCache[city.name];
+    const widget = document.getElementById('weather-widget');
+    
+    if (data && widget) {
+        document.getElementById('weather-city').textContent = city.name;
+        document.getElementById('weather-temp').textContent = `${data.temp}°C`;
+        document.getElementById('weather-desc').textContent = data.condition;
+        document.getElementById('weather-icon').textContent = data.icon;
+        document.getElementById('weather-rain').textContent = `☔ ${data.rain}%`;
+        
+        widget.style.display = 'inline-flex';
+    }
+}
+
+function getWeatherDescription(code) {
+    // WMO Weather interpretation codes (WW)
+    if (code === 0) return 'Despejado';
+    if (code === 1) return 'Mayormente Despejado';
+    if (code === 2) return 'Parcialmente Nublado';
+    if (code === 3) return 'Nublado';
+    if (code >= 45 && code <= 48) return 'Niebla';
+    if (code >= 51 && code <= 55) return 'Llovizna';
+    if (code >= 61 && code <= 65) return 'Lluvia';
+    if (code >= 66 && code <= 67) return 'Lluvia Helada';
+    if (code >= 71 && code <= 77) return 'Nieve';
+    if (code >= 80 && code <= 82) return 'Chubascos';
+    if (code >= 95) return 'Tormenta';
+    return 'Variable';
+}
+
+function getWeatherIcon(code) {
+    if (code === 0) return '☀️';
+    if (code === 1 || code === 2) return '⛅';
+    if (code === 3) return '☁️';
+    if (code >= 45 && code <= 48) return '��️';
+    if (code >= 51 && code <= 67) return '🌧️';
+    if (code >= 71 && code <= 77) return '❄️';
+    if (code >= 80 && code <= 82) return '🌦️';
+    if (code >= 95) return '⛈️';
+    return '🌡️';
+}
+
+// Iniciar widget cuando cargue el DOM
+document.addEventListener('DOMContentLoaded', function() {
+    // Esperar un poco para no bloquear la carga inicial
+    setTimeout(initWeatherWidget, 1000);
+});
+
+/* =========================================
+   ABOUT MODAL LOGIC
+   ========================================= */
+document.addEventListener('DOMContentLoaded', () => {
+    const aboutBtn = document.getElementById('aboutBtn');
+    const aboutModal = document.getElementById('aboutModal');
+
+    if (aboutBtn && aboutModal) {
+        aboutBtn.addEventListener('click', () => {
+            aboutModal.classList.add('active');
+        });
+    }
+});
