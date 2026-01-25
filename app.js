@@ -96,6 +96,7 @@ let state = {
     assignments: {},
     weeklyOverrides: {},
     employees: [],
+    employeeProfiles: {}, // { employeeName: { displayName: 'Name', phone: '123', email: 'email@example.com', notes: 'text' } }
     customTitles: {},
     vacations: {}, // { employeeName: [{ startDate: 'YYYY-MM-DD', endDate: 'YYYY-MM-DD' }] }
     locationChanges: {}, // { weekOffset: { employeeName: { days: [0,1,2], originalLocation: 'valle', newLocation: 'mitras', reason: 'text' } } }
@@ -205,6 +206,7 @@ function loadFromFirebase() {
             state.assignments = data.assignments || {};
             state.weeklyOverrides = data.weeklyOverrides || {};
             state.employees = data.employees || [];
+            state.employeeProfiles = data.employeeProfiles || {};
             state.customTitles = data.customTitles || {};
             state.vacations = data.vacations || {};
             state.locationChanges = data.locationChanges || {};
@@ -232,6 +234,7 @@ function saveToLocalStorage() { // Mantengo el nombre para no romper llamadas ex
         assignments: state.assignments,
         weeklyOverrides: state.weeklyOverrides,
         employees: state.employees,
+        employeeProfiles: state.employeeProfiles,
         customTitles: state.customTitles,
         vacations: state.vacations,
         locationChanges: state.locationChanges,
@@ -309,6 +312,11 @@ function setupEventListeners() {
 
     if (elements.manageAssignmentsBtn) {
         elements.manageAssignmentsBtn.addEventListener('click', openManageAssignments);
+    }
+
+    const manageEmployeesBtn = document.getElementById('manageEmployeesBtn');
+    if (manageEmployeesBtn) {
+        manageEmployeesBtn.addEventListener('click', openManageEmployees);
     }
 
     if (elements.manageVacationsBtn) {
@@ -2943,6 +2951,246 @@ function updateEventFilterStats(visibleCount) {
     } else {
         statsDiv.innerHTML = `Mostrando <strong>${visibleCount}</strong> de <strong>${totalEvents}</strong> evento(s)`;
     }
+}
+
+// ==========================================
+// GESTIÓN DE EMPLEADOS
+// ==========================================
+
+function openManageEmployees() {
+    const modal = document.getElementById('employeesModal');
+    const modalBody = modal.querySelector('.modal-body');
+
+    const employees = state.employees || [];
+
+    let html = `
+        <div style="margin-bottom: 1.5rem;">
+            <p style="color: var(--text-muted); margin-bottom: 1rem;">
+                Gestiona la información de contacto de cada empleado. El <strong>Nombre para Mostrar</strong> es cómo aparecerá en los horarios.
+            </p>
+        </div>
+    `;
+
+    if (employees.length === 0) {
+        html += `
+            <div style="text-align: center; padding: 2rem; color: var(--text-muted);">
+                <p>No hay empleados registrados. Agrega empleados desde "Gestionar Asignaciones".</p>
+            </div>
+        `;
+    } else {
+        html += '<div style="display: grid; gap: 1rem;">';
+
+        employees.forEach((emp, index) => {
+            const profile = state.employeeProfiles[emp] || {};
+            const displayName = profile.displayName || emp;
+            const phone = profile.phone || '';
+            const email = profile.email || '';
+            const notes = profile.notes || '';
+
+            html += `
+                <div style="background: var(--bg-secondary); padding: 1.5rem; border-radius: 10px; border-left: 4px solid var(--primary);">
+                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+                        <div style="flex: 1;">
+                            <h3 style="margin: 0 0 0.5rem 0; color: var(--primary);">
+                                ${displayName}
+                                ${displayName !== emp ? `<span style="font-size: 0.8rem; color: var(--text-muted); font-weight: normal;">(ID: ${emp})</span>` : ''}
+                            </h3>
+                        </div>
+                        <button 
+                            onclick="editEmployee('${emp}')"
+                            class="btn-icon"
+                            style="background: var(--primary); color: white; padding: 0.5rem; border-radius: 6px; margin-left: 1rem;"
+                            title="Editar empleado">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                        <div>
+                            <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.25rem;">
+                                📞 Teléfono
+                            </div>
+                            <div style="font-size: 0.95rem;">
+                                ${phone || '<span style="color: var(--text-muted); font-style: italic;">No registrado</span>'}
+                            </div>
+                        </div>
+                        <div>
+                            <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.25rem;">
+                                📧 Email
+                            </div>
+                            <div style="font-size: 0.95rem; word-break: break-all;">
+                                ${email || '<span style="color: var(--text-muted); font-style: italic;">No registrado</span>'}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    ${notes ? `
+                        <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border);">
+                            <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.25rem;">
+                                📝 Notas
+                            </div>
+                            <div style="font-size: 0.9rem; color: var(--text-secondary);">
+                                ${notes}
+                            </div>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        });
+
+        html += '</div>';
+    }
+
+    modalBody.innerHTML = html;
+    modal.classList.add('active');
+}
+
+window.editEmployee = function (employeeId) {
+    const profile = state.employeeProfiles[employeeId] || {};
+    const displayName = profile.displayName || employeeId;
+    const phone = profile.phone || '';
+    const email = profile.email || '';
+    const notes = profile.notes || '';
+
+    const modal = document.getElementById('employeesModal');
+    const modalBody = modal.querySelector('.modal-body');
+
+    modalBody.innerHTML = `
+        <div style="max-width: 600px; margin: 0 auto;">
+            <h3 style="margin-bottom: 1.5rem; color: var(--primary);">
+                ✏️ Editar Información de ${employeeId}
+            </h3>
+            
+            <div style="display: grid; gap: 1.5rem;">
+                <div>
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">
+                        Nombre para Mostrar en Horarios
+                        <span style="color: var(--danger); margin-left: 0.25rem;">*</span>
+                    </label>
+                    <input 
+                        type="text" 
+                        id="editDisplayName" 
+                        value="${displayName}"
+                        placeholder="Ej: Juan Pérez"
+                        style="width: 100%; padding: 0.75rem; border: 2px solid var(--border); border-radius: 8px; font-size: 1rem;"
+                        required
+                    >
+                    <small style="color: var(--text-muted); font-size: 0.85rem;">
+                        Este es el nombre que aparecerá en los horarios y reportes
+                    </small>
+                </div>
+
+                <div>
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">
+                        📞 Teléfono
+                    </label>
+                    <input 
+                        type="tel" 
+                        id="editPhone" 
+                        value="${phone}"
+                        placeholder="Ej: +52 81 1234 5678"
+                        style="width: 100%; padding: 0.75rem; border: 2px solid var(--border); border-radius: 8px; font-size: 1rem;"
+                    >
+                </div>
+
+                <div>
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">
+                        📧 Email
+                        <span style="color: var(--danger); margin-left: 0.25rem;">*</span>
+                    </label>
+                    <input 
+                        type="email" 
+                        id="editEmail" 
+                        value="${email}"
+                        placeholder="Ej: empleado@empresa.com"
+                        style="width: 100%; padding: 0.75rem; border: 2px solid var(--border); border-radius: 8px; font-size: 1rem;"
+                        required
+                    >
+                    <small style="color: var(--text-muted); font-size: 0.85rem;">
+                        Requerido para envío automático de horarios
+                    </small>
+                </div>
+
+                <div>
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">
+                        📝 Notas
+                    </label>
+                    <textarea 
+                        id="editNotes" 
+                        rows="4"
+                        placeholder="Información adicional, observaciones, etc."
+                        style="width: 100%; padding: 0.75rem; border: 2px solid var(--border); border-radius: 8px; font-size: 1rem; resize: vertical; font-family: inherit;"
+                    >${notes}</textarea>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                <button 
+                    onclick="saveEmployeeProfile('${employeeId}')"
+                    class="btn-primary"
+                    style="flex: 1; padding: 0.75rem; font-size: 1rem;">
+                    💾 Guardar Cambios
+                </button>
+                <button 
+                    onclick="openManageEmployees()"
+                    class="btn-secondary"
+                    style="padding: 0.75rem 1.5rem; font-size: 1rem;">
+                    ← Volver
+                </button>
+            </div>
+        </div>
+    `;
+};
+
+window.saveEmployeeProfile = function (employeeId) {
+    const displayName = document.getElementById('editDisplayName').value.trim();
+    const phone = document.getElementById('editPhone').value.trim();
+    const email = document.getElementById('editEmail').value.trim();
+    const notes = document.getElementById('editNotes').value.trim();
+
+    if (!displayName) {
+        alert('⚠️ El nombre para mostrar es obligatorio');
+        return;
+    }
+
+    if (!email) {
+        alert('⚠️ El email es obligatorio para el envío automático de horarios');
+        return;
+    }
+
+    // Validar formato de email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        alert('⚠️ Por favor ingresa un email válido');
+        return;
+    }
+
+    // Guardar perfil
+    if (!state.employeeProfiles) {
+        state.employeeProfiles = {};
+    }
+
+    state.employeeProfiles[employeeId] = {
+        displayName: displayName,
+        phone: phone,
+        email: email,
+        notes: notes
+    };
+
+    saveToLocalStorage();
+    alert('✅ Información del empleado guardada exitosamente');
+    openManageEmployees();
+};
+
+// Función auxiliar para obtener el nombre para mostrar de un empleado
+function getEmployeeDisplayName(employeeId) {
+    if (state.employeeProfiles && state.employeeProfiles[employeeId]) {
+        return state.employeeProfiles[employeeId].displayName || employeeId;
+    }
+    return employeeId;
 }
 
 // Start

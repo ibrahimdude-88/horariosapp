@@ -114,6 +114,7 @@
                     </div>
                     <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
                         <button id="manageAssignmentsBtn" class="btn-secondary">Gestionar Asignaciones</button>
+                        <button id="manageEmployeesBtn" class="btn-secondary">👥 Gestionar Empleados</button>
                         <button id="manageVacationsBtn" class="btn-secondary">Gestionar Vacaciones</button>
                         <button id="manageLocationChangesBtn" class="btn-secondary">Cambio de Ubicación</button>
                         <button id="manageTempChangesBtn" class="btn-secondary">🔄 Cambios Temporales</button>
@@ -365,6 +366,22 @@
                 <button class="close-modal">&times;</button>
             </div>
             <div class="modal-body">
+                <!-- Dynamic content -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary close-modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Employee Management Modal -->
+    <div id="employeesModal" class="modal">
+        <div class="modal-content" style="max-width: 900px;">
+            <div class="modal-header">
+                <h2>👥 Gestionar Empleados</h2>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body" style="max-height: 60vh; overflow-y: auto;">
                 <!-- Dynamic content -->
             </div>
             <div class="modal-footer">
