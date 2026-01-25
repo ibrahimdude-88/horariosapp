@@ -1043,3 +1043,47 @@ body.dark-mode .theme-toggle:hover {
         overflow-y: auto;
     }
 }
+
+/* =========================================
+   CONFIG ACTIONS LAYOUT
+   ========================================= */
+.config-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    justify-content: flex-end; /* A la derecha en desktop */
+    align-items: center;
+}
+
+@media (max-width: 1200px) {
+    .config-actions {
+        width: 100%;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 0.5rem;
+        margin-top: 1rem;
+    }
+    
+    .config-actions button {
+        width: 100%;
+        white-space: normal; /* Permitir saltos de línea */
+        height: 100%;
+        min-height: 40px;
+        font-size: 0.85rem;
+        padding: 0.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 600px) {
+    .config-actions {
+        grid-template-columns: 1fr 1fr; /* 2 columnas forzadas en móvil */
+    }
+    
+    .config-actions button {
+        font-size: 0.75rem;
+        padding: 4px;
+    }
+}
