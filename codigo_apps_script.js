@@ -283,12 +283,41 @@ function obtenerHorarioEmpleado(employeeId, semana, data) {
 function obtenerEventosSemana(events, semana) {
     const eventosEncontrados = [];
 
-    for (let dateStr in events) {
-        const eventDate = new Date(dateStr);
-        if (eventDate >= semana.startDate && eventDate <= semana.endDate) {
+    Logger.log(`🔍 Buscando eventos entre ${semana.startDate.toISOString().split('T')[0]} y ${semana.endDate.toISOString().split('T')[0]}`);
+    Logger.log(`📋 Total de eventos en base de datos: ${Object.keys(events).length}`);
+
+    // Normalizar las fechas de inicio y fin de la semana (solo fecha, sin hora)
+    const weekStart = new Date(semana.startDate);
+    weekStart.setHours(0, 0, 0, 0);
+
+    const weekEnd = new Date(semana.endDate);
+    weekEnd.setHours(23, 59, 59, 999);
+
+    for (let eventId in events) {
+        const evento = events[eventId];
+
+        // Los eventos tienen una propiedad 'date' que contiene la fecha
+        if (!evento.date) {
+            Logger.log(`  ⚠️ Evento ${eventId} no tiene fecha`);
+            continue;
+        }
+
+        // Parsear la fecha del evento como fecha local (YYYY-MM-DD)
+        const dateStr = evento.date;
+        const [year, month, day] = dateStr.split('-').map(num => parseInt(num, 10));
+        const eventDate = new Date(year, month - 1, day); // month - 1 porque los meses son 0-indexed
+        eventDate.setHours(12, 0, 0, 0); // Normalizar a mediodía para evitar problemas de zona horaria
+
+        const enRango = eventDate >= weekStart && eventDate <= weekEnd;
+        Logger.log(`  Evento: ${dateStr} (${evento.text}) - En rango: ${enRango}`);
+
+        // Comparar solo las fechas
+        if (enRango) {
             eventosEncontrados.push({
                 fecha: dateStr,
-                ...events[dateStr]
+                text: evento.text,
+                type: evento.type || 'notice',
+                color: evento.color
             });
         }
     }
@@ -299,28 +328,37 @@ function obtenerEventosSemana(events, semana) {
 function generarEmailHTML(profile, horarioEmpleado, eventos, semana, data) {
     const displayName = profile.displayName || 'Empleado';
 
+    // Definir colores para ubicaciones
+    const locationColors = {
+        'guardia': { bg: '#fef3c7', text: '#92400e', border: '#f59e0b' },
+        'valle': { bg: '#dbeafe', text: '#1e40af', border: '#3b82f6' },
+        'mitras': { bg: '#dcfce7', text: '#166534', border: '#22c55e' }
+    };
+
+    const locationNames = {
+        'guardia': 'Guardia',
+        'valle': 'Valle',
+        'mitras': 'Mitras'
+    };
+
     // Generar tabla de horario semanal del empleado
     let tablaHorarioEmpleado = '';
     if (horarioEmpleado.horarioDetallado) {
         const dias = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo'];
         const diasNombres = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
-        const locationNames = {
-            'guardia': 'Guardia',
-            'valle': 'Valle',
-            'mitras': 'Mitras'
-        };
 
         tablaHorarioEmpleado = '<table style="width: 100%; border-collapse: collapse; margin-top: 15px;">';
-        tablaHorarioEmpleado += '<tr style="background: #667eea; color: white;"><th style="padding: 10px; text-align: left;">Día</th><th style="padding: 10px; text-align: left;">Horario</th><th style="padding: 10px; text-align: left;">Ubicación</th></tr>';
+        tablaHorarioEmpleado += '<tr style="background: #667eea; color: white;"><th style="padding: 12px; text-align: left; border-radius: 8px 0 0 0;">Día</th><th style="padding: 12px; text-align: left;">Horario</th><th style="padding: 12px; text-align: left; border-radius: 0 8px 0 0;">Ubicación</th></tr>';
 
         dias.forEach((dia, index) => {
             const dayData = horarioEmpleado.horarioDetallado[dia];
-            const bgColor = index % 2 === 0 ? '#f9f9f9' : 'white';
+            const bgColor = index % 2 === 0 ? '#f9fafb' : 'white';
 
             if (dayData) {
-                tablaHorarioEmpleado += `<tr style="background: ${bgColor};"><td style="padding: 10px; border-bottom: 1px solid #ddd;"><strong>${diasNombres[index]}</strong></td><td style="padding: 10px; border-bottom: 1px solid #ddd;">${dayData.time}</td><td style="padding: 10px; border-bottom: 1px solid #ddd;">${locationNames[dayData.location] || dayData.location}</td></tr>`;
+                const locationColor = locationColors[dayData.location] || { bg: '#f3f4f6', text: '#374151', border: '#9ca3af' };
+                tablaHorarioEmpleado += `<tr style="background: ${bgColor};"><td style="padding: 12px; border-bottom: 1px solid #e5e7eb;"><strong>${diasNombres[index]}</strong></td><td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">${dayData.time}</td><td style="padding: 12px; border-bottom: 1px solid #e5e7eb;"><span style="background: ${locationColor.bg}; color: ${locationColor.text}; padding: 4px 12px; border-radius: 12px; font-size: 0.9em; font-weight: 600; border: 1px solid ${locationColor.border};">${locationNames[dayData.location] || dayData.location}</span></td></tr>`;
             } else {
-                tablaHorarioEmpleado += `<tr style="background: ${bgColor};"><td style="padding: 10px; border-bottom: 1px solid #ddd;"><strong>${diasNombres[index]}</strong></td><td style="padding: 10px; border-bottom: 1px solid #ddd; color: #999;" colspan="2">Descanso</td></tr>`;
+                tablaHorarioEmpleado += `<tr style="background: ${bgColor};"><td style="padding: 12px; border-bottom: 1px solid #e5e7eb;"><strong>${diasNombres[index]}</strong></td><td style="padding: 12px; border-bottom: 1px solid #e5e7eb; color: #9ca3af;" colspan="2">Descanso</td></tr>`;
             }
         });
 
@@ -333,15 +371,22 @@ function generarEmailHTML(profile, horarioEmpleado, eventos, semana, data) {
 <head>
   <meta charset="UTF-8">
   <style>
-    body { font-family: 'Segoe UI', Arial, sans-serif; line-height: 1.6; color: #333; }
-    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-    .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 10px 10px 0 0; text-align: center; }
-    .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
-    .section { background: white; padding: 20px; margin-bottom: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-    .section h2 { color: #667eea; margin-top: 0; border-bottom: 2px solid #667eea; padding-bottom: 10px; }
-    .horario-box { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 20px; border-radius: 8px; text-align: center; font-size: 1.1em; font-weight: bold; margin-bottom: 15px; }
-    .evento { padding: 10px; margin: 10px 0; border-left: 4px solid #667eea; background: #f0f0f0; border-radius: 4px; }
-    .footer { text-align: center; color: #666; font-size: 0.9em; margin-top: 20px; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; background: #f3f4f6; }
+    .container { max-width: 650px; margin: 0 auto; padding: 20px; }
+    .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 35px 30px; border-radius: 12px 12px 0 0; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+    .header h1 { margin: 0 0 10px 0; font-size: 28px; font-weight: 700; }
+    .header p { margin: 0; font-size: 16px; opacity: 0.95; }
+    .content { background: white; padding: 35px 30px; border-radius: 0 0 12px 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+    .section { background: #f9fafb; padding: 25px; margin-bottom: 25px; border-radius: 10px; border: 1px solid #e5e7eb; }
+    .section h2 { color: #667eea; margin: 0 0 18px 0; font-size: 20px; font-weight: 700; padding-bottom: 12px; border-bottom: 3px solid #667eea; }
+    .horario-box { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 18px 24px; border-radius: 10px; text-align: center; font-size: 1.2em; font-weight: 700; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(102, 126, 234, 0.3); }
+    .evento { padding: 15px 18px; margin: 12px 0; border-left: 5px solid #667eea; background: white; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+    .evento strong { color: #667eea; }
+    .evento-badge { display: inline-block; background: #667eea; color: white; padding: 3px 10px; border-radius: 12px; font-size: 0.75em; font-weight: 700; margin-right: 8px; text-transform: uppercase; }
+    .evento-badge.pago { background: #10b981; }
+    .evento-badge.festivo { background: #f59e0b; }
+    .evento-badge.aviso { background: #ef4444; }
+    .footer { text-align: center; color: #6b7280; font-size: 0.85em; margin-top: 25px; padding-top: 20px; border-top: 1px solid #e5e7eb; }
   </style>
 </head>
 <body>
@@ -352,15 +397,15 @@ function generarEmailHTML(profile, horarioEmpleado, eventos, semana, data) {
     </div>
     
     <div class="content">
-      <p>Hola <strong>${displayName}</strong>,</p>
-      <p>Este es tu horario para la próxima semana:</p>
+      <p style="font-size: 16px; margin-bottom: 8px;">Hola <strong style="color: #667eea;">${displayName}</strong>,</p>
+      <p style="color: #6b7280; margin-bottom: 25px;">Este es tu horario para la próxima semana:</p>
       
       <div class="section">
         <h2>Tu Horario</h2>
         <div class="horario-box">
           ${horarioEmpleado.horario}
         </div>
-        ${horarioEmpleado.esTemporal ? `<p style="margin-top: 15px; color: #d97706;"><strong>Cambio Temporal:</strong> ${horarioEmpleado.comentario}</p>` : ''}
+        ${horarioEmpleado.esTemporal ? `<p style="margin: 15px 0 20px 0; padding: 12px; background: #fef3c7; border-left: 4px solid #f59e0b; border-radius: 6px; color: #92400e;"><strong>Cambio Temporal:</strong> ${horarioEmpleado.comentario}</p>` : ''}
         ${tablaHorarioEmpleado}
       </div>
       
@@ -368,10 +413,25 @@ function generarEmailHTML(profile, horarioEmpleado, eventos, semana, data) {
         <div class="section">
           <h2>Eventos de la Semana</h2>
           ${eventos.map(e => {
-        const fecha = new Date(e.fecha);
+        // Parsear la fecha correctamente como fecha local
+        const [year, month, day] = e.fecha.split('-').map(num => parseInt(num, 10));
+        const fecha = new Date(year, month - 1, day);
         const dia = fecha.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
-        const icono = e.type === 'holiday' ? '[Festivo] ' : e.type === 'alert' ? '[Aviso] ' : e.type === 'payday' ? '[Pago] ' : '';
-        return `<div class="evento">${icono}<strong>${dia}:</strong> ${e.text}</div>`;
+
+        let badgeClass = '';
+        let badgeText = '';
+        if (e.type === 'holiday') {
+            badgeClass = 'festivo';
+            badgeText = 'Festivo';
+        } else if (e.type === 'alert') {
+            badgeClass = 'aviso';
+            badgeText = 'Aviso';
+        } else if (e.type === 'payday') {
+            badgeClass = 'pago';
+            badgeText = 'Pago';
+        }
+
+        return `<div class="evento">${badgeText ? `<span class="evento-badge ${badgeClass}">${badgeText}</span>` : ''}<strong>${dia}:</strong> ${e.text}</div>`;
     }).join('')}
         </div>
       ` : ''}
@@ -382,8 +442,8 @@ function generarEmailHTML(profile, horarioEmpleado, eventos, semana, data) {
       </div>
       
       <div class="footer">
-        <p>Este es un correo automático generado por el Sistema de Horarios.</p>
-        <p>Si tienes dudas, contacta a tu supervisor.</p>
+        <p style="margin: 5px 0;">Este es un correo automático generado por el Sistema de Horarios.</p>
+        <p style="margin: 5px 0;">Si tienes dudas, contacta a tu supervisor.</p>
       </div>
     </div>
   </div>
@@ -408,18 +468,25 @@ function generarTablaHorarioGeneral(data, semana) {
         'mitras': 'Mitras'
     };
 
-    let tabla = '<table style="width: 100%; border-collapse: collapse; font-size: 0.9em;">';
-    tabla += '<tr style="background: #667eea; color: white;"><th style="padding: 8px; text-align: left;">Horario</th><th style="padding: 8px; text-align: left;">Empleado</th>';
+    const locationColors = {
+        'guardia': { bg: '#fef3c7', text: '#92400e' },
+        'valle': { bg: '#dbeafe', text: '#1e40af' },
+        'mitras': { bg: '#dcfce7', text: '#166534' }
+    };
+
+    let tabla = '<table style="width: 100%; border-collapse: collapse; font-size: 0.85em;">';
+    tabla += '<tr style="background: #667eea; color: white;"><th style="padding: 10px; text-align: left; border-radius: 8px 0 0 0;">Empleado</th>';
 
     // Agregar columnas para cada día
-    diasNombres.forEach(dia => {
-        tabla += `<th style="padding: 8px; text-align: center; font-size: 0.85em;">${dia}</th>`;
+    diasNombres.forEach((dia, index) => {
+        const isLast = index === diasNombres.length - 1;
+        tabla += `<th style="padding: 10px; text-align: center; font-size: 0.85em; ${isLast ? 'border-radius: 0 8px 0 0;' : ''}">${dia}</th>`;
     });
     tabla += '</tr>';
 
     // Generar fila para cada horario
     for (let i = 1; i <= 7; i++) {
-        const bgColor = i % 2 === 0 ? '#f9f9f9' : 'white';
+        const bgColor = i % 2 === 0 ? '#f9fafb' : 'white';
 
         // Determinar quién tiene este horario (considerando rotación y cambios temporales)
         let employeeId = null;
@@ -445,15 +512,16 @@ function generarTablaHorarioGeneral(data, semana) {
         // Obtener el horario detallado
         const schedule = scheduleData.find(s => s.id === i);
 
-        tabla += `<tr style="background: ${bgColor};"><td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Horario ${i}</strong></td><td style="padding: 8px; border-bottom: 1px solid #ddd;">${displayName}</td>`;
+        tabla += `<tr style="background: ${bgColor};"><td style="padding: 10px; border-bottom: 1px solid #e5e7eb;"><strong style="color: #667eea;">${displayName}</strong></td>`;
 
         // Agregar información de cada día
         dias.forEach(dia => {
             const dayData = schedule ? schedule[dia] : null;
             if (dayData) {
-                tabla += `<td style="padding: 6px; border-bottom: 1px solid #ddd; text-align: center; font-size: 0.75em;"><div style="font-weight: bold;">${dayData.time}</div><div style="color: #666;">${locationNames[dayData.location] || dayData.location}</div></td>`;
+                const locationColor = locationColors[dayData.location] || { bg: '#f3f4f6', text: '#374151' };
+                tabla += `<td style="padding: 8px; border-bottom: 1px solid #e5e7eb; text-align: center; font-size: 0.7em;"><div style="font-weight: 600; color: #374151; margin-bottom: 2px;">${dayData.time}</div><div style="background: ${locationColor.bg}; color: ${locationColor.text}; padding: 2px 6px; border-radius: 8px; font-weight: 600; display: inline-block;">${locationNames[dayData.location] || dayData.location}</div></td>`;
             } else {
-                tabla += `<td style="padding: 6px; border-bottom: 1px solid #ddd; text-align: center; color: #999; font-size: 0.75em;">-</td>`;
+                tabla += `<td style="padding: 8px; border-bottom: 1px solid #e5e7eb; text-align: center; color: #9ca3af; font-size: 0.7em;">-</td>`;
             }
         });
 

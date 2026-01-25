@@ -2110,11 +2110,18 @@ function renderEventsList() {
     // Ordenar por fecha
     eventsArray.sort((a, b) => a.date.localeCompare(b.date));
 
+    // Obtener fecha actual (solo fecha, sin hora)
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+
     let html = '';
 
     eventsArray.forEach(event => {
         const dateObj = parseLocalDate(event.date);
         const dateFormatted = dateObj.toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+
+        // Verificar si el evento ya pasó
+        const eventoPasado = dateObj < hoy;
 
         let typeLabel = '';
         let typeColor = '';
@@ -2126,10 +2133,17 @@ function renderEventsList() {
             default: typeLabel = 'Aviso'; typeColor = 'var(--primary)';
         }
 
+        // Si el evento pasó, usar colores grises
+        const containerStyle = eventoPasado
+            ? `opacity: 0.5; filter: grayscale(100%);`
+            : '';
+
+        const borderColor = eventoPasado ? '#9ca3af' : typeColor;
+
         html += `
-            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; background: var(--bg-body); border-radius: var(--radius-sm); margin-bottom: 0.5rem; border-left: 4px solid ${typeColor};">
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; background: var(--bg-body); border-radius: var(--radius-sm); margin-bottom: 0.5rem; border-left: 4px solid ${borderColor}; ${containerStyle}">
                 <div>
-                    <div style="font-size: 0.8rem; color: var(--text-muted);">${dateFormatted} <span style="background: ${typeColor}20; color: ${typeColor}; padding: 2px 6px; border-radius: 4px; margin-left: 0.5rem; font-weight: bold;">${typeLabel}</span></div>
+                    <div style="font-size: 0.8rem; color: var(--text-muted);">${dateFormatted} <span style="background: ${typeColor}20; color: ${typeColor}; padding: 2px 6px; border-radius: 4px; margin-left: 0.5rem; font-weight: bold;">${typeLabel}</span>${eventoPasado ? ' <span style="background: #e5e7eb; color: #6b7280; padding: 2px 6px; border-radius: 4px; margin-left: 0.5rem; font-size: 0.7em;">PASADO</span>' : ''}</div>
                     <div style="font-weight: 500;">${event.text}</div>
                     ${event.guardiaStart ? `<div style="font-size: 0.75rem; color: #059669; margin-top: 2px;">🕒 Guardia: ${event.guardiaStart} - ${event.guardiaEnd}</div>` : ''}
                 </div>
@@ -2159,7 +2173,7 @@ function renderEventsList() {
                     })
                     .catch(error => {
                         console.error('Error al eliminar:', error);
-                        alert('❌ Error al eliminar.\nPosible causa: Permisos denegados en Firebase.');
+                        alert('❌ Error al eliminar.\\nPosible causa: Permisos denegados en Firebase.');
                     });
             });
         });
@@ -2796,6 +2810,11 @@ function renderAllEventsView() {
                 dayOfWeek = event.dateObj.toLocaleDateString('es-ES', { weekday: 'long' });
             } catch (e) { }
 
+            // Verificar si el evento ya pasó
+            const hoy = new Date();
+            hoy.setHours(0, 0, 0, 0);
+            const eventoPasado = event.dateObj < hoy;
+
             let bgColor = '', icon = '', typeName = '', typeClass = '';
 
             switch (event.type) {
@@ -2824,8 +2843,17 @@ function renderAllEventsView() {
                     typeClass = 'notice';
             }
 
+            // Si el evento pasó, usar colores grises
+            if (eventoPasado) {
+                bgColor = 'linear-gradient(135deg, #9ca3af 0%, #6b7280 100%)';
+            }
+
+            const cardStyle = eventoPasado
+                ? 'opacity: 0.6; filter: grayscale(80%);'
+                : '';
+
             html += `
-                <div class="event-card" data-type="${typeClass}" data-text="${event.text.toLowerCase()}" data-date="${event.dateStr}" style="background: ${bgColor}; color: white; padding: 0.75rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); position: relative; overflow: hidden; min-height: 85px; display: flex; flex-direction: column; transition: transform 0.2s, box-shadow 0.2s; cursor: default;">
+                <div class="event-card" data-type="${typeClass}" data-text="${event.text.toLowerCase()}" data-date="${event.dateStr}" style="background: ${bgColor}; color: white; padding: 0.75rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); position: relative; overflow: hidden; min-height: 85px; display: flex; flex-direction: column; transition: transform 0.2s, box-shadow 0.2s; cursor: default; ${cardStyle}">
                     <div style="position: absolute; top: -8px; right: -8px; opacity: 0.1; font-size: 3rem; transform: rotate(15deg); pointer-events: none;">
                         ${icon}
                     </div>
