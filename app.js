@@ -352,6 +352,12 @@ function setupEventListeners() {
         savePasswordBtn.addEventListener('click', saveNewPassword);
     }
 
+    // Botón de gestionar cambios temporales
+    const manageTempChangesBtn = document.getElementById('manageTempChangesBtn');
+    if (manageTempChangesBtn) {
+        manageTempChangesBtn.addEventListener('click', openManageTempChanges);
+    }
+
     document.querySelectorAll('.close-modal').forEach(btn => {
         btn.addEventListener('click', closeModal);
     });
@@ -703,6 +709,7 @@ function renderAll() {
     renderConfigTable();
     renderIndividualView();
     renderGeneralView();
+    renderAllEventsView();
 
     // Renderizar banners de eventos (V3 Diagnóstico)
     renderEventsBannerV3('eventsBannerInd');
@@ -2546,5 +2553,398 @@ function renderEventsBannerV3(containerId) {
     container.innerHTML = html;
 }
 
+// ==========================================
+// GESTIÓN DE CAMBIOS TEMPORALES
+// ==========================================
+
+function openManageTempChanges() {
+    const modal = document.getElementById('tempChangesModal');
+    const modalBody = modal.querySelector('.modal-body');
+
+    // Recopilar todos los cambios temporales activos
+    const tempChanges = [];
+
+    Object.entries(state.weeklyOverrides).forEach(([weekKey, schedules]) => {
+        const weekOffset = parseInt(weekKey);
+        const weekRange = getWeekDateRange(weekOffset);
+
+        Object.entries(schedules).forEach(([scheduleId, data]) => {
+            tempChanges.push({
+                weekOffset,
+                weekRange,
+                scheduleId: parseInt(scheduleId),
+                person: data.person,
+                comment: data.comment
+            });
+        });
+    });
+
+    if (tempChanges.length === 0) {
+        modalBody.innerHTML = `
+            <div style="text-align: center; padding: 2rem; color: var(--text-muted);">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="64" height="64" style="margin: 0 auto 1rem; opacity: 0.3;">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+                <h3 style="margin-bottom: 0.5rem;">No hay cambios temporales activos</h3>
+                <p>Los cambios temporales aparecerán aquí cuando se realicen.</p>
+            </div>
+        `;
+    } else {
+        // Ordenar por semana
+        tempChanges.sort((a, b) => a.weekOffset - b.weekOffset);
+
+        let html = `
+            <div style="margin-bottom: 1rem;">
+                <p style="color: var(--text-muted); font-size: 0.9rem;">
+                    Se encontraron <strong>${tempChanges.length}</strong> cambio(s) temporal(es) activo(s).
+                </p>
+            </div>
+            <div style="max-height: 400px; overflow-y: auto;">
+        `;
+
+        tempChanges.forEach((change, index) => {
+            html += `
+                <div style="background: var(--bg-secondary); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border-left: 4px solid var(--primary);">
+                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem;">
+                        <div style="flex: 1;">
+                            <div style="font-weight: 600; color: var(--primary); margin-bottom: 0.25rem;">
+                                Semana ${change.weekOffset + 1} - ${change.weekRange}
+                            </div>
+                            <div style="font-size: 0.9rem; margin-bottom: 0.25rem;">
+                                <strong>Horario ${change.scheduleId}</strong> → <strong>${change.person}</strong>
+                            </div>
+                            <div style="font-size: 0.85rem; color: var(--text-muted); font-style: italic;">
+                                "${change.comment}"
+                            </div>
+                        </div>
+                        <button 
+                            onclick="revokeTempChange(${change.weekOffset}, ${change.scheduleId})"
+                            class="btn-icon"
+                            style="background: var(--danger); color: white; padding: 0.5rem; border-radius: 6px;"
+                            title="Revocar cambio">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                                <polyline points="3 6 5 6 21 6"></polyline>
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            `;
+        });
+
+        html += '</div>';
+        modalBody.innerHTML = html;
+    }
+
+    modal.classList.add('active');
+}
+
+window.revokeTempChange = function (weekOffset, scheduleId) {
+    const weekKey = weekOffset.toString();
+    const weekRange = getWeekDateRange(weekOffset);
+
+    showConfirmDialog(
+        `¿Revocar el cambio temporal del Horario ${scheduleId} en la Semana ${weekOffset + 1} (${weekRange})?`,
+        () => {
+            if (state.weeklyOverrides[weekKey] && state.weeklyOverrides[weekKey][scheduleId]) {
+                delete state.weeklyOverrides[weekKey][scheduleId];
+
+                // Limpiar la semana si no hay más cambios
+                if (Object.keys(state.weeklyOverrides[weekKey]).length === 0) {
+                    delete state.weeklyOverrides[weekKey];
+                }
+
+                saveToLocalStorage();
+                openManageTempChanges(); // Refrescar el modal
+                renderAll(); // Refrescar las vistas
+
+                alert('✅ Cambio temporal revocado exitosamente');
+            }
+        }
+    );
+};
+
+// ==========================================
+// VISTA DE TODOS LOS EVENTOS
+// ==========================================
+
+function renderAllEventsView() {
+    const container = document.getElementById('allEventsContainer');
+    if (!container) return;
+
+    const events = state.events || {};
+    const eventsList = [];
+
+    // Convertir eventos a array
+    Object.entries(events).forEach(([key, value]) => {
+        if (!value) return;
+        const dateStr = value.date || (typeof key === 'string' && key.match(/^\d{4}-\d{2}-\d{2}$/) ? key : null);
+
+        if (dateStr) {
+            eventsList.push({
+                dateStr: dateStr,
+                dateObj: parseLocalDate(dateStr),
+                ...value
+            });
+        }
+    });
+
+    if (eventsList.length === 0) {
+        container.innerHTML = `
+            <div style="text-align: center; padding: 3rem; color: var(--text-muted);">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="80" height="80" style="margin: 0 auto 1.5rem; opacity: 0.3;">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                </svg>
+                <h3 style="margin-bottom: 0.5rem; font-size: 1.5rem;">No hay eventos registrados</h3>
+                <p style="font-size: 1rem;">Los eventos y avisos aparecerán aquí cuando se agreguen.</p>
+                ${state.isAdmin ? '<p style="margin-top: 1rem;"><em>Ve a Configuración → Eventos y Avisos para agregar eventos.</em></p>' : ''}
+            </div>
+        `;
+        return;
+    }
+
+    // Ordenar por fecha
+    eventsList.sort((a, b) => a.dateStr.localeCompare(b.dateStr));
+
+    // Crear filtro de búsqueda
+    let html = `
+        <div style="margin-bottom: 2rem; background: var(--bg-secondary); padding: 1.5rem; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+            <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;">
+                <div style="flex: 1; min-width: 250px;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--text-primary);">
+                        🔍 Buscar Evento
+                    </label>
+                    <input 
+                        type="text" 
+                        id="eventSearchInput" 
+                        placeholder="Buscar por texto, fecha o tipo..."
+                        style="width: 100%; padding: 0.75rem; border: 2px solid var(--border); border-radius: 8px; font-size: 1rem; transition: border-color 0.3s;"
+                        onkeyup="filterEvents()"
+                        onfocus="this.style.borderColor='var(--primary)'"
+                        onblur="this.style.borderColor='var(--border)'"
+                    >
+                </div>
+                <div style="min-width: 200px;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--text-primary);">
+                        🏷️ Filtrar por Tipo
+                    </label>
+                    <select 
+                        id="eventTypeFilter" 
+                        onchange="filterEvents()"
+                        style="width: 100%; padding: 0.75rem; border: 2px solid var(--border); border-radius: 8px; font-size: 1rem; background: white; cursor: pointer;">
+                        <option value="all">Todos los tipos</option>
+                        <option value="notice">ℹ️ Avisos</option>
+                        <option value="holiday">🎉 Días Festivos</option>
+                        <option value="alert">⚠️ Alertas</option>
+                        <option value="payday">💰 Quincenas</option>
+                    </select>
+                </div>
+                <div style="display: flex; align-items: flex-end;">
+                    <button 
+                        onclick="clearEventFilters()" 
+                        class="btn-secondary"
+                        style="padding: 0.75rem 1.5rem; white-space: nowrap;">
+                        ✖️ Limpiar
+                    </button>
+                </div>
+            </div>
+            <div id="eventFilterStats" style="margin-top: 1rem; font-size: 0.9rem; color: var(--text-muted);"></div>
+        </div>
+        <div id="eventsListContainer">
+    `;
+
+    // Agrupar por mes
+    const eventsByMonth = {};
+    eventsList.forEach(event => {
+        const monthKey = event.dateStr.substring(0, 7); // YYYY-MM
+        if (!eventsByMonth[monthKey]) {
+            eventsByMonth[monthKey] = [];
+        }
+        eventsByMonth[monthKey].push(event);
+    });
+
+    Object.entries(eventsByMonth).forEach(([monthKey, monthEvents]) => {
+        const [year, month] = monthKey.split('-');
+        const monthName = new Date(parseInt(year), parseInt(month) - 1, 1).toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+
+        html += `
+            <div class="month-section" data-month="${monthKey}" style="margin-bottom: 2.5rem;">
+                <h3 style="text-transform: capitalize; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--primary); color: var(--primary); font-size: 1.3rem;">
+                    📅 ${monthName}
+                </h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.75rem;">
+        `;
+
+        monthEvents.forEach(event => {
+            let dateFormatted = event.dateStr;
+            let dayOfWeek = '';
+            try {
+                dateFormatted = event.dateObj.toLocaleDateString('es-ES', { day: 'numeric', month: 'long' });
+                dayOfWeek = event.dateObj.toLocaleDateString('es-ES', { weekday: 'long' });
+            } catch (e) { }
+
+            let bgColor = '', icon = '', typeName = '', typeClass = '';
+
+            switch (event.type) {
+                case 'holiday':
+                    bgColor = 'linear-gradient(135deg, #059669 0%, #10b981 100%)';
+                    icon = '🎉';
+                    typeName = 'Festivo';
+                    typeClass = 'holiday';
+                    break;
+                case 'alert':
+                    bgColor = 'linear-gradient(135deg, #dc2626 0%, #ef4444 100%)';
+                    icon = '⚠️';
+                    typeName = 'Alerta';
+                    typeClass = 'alert';
+                    break;
+                case 'payday':
+                    bgColor = 'linear-gradient(135deg, #d97706 0%, #f59e0b 100%)';
+                    icon = '💰';
+                    typeName = 'Quincena';
+                    typeClass = 'payday';
+                    break;
+                default:
+                    bgColor = 'linear-gradient(135deg, #2563eb 0%, #3b82f6 100%)';
+                    icon = 'ℹ️';
+                    typeName = 'Aviso';
+                    typeClass = 'notice';
+            }
+
+            html += `
+                <div class="event-card" data-type="${typeClass}" data-text="${event.text.toLowerCase()}" data-date="${event.dateStr}" style="background: ${bgColor}; color: white; padding: 0.75rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); position: relative; overflow: hidden; min-height: 85px; display: flex; flex-direction: column; transition: transform 0.2s, box-shadow 0.2s; cursor: default;">
+                    <div style="position: absolute; top: -8px; right: -8px; opacity: 0.1; font-size: 3rem; transform: rotate(15deg); pointer-events: none;">
+                        ${icon}
+                    </div>
+                    <div style="position: relative; z-index: 2; flex: 1; display: flex; flex-direction: column;">
+                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.4rem;">
+                            <div style="display: flex; align-items: center; gap: 0.4rem;">
+                                <span style="font-size: 1.3rem;">${icon}</span>
+                                <div>
+                                    <div style="font-size: 0.65rem; opacity: 0.9; text-transform: uppercase; letter-spacing: 0.3px; font-weight: 600;">
+                                        ${typeName}
+                                    </div>
+                                    <div style="font-size: 0.7rem; opacity: 0.8; text-transform: capitalize;">
+                                        ${dayOfWeek}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="font-size: 0.85rem; font-weight: 600; margin-bottom: 0.3rem; text-transform: capitalize;">
+                            ${dateFormatted}
+                        </div>
+                        <div style="font-size: 0.8rem; line-height: 1.25; flex: 1;">
+                            ${event.text}
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+
+        html += `
+                </div>
+            </div>
+        `;
+    });
+
+    html += '</div>'; // Close eventsListContainer
+    container.innerHTML = html;
+
+    // Agregar estilos de hover
+    const style = document.createElement('style');
+    style.textContent = `
+        .event-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15) !important;
+        }
+    `;
+    if (!document.getElementById('event-card-styles')) {
+        style.id = 'event-card-styles';
+        document.head.appendChild(style);
+    }
+
+    updateEventFilterStats();
+}
+
+// Función para filtrar eventos
+window.filterEvents = function () {
+    const searchInput = document.getElementById('eventSearchInput');
+    const typeFilter = document.getElementById('eventTypeFilter');
+
+    if (!searchInput || !typeFilter) return;
+
+    const searchTerm = searchInput.value.toLowerCase();
+    const selectedType = typeFilter.value;
+
+    const eventCards = document.querySelectorAll('.event-card');
+    let visibleCount = 0;
+
+    eventCards.forEach(card => {
+        const cardType = card.getAttribute('data-type');
+        const cardText = card.getAttribute('data-text');
+        const cardDate = card.getAttribute('data-date');
+
+        const matchesSearch = searchTerm === '' ||
+            cardText.includes(searchTerm) ||
+            cardDate.includes(searchTerm);
+        const matchesType = selectedType === 'all' || cardType === selectedType;
+
+        if (matchesSearch && matchesType) {
+            card.style.display = 'flex';
+            visibleCount++;
+        } else {
+            card.style.display = 'none';
+        }
+    });
+
+    // Ocultar secciones de mes vacías
+    const monthSections = document.querySelectorAll('.month-section');
+    monthSections.forEach(section => {
+        const visibleCards = section.querySelectorAll('.event-card[style*="display: flex"]');
+        if (visibleCards.length === 0) {
+            section.style.display = 'none';
+        } else {
+            section.style.display = 'block';
+        }
+    });
+
+    updateEventFilterStats(visibleCount);
+};
+
+// Función para limpiar filtros
+window.clearEventFilters = function () {
+    const searchInput = document.getElementById('eventSearchInput');
+    const typeFilter = document.getElementById('eventTypeFilter');
+
+    if (searchInput) searchInput.value = '';
+    if (typeFilter) typeFilter.value = 'all';
+
+    filterEvents();
+};
+
+// Función para actualizar estadísticas de filtro
+function updateEventFilterStats(visibleCount) {
+    const statsDiv = document.getElementById('eventFilterStats');
+    if (!statsDiv) return;
+
+    const totalEvents = document.querySelectorAll('.event-card').length;
+
+    if (visibleCount === undefined) {
+        visibleCount = totalEvents;
+    }
+
+    if (visibleCount === totalEvents) {
+        statsDiv.innerHTML = `Mostrando <strong>${totalEvents}</strong> evento(s) en total`;
+    } else {
+        statsDiv.innerHTML = `Mostrando <strong>${visibleCount}</strong> de <strong>${totalEvents}</strong> evento(s)`;
+    }
+}
+
 // Start
 init();
+
