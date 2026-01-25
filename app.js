@@ -888,9 +888,23 @@ function renderDayCells(schedule, personName = null, weekOffset = null) {
     // Aplicar cambio de ubicación si existe
     const displaySchedule = locationChange ? applyLocationChangeToSchedule(schedule, locationChange) : schedule;
 
+    // Calcular índice del día actual (0=Lunes, ... 6=Domingo) para coincidir con el array days
+    const todayDate = new Date();
+    // getDay() devuelve 0 para Domingo, 1 para Lunes. Nosotros usamos 0=Lunes.
+    // Domingo(0) -> 6, Lunes(1) -> 0, ...
+    const todayIndex = (todayDate.getDay() + 6) % 7;
+
+    // Verificar si estamos viendo la semana actual
+    const currentWeeksFromStart = getWeeksFromStart(todayDate);
+    const isCurrentWeek = (weekOffset !== null ? weekOffset : state.currentWeekOffset) === currentWeeksFromStart;
+
     return days.map((day, index) => {
         const data = displaySchedule[day];
         const isOnVacation = vacationDays.includes(index);
+
+        // Verificar si es el día de hoy
+        const isToday = isCurrentWeek && index === todayIndex;
+        const todayStyle = isToday ? 'background-color: rgba(59, 130, 246, 0.1); box-shadow: inset 0 0 0 1px rgba(59, 130, 246, 0.2);' : '';
 
         // Verificar si es asueto y NO es guardia
         const holidayEvent = holidayEvents[index];
@@ -899,10 +913,10 @@ function renderDayCells(schedule, personName = null, weekOffset = null) {
         const applyHolidayEffect = isHoliday && !isGuardia;
 
         if (isOnVacation) {
-            return '<td class="vacation-cell"><span class="location-badge vacation">VACACIONES</span></td>';
+            return `<td class="vacation-cell" style="${todayStyle}"><span class="location-badge vacation">VACACIONES</span></td>`;
         }
 
-        if (!data) return '<td class="descanso"><span class="location-badge descanso">Descanso</span></td>';
+        if (!data) return `<td class="descanso" style="${todayStyle}"><span class="location-badge descanso">Descanso</span></td>`;
 
         // Lógica de horario especial para guardia
         let displayTime = data.time;
@@ -915,11 +929,11 @@ function renderDayCells(schedule, personName = null, weekOffset = null) {
 
         const hasLocationChange = locationChange && data.location === locationChange.newLocation;
         let classes = hasLocationChange ? 'location-change-cell' : '';
-        let styles = '';
+        let styles = todayStyle; // Base style is todayStyle
         let cellContent = '';
 
         if (applyHolidayEffect) {
-            styles = 'background-color: rgba(16, 185, 129, 0.15); position: relative;';
+            styles += 'background-color: rgba(16, 185, 129, 0.15); position: relative;';
             cellContent = `
                 <div class="schedule-cell" style="opacity: 0.25; filter: blur(1.5px);">
                     <span class="time">${displayTime}</span>
@@ -1148,9 +1162,7 @@ function renderGeneralView() {
 
         const isOnVacation = personData && isEmployeeOnVacation(personData.name, state.currentWeekOffset);
 
-        if (isOnVacation) {
-            tr.classList.add('row-vacation');
-        }
+        // Eliminado: if (isOnVacation) { tr.classList.add('row-vacation'); }
 
         const personDisplay = personData ? personData.name : '<span class="text-muted">--</span>';
         const commentDisplay = (personData && personData.isTemp)
