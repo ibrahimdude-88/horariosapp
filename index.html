@@ -36,11 +36,23 @@
                     </svg>
                     <h1 data-editable-id="main-title">Horarios Rotativos 2026</h1>
                     <div id="weather-widget" class="weather-widget" style="display: none;">
-                        <span id="weather-icon">Loading...</span>
-                        <span id="weather-city">...</span>
-                        <span id="weather-temp">--°C</span>
-                        <span id="weather-desc">...</span>
-                        <span id="weather-rain">☔ --%</span>
+                        <span id="weather-icon" class="weather-icon-large">☀️</span>
+                        <div class="weather-info">
+                            <div class="weather-main">
+                                <span id="weather-temp" class="weather-temp-main">--°</span>
+                                <div class="weather-details">
+                                    <span id="weather-city" class="weather-city-name">...</span>
+                                    <span id="weather-desc" class="weather-desc-text">...</span>
+                                </div>
+                            </div>
+                            <div class="weather-extra">
+                                <span class="weather-range">
+                                    <span style="color: #ff9999;">max<span id="weather-max">--</span>°</span>
+                                    <span style="color: #99ccff;">min<span id="weather-min">--</span>°</span>
+                                </span>
+                                <span id="weather-rain" class="weather-rain-badge">☔ --%</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <style>
@@ -587,17 +599,13 @@
                 <button class="close-modal">&times;</button>
             </div>
             <div class="modal-body">
-                <div
-                    style="background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%); width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem; color: white; box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.3);">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="40" height="40">
-                        <path d="M16 18l6-6-6-6"></path>
-                        <path d="M8 6l-6 6 6 6"></path>
-                    </svg>
-                </div>
+                <img src="icon-192.png" alt="Ti_St Logo"
+                    style="width: 80px; height: 80px; margin: 0 auto 1rem; display: block; border-radius: 16px; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);">
 
-                <h3 style="margin-bottom: 0.5rem; color: var(--text-main);">Designed by <span
-                        style="color: var(--primary);">ibrahimdude</span></h3>
-                <p style="color: var(--text-muted); margin-bottom: 2rem;">Sistema de gestión de horarios rotativos.</p>
+                <h2
+                    style="font-size: 2rem; margin-bottom: 0.2rem; color: var(--primary); font-family: 'Outfit', sans-serif; font-weight: 700;">
+                    Ti_St Horarios</h2>
+                <p style="color: var(--text-muted); margin-bottom: 2rem;">Sistema de gestión de turnos 2026</p>
 
                 <h4 style="margin-bottom: 1rem; color: var(--text-main); text-align: left;">🛠️ Tecnologías Utilizadas:
                 </h4>
@@ -626,7 +634,7 @@
                 </ul>
 
                 <a href="https://github.com/ibrahimdude-88/horariosapp/" target="_blank" class="btn-primary"
-                    style="display: flex; align-items: center; justify-content: center; gap: 10px; text-decoration: none; width: 100%;">
+                    style="display: flex; align-items: center; justify-content: center; gap: 10px; text-decoration: none; width: 100%; margin-bottom: 1.5rem;">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
                         <path
                             d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22">
@@ -634,6 +642,11 @@
                     </svg>
                     Ver Repositorio
                 </a>
+
+                <div
+                    style="font-size: 0.75rem; color: var(--text-muted); padding-top: 1rem; border-top: 1px solid var(--border);">
+                    Designed by <strong style="color: var(--primary);">ibrahimdude</strong>
+                </div>
             </div>
         </div>
     </div>

@@ -763,10 +763,11 @@ function renderConfigTable() {
                 ${isSwap ? `<span class="text-xs text-muted" style="display:block; font-size: 0.7rem;">(Cambio Temporal)</span>` : ''}
                 ${isOnVacation ? `<span class="vacation-badge-small">🏖️ Vacaciones</span>` : ''}
             </td>
-            ${renderDayCells(schedule, personData ? personData.name : null, state.currentWeekOffset)}
+            ${renderDayCellsV2(schedule, personData ? personData.name : null, state.currentWeekOffset).join('')}
         `;
         tbody.appendChild(tr);
     });
+    updateDayHeaders();
 }
 
 window.openSwapModal = function (scheduleId) {
@@ -863,8 +864,10 @@ function renderDayCells(schedule, personName = null, weekOffset = null) {
     const vacationDays = personName && weekOffset !== null ? getVacationDaysInWeek(personName, weekOffset) : [];
     const locationChange = personName && weekOffset !== null ? getEmployeeLocationChange(personName, weekOffset) : null;
 
-    // Obtener días festivos de la semana (mapa índice -> evento)
-    const holidayEvents = {};
+    // Obtener eventos de la semana (mapa índice -> evento principal)
+    const weekEvents = {};
+    const holidayEvents = {}; // Mantener compatibilidad con lógica de guardias especial
+
     if (weekOffset !== null && state.events) {
         const weekStart = getWeekStartDate(weekOffset);
 
@@ -878,9 +881,17 @@ function renderDayCells(schedule, personName = null, weekOffset = null) {
             const dateKey = `${year}-${month}-${isoDay}`;
 
             const eventsOnDate = getEventsForDate(dateKey);
-            const holiday = eventsOnDate.find(e => e.type === 'holiday');
-            if (holiday) {
-                holidayEvents[i] = holiday;
+            if (eventsOnDate.length > 0) {
+                // Prioridad: holiday > alert > payday > notice
+                // Ordenar para tomar el de mayor prioridad
+                const typePriority = { 'holiday': 4, 'alert': 3, 'payday': 2, 'notice': 1 };
+                eventsOnDate.sort((a, b) => (typePriority[b.type] || 0) - (typePriority[a.type] || 0));
+
+                weekEvents[i] = eventsOnDate[0]; // Tomar el más importante
+
+                // Si hay holiday, guardarlo también para lógica específica de guardias
+                const holiday = eventsOnDate.find(e => e.type === 'holiday');
+                if (holiday) holidayEvents[i] = holiday;
             }
         }
     }
@@ -888,13 +899,9 @@ function renderDayCells(schedule, personName = null, weekOffset = null) {
     // Aplicar cambio de ubicación si existe
     const displaySchedule = locationChange ? applyLocationChangeToSchedule(schedule, locationChange) : schedule;
 
-    // Calcular índice del día actual (0=Lunes, ... 6=Domingo) para coincidir con el array days
+    // Calcular índice del día actual (0=Lunes...6=Domingo)
     const todayDate = new Date();
-    // getDay() devuelve 0 para Domingo, 1 para Lunes. Nosotros usamos 0=Lunes.
-    // Domingo(0) -> 6, Lunes(1) -> 0, ...
     const todayIndex = (todayDate.getDay() + 6) % 7;
-
-    // Verificar si estamos viendo la semana actual
     const currentWeeksFromStart = getWeeksFromStart(todayDate);
     const isCurrentWeek = (weekOffset !== null ? weekOffset : state.currentWeekOffset) === currentWeeksFromStart;
 
@@ -904,19 +911,46 @@ function renderDayCells(schedule, personName = null, weekOffset = null) {
 
         // Verificar si es el día de hoy
         const isToday = isCurrentWeek && index === todayIndex;
-        const todayStyle = isToday ? 'background-color: rgba(59, 130, 246, 0.1); box-shadow: inset 0 0 0 1px rgba(59, 130, 246, 0.2);' : '';
+        let todayStyle = isToday ? 'box-shadow: inset 0 0 0 2px rgba(59, 130, 246, 0.5);' : '';
 
-        // Verificar si es asueto y NO es guardia
-        const holidayEvent = holidayEvents[index];
+        // Verificar eventos
+        const event = weekEvents[index];
+        const holidayEvent = holidayEvents[index]; // Específico para lógica antigua
         const isHoliday = !!holidayEvent;
         const isGuardia = data && data.location === 'guardia';
+
+        // Lógica antigua: en festivo NO guardia se "tapa" el horario
         const applyHolidayEffect = isHoliday && !isGuardia;
 
-        if (isOnVacation) {
-            return `<td class="vacation-cell" style="${todayStyle}"><span class="location-badge vacation">VACACIONES</span></td>`;
+        // Determinar color de fondo según evento
+        let eventBgColor = '';
+        if (event) {
+            switch (event.type) {
+                case 'holiday': eventBgColor = 'rgba(16, 185, 129, 0.15)'; break; // Verde
+                case 'alert': eventBgColor = 'rgba(239, 68, 68, 0.15)'; break; // Rojo
+                case 'payday': eventBgColor = 'rgba(245, 158, 11, 0.15)'; break; // Naranja
+                default: eventBgColor = 'rgba(59, 130, 246, 0.15)'; break; // Azul
+            }
         }
 
-        if (!data) return `<td class="descanso" style="${todayStyle}"><span class="location-badge descanso">Descanso</span></td>`;
+        // Si es hoy, combinar azul tenue con color del evento si existe
+        if (isToday && !eventBgColor) {
+            eventBgColor = 'rgba(59, 130, 246, 0.1)';
+        }
+
+        let cellStyles = todayStyle;
+        if (eventBgColor) {
+            cellStyles += `background-color: ${eventBgColor};`;
+        }
+
+        // Si hay evento, poner posición relativa para marcador si quisiéramos (opcional)
+        cellStyles += 'position: relative;';
+
+        if (isOnVacation) {
+            return `<td class="vacation-cell" style="${cellStyles}"><span class="location-badge vacation">VACACIONES</span></td>`;
+        }
+
+        if (!data) return `<td class="descanso" style="${cellStyles}"><span class="location-badge descanso">Descanso</span></td>`;
 
         // Lógica de horario especial para guardia
         let displayTime = data.time;
@@ -929,11 +963,10 @@ function renderDayCells(schedule, personName = null, weekOffset = null) {
 
         const hasLocationChange = locationChange && data.location === locationChange.newLocation;
         let classes = hasLocationChange ? 'location-change-cell' : '';
-        let styles = todayStyle; // Base style is todayStyle
         let cellContent = '';
 
         if (applyHolidayEffect) {
-            styles += 'background-color: rgba(16, 185, 129, 0.15); position: relative;';
+            // Mantener efecto visual de festivo (blur)
             cellContent = `
                 <div class="schedule-cell" style="opacity: 0.25; filter: blur(1.5px);">
                     <span class="time">${displayTime}</span>
@@ -945,6 +978,7 @@ function renderDayCells(schedule, personName = null, weekOffset = null) {
                 </div>
             `;
         } else {
+            // Celda normal (con fondo de evento si aplica)
             cellContent = `
                 <div class="schedule-cell">
                     <span class="time" ${isSpecialSchedule ? 'style="color: var(--success); font-weight: bold;"' : ''}>${displayTime}</span>
@@ -956,7 +990,7 @@ function renderDayCells(schedule, personName = null, weekOffset = null) {
         }
 
         return `
-            <td class="${classes}" style="${styles}">
+            <td class="${classes}" style="${cellStyles}">
                 ${cellContent}
             </td>
         `;
@@ -1119,7 +1153,7 @@ window.renderSelectedIndividual = function (personName) {
                 ${overlayHTML}
                 <div style="${contentStyle}">
                     <div class="day-name">
-                        <strong>${day.charAt(0).toUpperCase() + day.slice(1)}</strong>
+                        <strong style="color: ${getDayHeaderColor(state.currentWeekOffset, index)}">${day.charAt(0).toUpperCase() + day.slice(1)}</strong>
                         ${isToday ? '<span class="badge-today">HOY</span>' : ''}
                         ${isOnVacation ? '<span class="badge-vacation">VACACIONES</span>' : ''}
                         ${hasLocationChange ? '<span class="badge-location-change">CAMBIO UBICACIÓN</span>' : ''}
@@ -1176,7 +1210,7 @@ function renderGeneralView() {
                 ${commentDisplay}
                 ${vacationDisplay}
             </td>
-            ${renderDayCells(schedule, personData ? personData.name : null, state.currentWeekOffset)}
+            ${renderDayCellsV2(schedule, personData ? personData.name : null, state.currentWeekOffset).join('')}
         `;
         tbody.appendChild(tr);
 
@@ -1184,6 +1218,7 @@ function renderGeneralView() {
             addToLocationTables(personData, schedule);
         }
     }
+    updateDayHeaders();
 }
 
 function addToLocationTables(personData, schedule) {
@@ -3258,8 +3293,8 @@ function initWeatherWidget() {
 
 function fetchWeatherData() {
     weatherCities.forEach(city => {
-        const url = `https://api.open-meteo.com/v1/forecast?latitude=${city.lat}&longitude=${city.lon}&current=temperature_2m,precipitation,weather_code&hourly=precipitation_probability&timezone=auto&forecast_days=1`;
-        
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${city.lat}&longitude=${city.lon}&current=temperature_2m,precipitation,weather_code,is_day&hourly=precipitation_probability&daily=temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=1`;
+
         fetch(url)
             .then(response => response.json())
             .then(data => {
@@ -3267,14 +3302,16 @@ function fetchWeatherData() {
                     // Obtener probabilidad de lluvia de la hora actual
                     const currentHour = new Date().getHours();
                     const precipitationProb = data.hourly && data.hourly.precipitation_probability ? data.hourly.precipitation_probability[currentHour] : 0;
-                    
+
                     weatherCache[city.name] = {
                         temp: Math.round(data.current.temperature_2m),
+                        max: data.daily && data.daily.temperature_2m_max ? Math.round(data.daily.temperature_2m_max[0]) : '--',
+                        min: data.daily && data.daily.temperature_2m_min ? Math.round(data.daily.temperature_2m_min[0]) : '--',
                         condition: getWeatherDescription(data.current.weather_code),
-                        icon: getWeatherIcon(data.current.weather_code),
+                        icon: getWeatherIconV2(data.current.weather_code, data.current.is_day),
                         rain: Math.max(precipitationProb, data.current.precipitation > 0 ? 100 : 0) // Si llueve ahora es 100%, sino la probabilidad
                     };
-                    
+
                     // Si es la primera carga y estamos en esta ciudad, mostrarla
                     if (city.name === weatherCities[currentCityIndex].name) {
                         updateWeatherUI();
@@ -3294,14 +3331,21 @@ function updateWeatherUI() {
     const city = weatherCities[currentCityIndex];
     const data = weatherCache[city.name];
     const widget = document.getElementById('weather-widget');
-    
+
     if (data && widget) {
         document.getElementById('weather-city').textContent = city.name;
-        document.getElementById('weather-temp').textContent = `${data.temp}°C`;
+        document.getElementById('weather-temp').textContent = `${data.temp}°`;
+
+        // Actualizar Max/Min si existen los elementos
+        const maxEl = document.getElementById('weather-max');
+        const minEl = document.getElementById('weather-min');
+        if (maxEl) maxEl.textContent = data.max;
+        if (minEl) minEl.textContent = data.min;
+
         document.getElementById('weather-desc').textContent = data.condition;
         document.getElementById('weather-icon').textContent = data.icon;
         document.getElementById('weather-rain').textContent = `☔ ${data.rain}%`;
-        
+
         widget.style.display = 'inline-flex';
     }
 }
@@ -3313,18 +3357,26 @@ function getWeatherDescription(code) {
     if (code === 2) return 'Parcialmente Nublado';
     if (code === 3) return 'Nublado';
     if (code >= 45 && code <= 48) return 'Niebla';
-    if (code >= 51 && code <= 55) return 'Llovizna';
-    if (code >= 61 && code <= 65) return 'Lluvia';
-    if (code >= 66 && code <= 67) return 'Lluvia Helada';
-    if (code >= 71 && code <= 77) return 'Nieve';
+    if (code >= 51 && code <= 55) return 'Llovizna'; // Drizzle
+    if (code === 56 || code === 57) return 'Llovizna Helada';
+    if (code === 61) return 'Lluvia Ligera';
+    if (code === 63) return 'Lluvia Moderada';
+    if (code === 65) return 'Lluvia Intensa';
+    if (code === 66 || code === 67) return 'Lluvia Helada';
+    if (code === 71) return 'Nieve Ligera';
+    if (code === 73) return 'Nieve Moderada';
+    if (code === 75) return 'Nieve Intensa';
+    if (code === 77) return 'Granizo';
     if (code >= 80 && code <= 82) return 'Chubascos';
-    if (code >= 95) return 'Tormenta';
+    if (code === 85 || code === 86) return 'Chubascos de Nieve';
+    if (code === 95) return 'Tormenta Eléctrica';
+    if (code === 96 || code === 99) return 'Tormenta con Granizo';
     return 'Variable';
 }
 
-function getWeatherIcon(code) {
-    if (code === 0) return '☀️';
-    if (code === 1 || code === 2) return '⛅';
+function getWeatherIcon(code, isDay = 1) {
+    if (code === 0) return isDay ? '☀️' : '🌙';
+    if (code === 1 || code === 2) return isDay ? '⛅' : '☁️';
     if (code === 3) return '☁️';
     if (code >= 45 && code <= 48) return '��️';
     if (code >= 51 && code <= 67) return '🌧️';
@@ -3335,7 +3387,7 @@ function getWeatherIcon(code) {
 }
 
 // Iniciar widget cuando cargue el DOM
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     // Esperar un poco para no bloquear la carga inicial
     setTimeout(initWeatherWidget, 1000);
 });
@@ -3353,3 +3405,239 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+
+// Versión V2 con iconos completos y corregidos
+function getWeatherIconV2(code, isDay = 1) {
+    // 0: Cielo limpio
+    if (code === 0) return isDay ? '☀️' : '🌙';
+
+    // 1-3: Nublado
+    if (code === 1) return isDay ? '🌤️' : '🌙';
+    if (code === 2) return isDay ? '⛅' : '☁️';
+    if (code === 3) return '☁️';
+
+    // 45-48: Niebla
+    if (code >= 45 && code <= 48) return '🌫️';
+
+    // 51-55: Llovizna
+    if (code >= 51 && code <= 55) return '🌦️';
+
+    // 56-57: Llovizna helada
+    if (code === 56 || code === 57) return '🌨️';
+
+    // 61-65: Lluvia
+    if (code === 61) return '🌧️';
+    if (code === 63) return '🌧️';
+    if (code === 65) return '🌧️💦'; // Lluvia fuerte
+
+    // 66-67: Lluvia helada
+    if (code === 66 || code === 67) return '🌨️❄️';
+
+    // 71-77: Nieve y Granizo
+    if (code === 71) return '🌨️';
+    if (code === 73) return '❄️';
+    if (code === 75) return '❄️☃️'; // Nieve fuerte
+    if (code === 77) return '🧊'; // Granizo
+
+    // 80-82: Chubascos
+    if (code === 80 || code === 81) return '☔';
+    if (code === 82) return '☔⛈️';
+
+    // 85-86: Chubascos de nieve
+    if (code === 85 || code === 86) return '❄️☔';
+
+    // 95-99: Tormenta
+    if (code === 95) return '⚡';
+    if (code === 96 || code === 99) return '⛈️🧊'; // Tormenta con granizo
+
+    return isDay ? '🌡️' : '🌙';
+}
+
+// Versión V2 de renderDayCells (Limpia, sin colores de fondo por evento)
+function renderDayCellsV2(schedule, personName = null, weekOffset = null) {
+    const days = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo'];
+    const vacationDays = personName && weekOffset !== null ? getVacationDaysInWeek(personName, weekOffset) : [];
+    const locationChange = personName && weekOffset !== null ? getEmployeeLocationChange(personName, weekOffset) : null;
+
+    // Obtener días festivos de la semana (mapa índice -> evento)
+    const holidayEvents = {};
+    if (weekOffset !== null && state.events) {
+        const weekStart = getWeekStartDate(weekOffset);
+
+        for (let i = 0; i < 7; i++) {
+            const currentDay = new Date(weekStart);
+            currentDay.setDate(currentDay.getDate() + i);
+
+            const year = currentDay.getFullYear();
+            const month = String(currentDay.getMonth() + 1).padStart(2, '0');
+            const isoDay = String(currentDay.getDate()).padStart(2, '0');
+            const dateKey = `${year}-${month}-${isoDay}`;
+
+            const eventsOnDate = getEventsForDate(dateKey);
+            const holiday = eventsOnDate.find(e => e.type === 'holiday');
+            if (holiday) {
+                holidayEvents[i] = holiday;
+            }
+        }
+    }
+
+    // Aplicar cambio de ubicación si existe
+    const displaySchedule = locationChange ? applyLocationChangeToSchedule(schedule, locationChange) : locationChange ? applyLocationChangeToSchedule(schedule, locationChange) : schedule;
+
+    // Calcular índice del día actual
+    const todayDate = new Date();
+    const todayIndex = (todayDate.getDay() + 6) % 7;
+    const currentWeeksFromStart = getWeeksFromStart(todayDate);
+    const isCurrentWeek = (weekOffset !== null ? weekOffset : state.currentWeekOffset) === currentWeeksFromStart;
+
+    return days.map((day, index) => {
+        const data = displaySchedule[day];
+        const isOnVacation = vacationDays.includes(index);
+
+        // Verificar si es el día de hoy
+        const isToday = isCurrentWeek && index === todayIndex;
+        // Solo borde sutil para HOY, sin fondo invasivo
+        const todayStyle = isToday ? 'box-shadow: inset 0 0 0 2px rgba(59, 130, 246, 0.5);' : '';
+
+        // Verificar si es asueto y NO es guardia
+        const holidayEvent = holidayEvents[index];
+        const isHoliday = !!holidayEvent;
+        const isGuardia = data && data.location === 'guardia';
+        const applyHolidayEffect = isHoliday && !isGuardia;
+
+        if (isOnVacation) {
+            return `<td class="vacation-cell" style="${todayStyle}"><span class="location-badge vacation">VACACIONES</span></td>`;
+        }
+
+        if (!data) return `<td class="descanso" style="${todayStyle}"><span class="location-badge descanso">Descanso</span></td>`;
+
+        // Lógica de horario especial para guardia
+        let displayTime = data.time;
+        let isSpecialSchedule = false;
+
+        if (isHoliday && isGuardia && holidayEvent.guardiaStart && holidayEvent.guardiaEnd) {
+            displayTime = `${holidayEvent.guardiaStart} - ${holidayEvent.guardiaEnd}`;
+            isSpecialSchedule = true;
+        }
+
+        const hasLocationChange = locationChange && data.location === locationChange.newLocation;
+        let classes = hasLocationChange ? 'location-change-cell' : '';
+        let cellContent = '';
+
+        if (applyHolidayEffect) {
+            // Efecto Blur Festivo (Original)
+            let styles = todayStyle + 'background-color: rgba(16, 185, 129, 0.15); position: relative;';
+            cellContent = `
+                <div class="schedule-cell" style="opacity: 0.25; filter: blur(1.5px);">
+                    <span class="time">${displayTime}</span>
+                    <span class="location-badge ${data.location}">${data.location}</span>
+                    ${hasLocationChange ? '<span class="location-change-indicator">📍 Cambio</span>' : ''}
+                </div>
+                <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: var(--success); font-weight: bold; font-size: 0.85rem; text-shadow: 0 1px 2px rgba(255,255,255,0.9); pointer-events: none; width: 100%; text-align: center;">
+                    FESTIVO
+                </div>
+            `;
+            return `<td class="${classes}" style="${styles}">${cellContent}</td>`;
+        } else {
+            // Celda Normal (Sin colores de fondo extraños)
+            cellContent = `
+                <div class="schedule-cell">
+                    <span class="time" ${isSpecialSchedule ? 'style="color: var(--success); font-weight: bold;"' : ''}>${displayTime}</span>
+                    <span class="location-badge ${data.location}">${data.location}</span>
+                    ${hasLocationChange ? '<span class="location-change-indicator">📍 Cambio</span>' : ''}
+                    ${isSpecialSchedule ? '<span class="location-change-indicator" style="background: var(--success); color: white;">🕒 Especial</span>' : ''}
+                </div>
+            `;
+            return `<td class="${classes}" style="${todayStyle}">${cellContent}</td>`;
+        }
+    });
+}
+
+// Función para colorear los encabezados de los días en la tabla general
+function updateDayHeaders(weekOffset = state.currentWeekOffset) {
+    if (!state.events) return;
+
+    const weekStart = getWeekStartDate(weekOffset);
+    const dayColors = [];
+
+    for (let i = 0; i < 7; i++) {
+        const d = new Date(weekStart);
+        d.setDate(d.getDate() + i);
+
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const isoDay = String(d.getDate()).padStart(2, '0');
+        const key = `${year}-${month}-${isoDay}`;
+
+        const events = getEventsForDate(key);
+        let color = '';
+        if (events.length > 0) {
+            const typePriority = { 'holiday': 4, 'alert': 3, 'payday': 2, 'notice': 1 };
+            events.sort((a, b) => (typePriority[b.type] || 0) - (typePriority[a.type] || 0));
+            const evt = events[0];
+
+            switch (evt.type) {
+                case 'holiday': color = '#10b981'; break; // Verde
+                case 'alert': color = '#ef4444'; break; // Rojo
+                case 'payday': color = '#f59e0b'; break; // Naranja
+                default: color = '#3b82f6'; break; // Azul
+            }
+        }
+        dayColors.push(color);
+    }
+
+    // Aplicar a los encabezados (tabla general y configuracion)
+    const tables = document.querySelectorAll('.schedule-table');
+    tables.forEach(table => {
+        const ths = table.querySelectorAll('thead th');
+        let startIndex = -1;
+
+        if (ths.length >= 9) {
+            startIndex = 2; // Config Table: [Hr, Per, L, M, ...]
+        } else if (ths.length >= 8) {
+            startIndex = 1; // General Table: [Per, L, M, ...]
+        }
+
+        if (startIndex !== -1) {
+            for (let i = 0; i < 7; i++) {
+                const th = ths[startIndex + i];
+                // Asegurar que existe el elemento (por si acaso length es raro)
+                if (th) {
+                    if (dayColors[i]) {
+                        th.style.color = dayColors[i];
+                        th.style.borderBottom = `2px solid ${dayColors[i]}`;
+                    } else {
+                        th.style.color = '';
+                        th.style.borderBottom = '';
+                    }
+                }
+            }
+        }
+    });
+}
+
+function getDayHeaderColor(weekOffset, dayIndex) {
+    if (!state.events) return '';
+    const weekStart = getWeekStartDate(weekOffset);
+    const d = new Date(weekStart);
+    d.setDate(d.getDate() + dayIndex);
+
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const isoDay = String(d.getDate()).padStart(2, '0');
+    const key = `${year}-${month}-${isoDay}`;
+
+    const events = getEventsForDate(key);
+    if (events.length > 0) {
+        const typePriority = { 'holiday': 4, 'alert': 3, 'payday': 2, 'notice': 1 };
+        events.sort((a, b) => (typePriority[b.type] || 0) - (typePriority[a.type] || 0));
+        const evt = events[0];
+        switch (evt.type) {
+            case 'holiday': return '#10b981';
+            case 'alert': return '#ef4444';
+            case 'payday': return '#f59e0b';
+            default: return '#3b82f6';
+        }
+    }
+    return '';
+}

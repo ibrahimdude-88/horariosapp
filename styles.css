@@ -947,6 +947,7 @@ body.dark-mode .theme-toggle:hover {
     background: rgba(255, 255, 255, 0.1);
     color: var(--primary);
 }
+
 /* =========================================
    RESPONSIVE DESIGN (MOBILE)
    ========================================= */
@@ -964,7 +965,7 @@ body.dark-mode .theme-toggle:hover {
         padding: 1.25rem;
     }
 
-    .header-content, 
+    .header-content,
     .logo-container {
         width: 100%;
     }
@@ -975,7 +976,7 @@ body.dark-mode .theme-toggle:hover {
         border-top: 1px solid var(--border);
         padding-top: 1rem;
     }
-    
+
     body.dark-mode .header-actions {
         border-color: var(--border-dark);
     }
@@ -985,9 +986,10 @@ body.dark-mode .theme-toggle:hover {
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
     }
-    
+
     .schedule-table {
-        min-width: 800px; /* Force scroll */
+        min-width: 800px;
+        /* Force scroll */
     }
 
     /* Controls Bar Stack */
@@ -1001,7 +1003,7 @@ body.dark-mode .theme-toggle:hover {
         justify-content: space-between;
         width: 100%;
     }
-    
+
     .week-navigation div {
         flex-wrap: wrap;
         justify-content: center;
@@ -1015,17 +1017,19 @@ body.dark-mode .theme-toggle:hover {
     }
 
     .tab-button {
-        flex: 0 0 auto; /* No shrink */
+        flex: 0 0 auto;
+        /* No shrink */
     }
-    
+
     /* Buttons Grid on Mobile */
-    .controls-bar > div:last-child {
+    .controls-bar>div:last-child {
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 0.5rem;
     }
-    
-    .btn-secondary, .today-btn {
+
+    .btn-secondary,
+    .today-btn {
         width: 100%;
         padding: 0.6rem 0.5rem;
         font-size: 0.85rem;
@@ -1051,7 +1055,8 @@ body.dark-mode .theme-toggle:hover {
     display: flex;
     gap: 0.5rem;
     flex-wrap: wrap;
-    justify-content: flex-end; /* A la derecha en desktop */
+    justify-content: flex-end;
+    /* A la derecha en desktop */
     align-items: center;
 }
 
@@ -1063,10 +1068,11 @@ body.dark-mode .theme-toggle:hover {
         gap: 0.5rem;
         margin-top: 1rem;
     }
-    
+
     .config-actions button {
         width: 100%;
-        white-space: normal; /* Permitir saltos de línea */
+        white-space: normal;
+        /* Permitir saltos de línea */
         height: 100%;
         min-height: 40px;
         font-size: 0.85rem;
@@ -1079,11 +1085,179 @@ body.dark-mode .theme-toggle:hover {
 
 @media (max-width: 600px) {
     .config-actions {
-        grid-template-columns: 1fr 1fr; /* 2 columnas forzadas en móvil */
+        grid-template-columns: 1fr 1fr;
+        /* 2 columnas forzadas en móvil */
     }
-    
+
     .config-actions button {
         font-size: 0.75rem;
         padding: 4px;
+    }
+}
+
+/* =========================================
+   WIDGET DE CLIMA AVANZADO (Responsive)
+   ========================================= */
+
+/* Estilos base del widget (Escritorio) */
+.weather-widget {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    padding: 8px 20px;
+    border-radius: 24px;
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+    transition: all 0.3s ease;
+    font-family: 'Outfit', sans-serif;
+    margin-left: 20px;
+}
+
+.weather-widget:hover {
+    background: rgba(255, 255, 255, 0.25);
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px 0 rgba(31, 38, 135, 0.25);
+}
+
+/* Icono Grande Animado */
+.weather-icon-large {
+    font-size: 3rem;
+    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.2));
+    line-height: 1;
+    animation: floatIcon 4s ease-in-out infinite;
+}
+
+.weather-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.weather-main {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.weather-temp-main {
+    font-size: 2.2rem;
+    font-weight: 700;
+    line-height: 1;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.weather-details {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.1;
+}
+
+.weather-city-name {
+    font-weight: 600;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #fef3c7;
+}
+
+.weather-desc-text {
+    font-size: 0.75rem;
+    opacity: 0.9;
+    white-space: nowrap;
+}
+
+/* Info Extra (Min/Max/Lluvia) */
+.weather-extra {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.8rem;
+    background: rgba(0, 0, 0, 0.15);
+    padding: 2px 8px;
+    border-radius: 8px;
+    margin-top: 2px;
+}
+
+.weather-range {
+    display: flex;
+    gap: 6px;
+    font-weight: 600;
+}
+
+/* Badges de color para temperatura */
+.temp-max-badge {
+    color: #ffb3b3;
+    text-shadow: 0 0 1px rgba(0, 0, 0, 0.3);
+}
+
+.temp-min-badge {
+    color: #b3d9ff;
+    text-shadow: 0 0 1px rgba(0, 0, 0, 0.3);
+}
+
+.weather-rain-badge {
+    border-left: 1px solid rgba(255, 255, 255, 0.3);
+    padding-left: 8px;
+    font-weight: 500;
+}
+
+@keyframes floatIcon {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-6px);
+    }
+}
+
+/* =========================================
+   RESPONSIVE DESIGN (MÓVIL)
+   ========================================= */
+@media (max-width: 768px) {
+    .header-content {
+        flex-direction: column;
+        gap: 10px;
+        padding-bottom: 10px;
+    }
+
+    .weather-widget {
+        margin-left: 0;
+        width: 100%;
+        max-width: 350px;
+        justify-content: center;
+        padding: 6px 15px;
+    }
+
+    .weather-icon-large {
+        font-size: 2.2rem;
+    }
+
+    .weather-temp-main {
+        font-size: 1.8rem;
+    }
+
+    .weather-main {
+        gap: 8px;
+    }
+
+    .weather-info {
+        align-items: center;
+    }
+
+    .weather-details {
+        text-align: left;
+    }
+
+    @media (max-width: 380px) {
+        .weather-desc-text {
+            display: none;
+        }
     }
 }
