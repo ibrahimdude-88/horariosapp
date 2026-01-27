@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test - Select en Modo Oscuro</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="logo-container">
+                    <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 11l3 3L22 4"></path>
+                        <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                    </svg>
+                    <div>
+                        <h1>Test Select - Modo Oscuro</h1>
+                        <p class="subtitle">Verificación de visibilidad de opciones</p>
+                    </div>
+                </div>
+            </div>
+            <div class="header-actions">
+                <button class="theme-toggle" id="themeToggle" title="Alternar Modo Oscuro">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                </button>
+            </div>
+        </header>
+
+        <!-- Test Section -->
+        <div style="max-width: 800px; margin: 0 auto;">
+            <div class="glass-panel" style="padding: 2rem; margin-bottom: 2rem;">
+                <h2 style="font-size: 1.5rem; font-weight: 800; margin-bottom: 1.5rem;">
+                    Prueba de Select en Ambos Modos
+                </h2>
+
+                <div style="display: grid; gap: 1.5rem;">
+                    <!-- Select 1 -->
+                    <div>
+                        <label
+                            style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--text-primary); font-size: 0.85rem;">
+                            🏷️ Filtrar por Tipo
+                        </label>
+                        <select
+                            style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: var(--radius-md); font-size: 0.95rem; background: var(--bg-primary); color: var(--text-primary); cursor: pointer;">
+                            <option value="all">Todos los tipos</option>
+                            <option value="notice">ℹ️ Avisos</option>
+                            <option value="holiday">🎉 Días Festivos</option>
+                            <option value="alert">⚠️ Alertas</option>
+                            <option value="payday">💰 Quincenas</option>
+                        </select>
+                    </div>
+
+                    <!-- Select 2 -->
+                    <div>
+                        <label
+                            style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--text-primary); font-size: 0.85rem;">
+                            👤 Seleccionar Empleado
+                        </label>
+                        <select style="width: 100%;">
+                            <option value="">-- Seleccionar --</option>
+                            <option value="1">Felix Gonzalez</option>
+                            <option value="2">Mauricio Hernandez</option>
+                            <option value="3">Joshua Carreon</option>
+                            <option value="4">Conrado Garcia</option>
+                            <option value="5">Adriana Martinez</option>
+                            <option value="6">Fernando Gomez</option>
+                            <option value="7">Jonas Figueroa</option>
+                        </select>
+                    </div>
+
+                    <!-- Select 3 -->
+                    <div>
+                        <label
+                            style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--text-primary); font-size: 0.85rem;">
+                            📍 Ubicación
+                        </label>
+                        <select style="width: 100%;">
+                            <option value="">-- Seleccionar Ubicación --</option>
+                            <option value="guardia">🔵 GUARDIA</option>
+                            <option value="valle">🟢 VALLE</option>
+                            <option value="mitras">🟠 MITRAS</option>
+                            <option value="descanso">⚪ DESCANSO</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Instrucciones -->
+            <div class="glass-panel" style="padding: 2rem; margin-bottom: 2rem;">
+                <h3 style="font-size: 1.2rem; font-weight: 700; margin-bottom: 1rem;">
+                    🧪 Instrucciones de Prueba
+                </h3>
+                <ol style="color: var(--text-secondary); line-height: 2;">
+                    <li>Haz clic en el botón de luna (🌙) para alternar entre modo claro y oscuro</li>
+                    <li>Despliega cada select (dropdown)</li>
+                    <li>Verifica que las opciones sean visibles en ambos modos</li>
+                    <li>Verifica que el texto sea legible</li>
+                    <li>Verifica que el fondo de las opciones sea apropiado</li>
+                </ol>
+            </div>
+
+            <!-- Estado Actual -->
+            <div class="glass-panel" style="padding: 2rem;">
+                <h3 style="font-size: 1.2rem; font-weight: 700; margin-bottom: 1rem;">
+                    📊 Estado Actual del Tema
+                </h3>
+                <div id="themeStatus"
+                    style="padding: 1rem; background: rgba(120, 120, 128, 0.08); border-radius: var(--radius-md); font-family: monospace;">
+                    Detectando...
+                </div>
+
+                <h3 style="font-size: 1.2rem; font-weight: 700; margin: 1.5rem 0 1rem;">
+                    ✅ Verificaciones
+                </h3>
+                <ul style="color: var(--text-secondary); line-height: 2;">
+                    <li><strong>Modo Claro:</strong> Fondo blanco, texto oscuro en opciones</li>
+                    <li><strong>Modo Oscuro:</strong> Fondo oscuro (#1C1C1E), texto blanco en opciones</li>
+                    <li><strong>Hover:</strong> Las opciones deben resaltarse al pasar el mouse</li>
+                    <li><strong>Selección:</strong> La opción seleccionada debe ser visible</li>
+                </ul>
+            </div>
+
+            <!-- Comparación -->
+            <div
+                style="margin-top: 2rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+                <div class="glass-panel" style="padding: 1.5rem;">
+                    <h4 style="font-size: 1rem; font-weight: 700; margin-bottom: 0.75rem; color: var(--success);">
+                        ✅ Modo Claro
+                    </h4>
+                    <ul style="font-size: 0.9rem; color: var(--text-secondary); line-height: 1.8;">
+                        <li>Fondo: Blanco/Claro</li>
+                        <li>Texto: Oscuro (#1D1D1F)</li>
+                        <li>Opciones: Fondo blanco</li>
+                        <li>Hover: Resaltado sutil</li>
+                    </ul>
+                </div>
+                <div class="glass-panel" style="padding: 1.5rem;">
+                    <h4 style="font-size: 1rem; font-weight: 700; margin-bottom: 0.75rem; color: var(--primary);">
+                        ✅ Modo Oscuro
+                    </h4>
+                    <ul style="font-size: 0.9rem; color: var(--text-secondary); line-height: 1.8;">
+                        <li>Fondo: Oscuro (#1C1C1E)</li>
+                        <li>Texto: Claro (#FFFFFF)</li>
+                        <li>Opciones: Fondo oscuro</li>
+                        <li>Hover: Resaltado sutil</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const themeToggle = document.getElementById('themeToggle');
+        const themeStatus = document.getElementById('themeStatus');
+
+        // Cargar tema guardado
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'dark') {
+            document.body.classList.add('dark-mode');
+        }
+
+        // Toggle theme
+        themeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('dark-mode');
+            const isDark = document.body.classList.contains('dark-mode');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            updateThemeStatus();
+        });
+
+        function updateThemeStatus() {
+            const isDark = document.body.classList.contains('dark-mode');
+            const selectBg = window.getComputedStyle(document.querySelector('select')).backgroundColor;
+            const selectColor = window.getComputedStyle(document.querySelector('select')).color;
+
+            themeStatus.innerHTML = `
+                <strong>Modo Actual:</strong> ${isDark ? '🌙 Oscuro' : '☀️ Claro'}<br>
+                <strong>Select Background:</strong> ${selectBg}<br>
+                <strong>Select Color:</strong> ${selectColor}<br>
+                <strong>Body Class:</strong> ${document.body.className || 'ninguna'}
+            `;
+        }
+
+        // Actualizar al cargar
+        updateThemeStatus();
+
+        // Actualizar al cambiar selects
+        document.querySelectorAll('select').forEach(select => {
+            select.addEventListener('change', () => {
+                console.log('Select cambiado:', select.value);
+            });
+        });
+    </script>
+</body>
+
+</html>

@@ -20,7 +20,7 @@
     <meta name="theme-color" content="#6366f1">
     <meta name="description" content="Sistema de gestión de turnos semanales rotativos">
 
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles.css?v=2.2">
 </head>
 
 <body>
@@ -55,68 +55,7 @@
                         </div>
                     </div>
                 </div>
-                <style>
-                    .weather-widget {
-                        display: inline-flex;
-                        align-items: center;
-                        gap: 10px;
-                        background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
-                        padding: 6px 15px;
-                        border-radius: 20px;
-                        font-size: 0.9rem;
-                        color: white !important;
-                        margin-left: 15px;
-                        border: 1px solid rgba(255, 255, 255, 0.2);
-                        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-                        transition: all 0.5s ease;
-                        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-                    }
 
-                    .weather-widget span {
-                        white-space: nowrap;
-                    }
-
-                    #weather-city {
-                        font-weight: 700;
-                        color: #fef3c7;
-                        /* Amarillo muy suave */
-                    }
-
-                    #weather-temp {
-                        font-weight: 700;
-                    }
-
-                    #weather-rain {
-                        font-size: 0.8em;
-                        opacity: 0.9;
-                    }
-
-                    @media (max-width: 768px) {
-                        .weather-widget {
-                            margin-top: 10px;
-                            margin-left: 0;
-                            width: 100%;
-                            justify-content: center;
-                            font-size: 0.8rem;
-                            padding: 4px 10px;
-                            flex-wrap: wrap;
-                        }
-
-                        /* Ocultar descripción en móviles muy pequeños para ahorrar espacio */
-                        #weather-desc {
-                            display: none;
-                        }
-
-                        .logo-container {
-                            flex-direction: column;
-                            align-items: flex-start;
-                        }
-
-                        h1 {
-                            font-size: 1.4rem;
-                        }
-                    }
-                </style>
                 <p class="subtitle" data-editable-id="sub-title">Sistema de gestión de turnos semanales</p>
             </div>
             <div class="header-actions">
@@ -206,8 +145,7 @@
                         <button id="manageLocationChangesBtn" class="btn-secondary">Cambio de Ubicación</button>
                         <button id="manageTempChangesBtn" class="btn-secondary">🔄 Cambios Temporales</button>
                         <button id="manageEventsBtn" class="btn-secondary">📅 Eventos y Avisos</button>
-                        <button id="changePasswordBtn" class="btn-secondary"
-                            style="background: var(--primary); color: white;">🔐 Cambiar Contraseña</button>
+                        <button id="changePasswordBtn" class="btn-primary">🔐 Cambiar Contraseña</button>
                         <button id="todayBtnConfig" class="today-btn">Ir a Hoy</button>
 
                     </div>
@@ -234,15 +172,10 @@
                     </table>
                 </div>
 
-                <div
-                    style="margin-top: 3rem; padding: 1.5rem; background: #fff1f2; border: 1px solid #fda4af; border-radius: var(--radius);">
-                    <h3 style="color: #be123c; margin-bottom: 1rem; font-size: 1.1rem; font-weight: 700;">Zona de
-                        Peligro</h3>
-                    <p style="color: #be123c; margin-bottom: 1rem; font-size: 0.9rem;">Esta acción eliminará
-                        permanentemente todos los datos de la aplicación.</p>
-                    <button id="resetDatabaseBtn" class="btn-secondary"
-                        style="background-color: #be123c; color: white; border-color: #9f1239;">⚠️ Borrar Base de
-                        Datos</button>
+                <div class="danger-zone">
+                    <h3 class="danger-title">Zona de Peligro</h3>
+                    <p class="danger-text">Esta acción eliminará permanentemente todos los datos de la aplicación.</p>
+                    <button id="resetDatabaseBtn" class="btn-danger">⚠️ Borrar Base de Datos</button>
                 </div>
             </section>
 
@@ -599,38 +532,21 @@
                 <button class="close-modal">&times;</button>
             </div>
             <div class="modal-body">
-                <img src="icon-192.png" alt="Ti_St Logo"
-                    style="width: 80px; height: 80px; margin: 0 auto 1rem; display: block; border-radius: 16px; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);">
+                <img src="icon-192.png" alt="Ti_St Logo" class="about-logo">
 
-                <h2
-                    style="font-size: 2rem; margin-bottom: 0.2rem; color: var(--primary); font-family: 'Outfit', sans-serif; font-weight: 700;">
-                    Ti_St Horarios</h2>
+                <h2 style="font-size: 1.5rem; margin-bottom: 0.2rem; color: var(--primary); font-weight: 700;">Ti_St
+                    Horarios</h2>
                 <p style="color: var(--text-muted); margin-bottom: 2rem;">Sistema de gestión de turnos 2026</p>
 
                 <h4 style="margin-bottom: 1rem; color: var(--text-main); text-align: left;">🛠️ Tecnologías Utilizadas:
                 </h4>
-                <ul
-                    style="text-align: left; list-style: none; padding: 0; margin-bottom: 2rem; display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem;">
-                    <li
-                        style="background: rgba(99, 102, 241, 0.1); padding: 8px 12px; border-radius: 8px; font-size: 0.9rem; color: var(--text-main);">
-                        <span style="color: #e34c26;">🟠</span> HTML5
-                    </li>
-                    <li
-                        style="background: rgba(99, 102, 241, 0.1); padding: 8px 12px; border-radius: 8px; font-size: 0.9rem; color: var(--text-main);">
-                        <span style="color: #264de4;">🔵</span> CSS3 (Outfit)
-                    </li>
-                    <li
-                        style="background: rgba(99, 102, 241, 0.1); padding: 8px 12px; border-radius: 8px; font-size: 0.9rem; color: var(--text-main);">
-                        <span style="color: #f7df1e;">🟡</span> JavaScript ES6+
-                    </li>
-                    <li
-                        style="background: rgba(99, 102, 241, 0.1); padding: 8px 12px; border-radius: 8px; font-size: 0.9rem; color: var(--text-main);">
-                        <span style="color: #ffca28;">🔥</span> Firebase
-                    </li>
-                    <li
-                        style="background: rgba(99, 102, 241, 0.1); padding: 8px 12px; border-radius: 8px; font-size: 0.9rem; color: var(--text-main); grid-column: span 2;">
-                        <span style="color: #6366f1;">☀️</span> Open-Meteo API
-                    </li>
+                <ul class="tech-list">
+                    <li class="tech-item"><span style="color: #e34c26;">🟠</span> HTML5</li>
+                    <li class="tech-item"><span style="color: #264de4;">🔵</span> CSS3</li>
+                    <li class="tech-item"><span style="color: #f7df1e;">🟡</span> JavaScript</li>
+                    <li class="tech-item"><span style="color: #ffca28;">🔥</span> Firebase</li>
+                    <li class="tech-item" style="grid-column: span 2;"><span style="color: #6366f1;">☀️</span>
+                        Open-Meteo API</li>
                 </ul>
 
                 <a href="https://github.com/ibrahimdude-88/horariosapp/" target="_blank" class="btn-primary"
@@ -656,10 +572,7 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <!-- App Logic -->
-    <script src="app.js" defer></script>
-    <button onclick="showDebugInfo()"
-        style="position:fixed; bottom:10px; right:10px; z-index:9999; opacity:0.7; background:#ddd; border:1px solid #aaa; border-radius:4px; padding:2px 5px; font-size:12px; cursor:pointer;"
-        title="Ver diagnóstico">🛠️ Debug</button>
+    <script src="app.js?v=2.2" defer></script>
 </body>
 
 </html>

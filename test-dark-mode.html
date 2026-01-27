@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Modo Oscuro</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .test-container {
+            max-width: 800px;
+            margin: 3rem auto;
+            padding: 2rem;
+        }
+
+        .test-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(var(--glass-blur)) saturate(150%);
+            -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(150%);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--glass-border);
+            padding: 3rem;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            padding: 12px 24px;
+            border-radius: var(--radius-pill);
+            font-weight: 600;
+            margin-top: 1rem;
+        }
+
+        .light-indicator {
+            background: rgba(255, 193, 7, 0.2);
+            color: #FF9F0A;
+        }
+
+        .dark-indicator {
+            background: rgba(88, 86, 214, 0.2);
+            color: #5856D6;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="test-container">
+        <header class="header">
+            <div class="header-content">
+                <div class="logo-container">
+                    <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <path d="M12 6v6l4 2"></path>
+                    </svg>
+                    <div>
+                        <h1>Test Modo Oscuro</h1>
+                        <p class="subtitle">Verifica que el modo oscuro funcione correctamente</p>
+                    </div>
+                </div>
+            </div>
+            <div class="header-actions">
+                <button class="theme-toggle" id="themeToggle" title="Alternar Modo Oscuro">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                </button>
+            </div>
+        </header>
+
+        <div class="test-card">
+            <h2 style="font-size: 2rem; font-weight: 800; margin-bottom: 1rem;">
+                Prueba de Modo Oscuro
+            </h2>
+            <p style="color: var(--text-secondary); font-size: 1.1rem; margin-bottom: 2rem;">
+                Haz clic en el botón de luna arriba para alternar entre modo claro y oscuro
+            </p>
+
+            <div id="modeStatus" class="status-indicator light-indicator">
+                ☀️ Modo Claro Activo
+            </div>
+
+            <div
+                style="margin-top: 3rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem;">
+                <button class="btn-primary">Primary</button>
+                <button class="btn-secondary">Secondary</button>
+                <button class="btn-danger">Danger</button>
+            </div>
+
+            <div style="margin-top: 2rem; display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                <span class="location-badge guardia">GUARDIA</span>
+                <span class="location-badge valle">VALLE</span>
+                <span class="location-badge mitras">MITRAS</span>
+                <span class="location-badge descanso">DESCANSO</span>
+            </div>
+        </div>
+
+        <div class="test-card">
+            <h3 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 1rem;">
+                Instrucciones
+            </h3>
+            <ul style="text-align: left; color: var(--text-secondary); line-height: 1.8;">
+                <li>Haz clic en el botón de luna (🌙) en el header</li>
+                <li>El fondo debe cambiar de azul claro a oscuro</li>
+                <li>El texto debe cambiar de oscuro a claro</li>
+                <li>Los componentes deben mantener su glassmorphism</li>
+                <li>El indicador de estado debe actualizarse</li>
+            </ul>
+        </div>
+
+        <div class="test-card">
+            <h3 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 1rem;">
+                Variables CSS Activas
+            </h3>
+            <div style="text-align: left; font-family: monospace; font-size: 0.9rem; color: var(--text-secondary);">
+                <p><strong>--text-primary:</strong> <span id="textPrimary"></span></p>
+                <p><strong>--text-secondary:</strong> <span id="textSecondary"></span></p>
+                <p><strong>--glass-bg:</strong> <span id="glassBg"></span></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const themeToggle = document.getElementById('themeToggle');
+        const modeStatus = document.getElementById('modeStatus');
+
+        // Cargar tema guardado
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'dark') {
+            document.body.classList.add('dark-mode');
+            updateModeStatus();
+        }
+
+        // Toggle theme
+        themeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('dark-mode');
+            const isDark = document.body.classList.contains('dark-mode');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            updateModeStatus();
+        });
+
+        function updateModeStatus() {
+            const isDark = document.body.classList.contains('dark-mode');
+            if (isDark) {
+                modeStatus.textContent = '🌙 Modo Oscuro Activo';
+                modeStatus.className = 'status-indicator dark-indicator';
+            } else {
+                modeStatus.textContent = '☀️ Modo Claro Activo';
+                modeStatus.className = 'status-indicator light-indicator';
+            }
+            updateCSSVariables();
+        }
+
+        function updateCSSVariables() {
+            const styles = getComputedStyle(document.body);
+            document.getElementById('textPrimary').textContent = styles.getPropertyValue('--text-primary');
+            document.getElementById('textSecondary').textContent = styles.getPropertyValue('--text-secondary');
+            document.getElementById('glassBg').textContent = styles.getPropertyValue('--glass-bg');
+        }
+
+        // Actualizar variables al cargar
+        updateCSSVariables();
+        updateModeStatus();
+    </script>
+</body>
+
+</html>
