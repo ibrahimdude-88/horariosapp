@@ -758,12 +758,12 @@ function renderConfigTable() {
                     ${actionBtn}
                 </div>
             </td>
-            <td class="person-cell" style="cursor: default; font-weight: normal;">
+            <td class="person-cell">
                 ${assignedPersonName}
                 ${isSwap ? `<span class="text-xs text-muted" style="display:block; font-size: 0.7rem;">(Cambio Temporal)</span>` : ''}
                 ${isOnVacation ? `<span class="vacation-badge-small">🏖️ Vacaciones</span>` : ''}
             </td>
-            ${renderDayCellsV2(schedule, personData ? personData.name : null, state.currentWeekOffset).join('')}
+            ${renderDayCells(schedule, personData ? personData.name : null, state.currentWeekOffset).join('')}
         `;
         tbody.appendChild(tr);
     });
@@ -859,7 +859,7 @@ function saveSwap() {
     closeModal();
 }
 
-function renderDayCells(schedule, personName = null, weekOffset = null) {
+function renderDayCells_Legacy(schedule, personName = null, weekOffset = null) {
     const days = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo'];
     const vacationDays = personName && weekOffset !== null ? getVacationDaysInWeek(personName, weekOffset) : [];
     const locationChange = personName && weekOffset !== null ? getEmployeeLocationChange(personName, weekOffset) : null;
@@ -1092,8 +1092,8 @@ window.renderSelectedIndividual = function (personName) {
         `;
     }
 
-    // Obtener días festivos de la semana (mapa índice -> evento) para esta vista
-    const holidayEvents = {};
+    // Obtener eventos de la semana (mapa índice -> evento) para esta vista
+    const weekEvents = {};
     if (state.events) {
         const weekStart = getWeekStartDate(state.currentWeekOffset);
         for (let i = 0; i < 7; i++) {
@@ -1105,9 +1105,14 @@ window.renderSelectedIndividual = function (personName) {
             const dateKey = `${year}-${month}-${isoDay}`;
 
             const eventsOnDate = getEventsForDate(dateKey);
-            const holiday = eventsOnDate.find(e => e.type === 'holiday');
-            if (holiday) {
-                holidayEvents[i] = holiday;
+            // Priorizar: Holiday > Alert > Payday > Notice
+            let priorityEvent = eventsOnDate.find(e => e.type === 'holiday');
+            if (!priorityEvent) priorityEvent = eventsOnDate.find(e => e.type === 'alert');
+            if (!priorityEvent) priorityEvent = eventsOnDate.find(e => e.type === 'payday');
+            if (!priorityEvent) priorityEvent = eventsOnDate.find(e => e.type === 'notice'); // Opcional
+
+            if (priorityEvent) {
+                weekEvents[i] = priorityEvent;
             }
         }
     }
@@ -1120,32 +1125,48 @@ window.renderSelectedIndividual = function (personName) {
         const isOnVacation = vacationDays.includes(index);
         const hasLocationChange = locationChange && data && data.location === locationChange.newLocation;
 
-        // Lógica de Asueto / Guardia
-        const holidayEvent = holidayEvents[index];
-        const isHoliday = !!holidayEvent;
+        // Lógica de Eventos
+        const event = weekEvents[index];
+        const isHoliday = event && event.type === 'holiday';
+        const isPayday = event && event.type === 'payday';
+        const isAlert = event && event.type === 'alert';
+
         const isGuardia = data && data.location === 'guardia';
         const applyHolidayEffect = isHoliday && !isGuardia;
 
         let displayTime = data ? data.time : '';
         let isSpecialSchedule = false;
 
-        if (isHoliday && isGuardia && holidayEvent.guardiaStart && holidayEvent.guardiaEnd) {
-            displayTime = `${holidayEvent.guardiaStart} - ${holidayEvent.guardiaEnd}`;
+        if (isHoliday && isGuardia && event.guardiaStart && event.guardiaEnd) {
+            displayTime = `${event.guardiaStart} - ${event.guardiaEnd}`;
             isSpecialSchedule = true;
         }
 
         let cardStyle = '';
         let contentStyle = '';
         let overlayHTML = '';
+        let eventBadge = '';
 
         if (applyHolidayEffect) {
             cardStyle = 'background-color: rgba(16, 185, 129, 0.15); border: 1px solid var(--success); position: relative; overflow: hidden;';
             contentStyle = 'opacity: 0.25; filter: blur(1.5px);';
             overlayHTML = `
                 <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: var(--success); font-weight: bold; font-size: 1.2rem; text-shadow: 0 1px 2px rgba(255,255,255,0.9); pointer-events: none; width: 100%; text-align: center; z-index: 5;">
-                    FESTIVO
+                    ${event.text || 'FESTIVO'}
                 </div>
             `;
+        } else if (isPayday) {
+            // Estilo Quincena
+            cardStyle = 'border: 1px solid #F59E0B; background: linear-gradient(to bottom right, var(--bg-card), rgba(245, 158, 11, 0.1));';
+            eventBadge = `<span class="badge-event" style="background: rgba(245, 158, 11, 0.15); color: #D97706; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; font-weight: 600; vertical-align: middle; margin-left: 0.5rem; border: 1px solid rgba(245, 158, 11, 0.3);">💰 ${event.text || 'QUINCENA'}</span>`;
+        } else if (isAlert) {
+            // Estilo Alerta
+            cardStyle = 'border: 1px solid var(--danger); background: linear-gradient(to bottom right, var(--bg-card), rgba(239, 68, 68, 0.1));';
+            eventBadge = `<span class="badge-event" style="background: rgba(239, 68, 68, 0.15); color: var(--danger); padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; font-weight: 600; vertical-align: middle; margin-left: 0.5rem; border: 1px solid rgba(239, 68, 68, 0.3);">🚨 ${event.text || 'ALERTA'}</span>`;
+        } else if (event && event.type === 'notice') {
+            // Estilo Aviso
+            cardStyle = 'border: 1px solid var(--primary);';
+            eventBadge = `<span class="badge-event" style="background: rgba(59, 130, 246, 0.15); color: var(--primary); padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; font-weight: 600; vertical-align: middle; margin-left: 0.5rem; border: 1px solid rgba(59, 130, 246, 0.3);">ℹ️ ${event.text || 'AVISO'}</span>`;
         }
 
         html += `
@@ -1158,6 +1179,7 @@ window.renderSelectedIndividual = function (personName) {
                         ${isOnVacation ? '<span class="badge-vacation">VACACIONES</span>' : ''}
                         ${hasLocationChange ? '<span class="badge-location-change">CAMBIO UBICACIÓN</span>' : ''}
                         ${isSpecialSchedule ? '<span class="badge-location-change" style="background: var(--success);">🕒 HORARIO ESPECIAL</span>' : ''}
+                        ${eventBadge}
                     </div>
                     <div class="day-schedule">
                         ${isOnVacation ? '<span class="vacation-text">🏖️ Día de vacaciones</span>' :
@@ -1205,12 +1227,12 @@ function renderGeneralView() {
         const vacationDisplay = isOnVacation ? `<span class="vacation-badge-small">🏖️ Vacaciones</span>` : '';
 
         tr.innerHTML = `
-            <td class="person-cell" style="cursor: default; font-weight: normal;">
+            <td class="person-cell">
                 ${personDisplay}
                 ${commentDisplay}
                 ${vacationDisplay}
             </td>
-            ${renderDayCellsV2(schedule, personData ? personData.name : null, state.currentWeekOffset).join('')}
+            ${renderDayCells(schedule, personData ? personData.name : null, state.currentWeekOffset).join('')}
         `;
         tbody.appendChild(tr);
 
@@ -1542,9 +1564,9 @@ function renderVacationsList() {
                 const start = parseLocalDate(vac.startDate).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
                 const end = parseLocalDate(vac.endDate).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
                 return `
-                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; background: white; border-radius: 4px; margin-bottom: 0.5rem;">
-                                <span>🏖️ ${start} - ${end}</span>
-                                <button class="btn-remove-vacation btn-icon" data-employee="${employee}" data-index="${index}" style="background: #fee2e2; color: #dc2626; border-color: #fca5a5;" title="Eliminar">
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; background: var(--bg-input); border-radius: var(--radius-sm); margin-bottom: 0.5rem; border: 1px solid var(--border);">
+                                <span style="color: var(--text-primary); font-weight: 500; font-size: 0.95rem;">🏖️ ${start} - ${end}</span>
+                                <button class="btn-remove-vacation btn-icon" data-employee="${employee}" data-index="${index}" style="background: rgba(239, 68, 68, 0.1); color: #EF4444; border: 1px solid rgba(239, 68, 68, 0.2);" title="Eliminar">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
                                         <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"></path>
                                     </svg>
@@ -1851,7 +1873,7 @@ function renderLocationChangesList() {
             <div style="margin-bottom: 1rem; padding: 1rem; background: var(--bg-body); border-radius: var(--radius-sm); border: 1px solid var(--border);">
                 <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem;">
                     <strong style="color: var(--primary);">${employee}</strong>
-                    <button class="btn-remove-location-change btn-icon" data-employee="${employee}" style="background: #fee2e2; color: #dc2626; border-color: #fca5a5;" title="Eliminar">
+                    <button class="btn-remove-location-change btn-icon" data-employee="${employee}" style="background: rgba(239, 68, 68, 0.1); color: #EF4444; border: 1px solid rgba(239, 68, 68, 0.2);" title="Eliminar">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
                             <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"></path>
                         </svg>
@@ -2782,30 +2804,32 @@ function renderAllEventsView() {
 
     // Crear filtro de búsqueda
     let html = `
-        <div style="margin-bottom: 2rem; background: var(--bg-secondary); padding: 1.5rem; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-            <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;">
+        <div style="margin-bottom: 2rem; background: var(--glass-bg); backdrop-filter: blur(20px); padding: 1.5rem; border-radius: var(--radius-lg); box-shadow: var(--shadow-md); border: 1px solid var(--glass-border);">
+            <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: flex-end;">
                 <div style="flex: 1; min-width: 250px;">
-                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--text-primary);">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--text-primary); font-size: 0.85rem;">
                         🔍 Buscar Evento
                     </label>
                     <input 
                         type="text" 
                         id="eventSearchInput" 
                         placeholder="Buscar por texto, fecha o tipo..."
-                        style="width: 100%; padding: 0.75rem; border: 2px solid var(--border); border-radius: 8px; font-size: 1rem; transition: border-color 0.3s;"
+                        style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: var(--radius-md); font-size: 0.95rem; transition: all 0.3s; background: var(--bg-primary); color: var(--text-primary);"
                         onkeyup="filterEvents()"
-                        onfocus="this.style.borderColor='var(--primary)'"
-                        onblur="this.style.borderColor='var(--border)'"
+                        onfocus="this.style.borderColor='var(--primary)'; this.style.boxShadow='0 0 0 3px rgba(0, 122, 255, 0.1)'"
+                        onblur="this.style.borderColor='var(--border)'; this.style.boxShadow='none'"
                     >
                 </div>
                 <div style="min-width: 200px;">
-                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--text-primary);">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--text-primary); font-size: 0.85rem;">
                         🏷️ Filtrar por Tipo
                     </label>
                     <select 
                         id="eventTypeFilter" 
                         onchange="filterEvents()"
-                        style="width: 100%; padding: 0.75rem; border: 2px solid var(--border); border-radius: 8px; font-size: 1rem; background: white; cursor: pointer;">
+                        style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: var(--radius-md); font-size: 0.95rem; background: var(--bg-primary); color: var(--text-primary); cursor: pointer; transition: all 0.3s;"
+                        onfocus="this.style.borderColor='var(--primary)'; this.style.boxShadow='0 0 0 3px rgba(0, 122, 255, 0.1)'"
+                        onblur="this.style.borderColor='var(--border)'; this.style.boxShadow='none'">
                         <option value="all">Todos los tipos</option>
                         <option value="notice">ℹ️ Avisos</option>
                         <option value="holiday">🎉 Días Festivos</option>
@@ -2817,7 +2841,8 @@ function renderAllEventsView() {
                     <button 
                         onclick="clearEventFilters()" 
                         class="btn-secondary"
-                        style="padding: 0.75rem 1.5rem; white-space: nowrap;">
+                        style="padding: 0.75rem 1.5rem; white-space: nowrap; height: 48px;">
+
                         ✖️ Limpiar
                     </button>
                 </div>
@@ -3308,7 +3333,7 @@ function fetchWeatherData() {
                         max: data.daily && data.daily.temperature_2m_max ? Math.round(data.daily.temperature_2m_max[0]) : '--',
                         min: data.daily && data.daily.temperature_2m_min ? Math.round(data.daily.temperature_2m_min[0]) : '--',
                         condition: getWeatherDescription(data.current.weather_code),
-                        icon: getWeatherIconV2(data.current.weather_code, data.current.is_day),
+                        icon: getWeatherIcon(data.current.weather_code, data.current.is_day),
                         rain: Math.max(precipitationProb, data.current.precipitation > 0 ? 100 : 0) // Si llueve ahora es 100%, sino la probabilidad
                     };
 
@@ -3374,7 +3399,7 @@ function getWeatherDescription(code) {
     return 'Variable';
 }
 
-function getWeatherIcon(code, isDay = 1) {
+function getWeatherIcon_Legacy(code, isDay = 1) {
     if (code === 0) return isDay ? '☀️' : '🌙';
     if (code === 1 || code === 2) return isDay ? '⛅' : '☁️';
     if (code === 3) return '☁️';
@@ -3407,7 +3432,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Versión V2 con iconos completos y corregidos
-function getWeatherIconV2(code, isDay = 1) {
+function getWeatherIcon(code, isDay = 1) {
     // 0: Cielo limpio
     if (code === 0) return isDay ? '☀️' : '🌙';
 
@@ -3454,7 +3479,7 @@ function getWeatherIconV2(code, isDay = 1) {
 }
 
 // Versión V2 de renderDayCells (Limpia, sin colores de fondo por evento)
-function renderDayCellsV2(schedule, personName = null, weekOffset = null) {
+function renderDayCells(schedule, personName = null, weekOffset = null) {
     const days = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo'];
     const vacationDays = personName && weekOffset !== null ? getVacationDaysInWeek(personName, weekOffset) : [];
     const locationChange = personName && weekOffset !== null ? getEmployeeLocationChange(personName, weekOffset) : null;

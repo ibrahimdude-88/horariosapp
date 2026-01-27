@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demo - Personal por Ubicación</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="logo-container">
+                    <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                    </svg>
+                    <div>
+                        <h1>Personal por Ubicación</h1>
+                        <p class="subtitle">Vista mejorada y amigable</p>
+                    </div>
+                </div>
+            </div>
+            <div class="header-actions">
+                <button class="theme-toggle" onclick="document.body.classList.toggle('dark-mode')"
+                    title="Alternar Modo Oscuro">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                </button>
+            </div>
+        </header>
+
+        <!-- Locations Section -->
+        <div class="locations-section">
+            <h3>Personal por Ubicación</h3>
+            <div class="locations-grid">
+                <!-- GUARDIA -->
+                <div class="location-card guardia">
+                    <div class="location-header">GUARDIA</div>
+                    <div class="location-content">
+                        <div class="location-item">
+                            <div>
+                                <strong>Felix Gonzalez</strong>
+                                <div class="text-xs text-muted">Lun, Mar, Mié, Jue, Vie, Sáb, Dom</div>
+                            </div>
+                            <span class="text-sm font-bold">05:30 PM</span>
+                        </div>
+                        <div class="location-item">
+                            <div>
+                                <strong>Mauricio Hernandez</strong>
+                                <div class="text-xs text-muted">Lun, Mar, Mié, Jue, Vie, Sáb, Dom</div>
+                            </div>
+                            <span class="text-sm font-bold">05:30 PM</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- VALLE -->
+                <div class="location-card valle">
+                    <div class="location-header">VALLE</div>
+                    <div class="location-content">
+                        <div class="location-item">
+                            <div>
+                                <strong>Joshua Carreon</strong>
+                                <div class="text-xs text-muted">Lun, Mar, Mié, Jue, Vie</div>
+                            </div>
+                            <span class="text-sm font-bold">10:00 AM</span>
+                        </div>
+                        <div class="location-item">
+                            <div>
+                                <strong>Conrado Garcia</strong>
+                                <div class="text-xs text-muted">Vie</div>
+                                <span class="location-change-indicator">📍 Cambio temporal</span>
+                            </div>
+                            <span class="text-sm font-bold">10:00 AM</span>
+                        </div>
+                        <div class="location-item">
+                            <div>
+                                <strong>Adriana Martinez</strong>
+                                <div class="text-xs text-muted">Lun, Mar, Mié, Jue</div>
+                            </div>
+                            <span class="text-sm font-bold">10:00 AM</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MITRAS -->
+                <div class="location-card mitras">
+                    <div class="location-header">MITRAS</div>
+                    <div class="location-content">
+                        <div class="location-item">
+                            <div>
+                                <strong>Conrado Garcia</strong>
+                                <div class="text-xs text-muted">Mar, Mié, Jue</div>
+                            </div>
+                            <span class="text-sm font-bold">10:00 AM</span>
+                        </div>
+                        <div class="location-item">
+                            <div>
+                                <strong>Fernando Gomez</strong>
+                                <div class="text-xs text-muted">Lun, Mar, Mié, Jue, Vie</div>
+                            </div>
+                            <span class="text-sm font-bold">08:30 AM</span>
+                        </div>
+                        <div class="location-item">
+                            <div>
+                                <strong>Jonas Figueroa</strong>
+                                <div class="text-xs text-muted">Lun, Mar, Mié, Jue, Vie</div>
+                            </div>
+                            <span class="text-sm font-bold">08:30 AM</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Características -->
+        <div style="margin-top: 3rem;">
+            <div class="glass-panel" style="padding: 2rem;">
+                <h2 style="font-size: 1.5rem; font-weight: 800; margin-bottom: 1.5rem; letter-spacing: -0.03em;">
+                    ✨ Mejoras Implementadas
+                </h2>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
+                    <div>
+                        <h3 style="font-size: 1rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--primary);">
+                            🎨 Diseño Moderno
+                        </h3>
+                        <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.6;">
+                            Gradientes suaves, bordes redondeados y glassmorphism para un aspecto premium
+                        </p>
+                    </div>
+                    <div>
+                        <h3 style="font-size: 1rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--success);">
+                            📱 Iconos Visuales
+                        </h3>
+                        <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.6;">
+                            Emojis y símbolos para identificar rápidamente personas, fechas y horarios
+                        </p>
+                    </div>
+                    <div>
+                        <h3 style="font-size: 1rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--warning);">
+                            ✨ Animaciones Suaves
+                        </h3>
+                        <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.6;">
+                            Efectos hover con elevación 3D y transiciones tipo resorte
+                        </p>
+                    </div>
+                    <div>
+                        <h3 style="font-size: 1rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--danger);">
+                            🎯 Mejor Legibilidad
+                        </h3>
+                        <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.6;">
+                            Tipografía San Francisco, espaciado mejorado y jerarquía visual clara
+                        </p>
+                    </div>
+                    <div>
+                        <h3 style="font-size: 1rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--primary);">
+                            💫 Indicadores Visuales
+                        </h3>
+                        <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.6;">
+                            Punto pulsante en headers y barra lateral en hover para mejor feedback
+                        </p>
+                    </div>
+                    <div>
+                        <h3 style="font-size: 1rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--success);">
+                            🌓 Modo Oscuro
+                        </h3>
+                        <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.6;">
+                            Soporte completo para modo oscuro con colores ajustados
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Detalles Técnicos -->
+        <div style="margin-top: 2rem;">
+            <div class="glass-panel" style="padding: 2rem;">
+                <h2 style="font-size: 1.5rem; font-weight: 800; margin-bottom: 1.5rem; letter-spacing: -0.03em;">
+                    🔧 Detalles Técnicos
+                </h2>
+                <ul style="color: var(--text-secondary); line-height: 2; font-size: 0.95rem;">
+                    <li><strong>Título con gradiente:</strong> Efecto de texto degradado para el encabezado principal
+                    </li>
+                    <li><strong>Headers con gradiente:</strong> Cada ubicación tiene un gradiente único (azul, verde,
+                        naranja)</li>
+                    <li><strong>Punto pulsante:</strong> Animación de pulso en el header de cada tarjeta</li>
+                    <li><strong>Hover elevado:</strong> Las tarjetas se elevan 8px y escalan al 102% al pasar el mouse
+                    </li>
+                    <li><strong>Barra lateral:</strong> Los items muestran una barra azul lateral al hacer hover</li>
+                    <li><strong>Iconos integrados:</strong> 👤 para personas, 📅 para fechas, 🕐 para horarios</li>
+                    <li><strong>Estado vacío:</strong> Mensaje "Sin personal asignado" cuando no hay empleados</li>
+                    <li><strong>Indicadores especiales:</strong> Badges para cambios temporales y comentarios</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Instrucciones -->
+        <div style="margin-top: 2rem; margin-bottom: 3rem;">
+            <div class="glass-panel" style="padding: 2rem; text-align: center;">
+                <h3 style="font-size: 1.2rem; font-weight: 700; margin-bottom: 1rem;">
+                    💡 Prueba las Interacciones
+                </h3>
+                <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
+                    Pasa el mouse sobre las tarjetas y los items para ver las animaciones
+                </p>
+                <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                    <button class="btn-primary" onclick="alert('¡Las tarjetas ahora son más amigables! 🎉')">
+                        Ver en la App
+                    </button>
+                    <button class="btn-secondary" onclick="document.body.classList.toggle('dark-mode')">
+                        Alternar Modo Oscuro
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

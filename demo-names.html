@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demo - Nombres Mejorados</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="logo-container">
+                    <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                    <div>
+                        <h1>Nombres Mejorados</h1>
+                        <p class="subtitle">Columna de personas con más presencia</p>
+                    </div>
+                </div>
+            </div>
+            <div class="header-actions">
+                <button class="theme-toggle" onclick="document.body.classList.toggle('dark-mode')"
+                    title="Alternar Modo Oscuro">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                </button>
+            </div>
+        </header>
+
+        <!-- Comparación -->
+        <div style="max-width: 1200px; margin: 0 auto;">
+            <div class="glass-panel" style="padding: 2rem; margin-bottom: 2rem;">
+                <h2 style="font-size: 1.5rem; font-weight: 800; margin-bottom: 1.5rem;">
+                    ✨ Antes vs Después
+                </h2>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 2rem;">
+                    <!-- Antes -->
+                    <div>
+                        <h3
+                            style="font-size: 1.1rem; font-weight: 700; margin-bottom: 1rem; color: var(--text-secondary);">
+                            ❌ Antes (Simple)
+                        </h3>
+                        <div
+                            style="padding: 1.5rem; background: rgba(120, 120, 128, 0.08); border-radius: var(--radius-md);">
+                            <div style="padding: 1rem; background: white; border-radius: 8px; margin-bottom: 0.75rem;">
+                                <p style="font-size: 0.95rem; font-weight: 400; color: #1D1D1F;">Jonas Figueroa</p>
+                            </div>
+                            <div style="padding: 1rem; background: white; border-radius: 8px; margin-bottom: 0.75rem;">
+                                <p style="font-size: 0.95rem; font-weight: 400; color: #1D1D1F;">Mauricio Hernandez</p>
+                            </div>
+                            <div style="padding: 1rem; background: white; border-radius: 8px;">
+                                <p style="font-size: 0.95rem; font-weight: 400; color: #1D1D1F;">Adriana Martinez</p>
+                            </div>
+                            <p
+                                style="margin-top: 1rem; font-size: 0.85rem; color: var(--text-tertiary); font-style: italic;">
+                                Sin icono, sin énfasis, difícil de escanear
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Después -->
+                    <div>
+                        <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 1rem; color: var(--success);">
+                            ✅ Después (Mejorado)
+                        </h3>
+                        <div
+                            style="padding: 1.5rem; background: rgba(120, 120, 128, 0.08); border-radius: var(--radius-md);">
+                            <div
+                                style="position: relative; padding: 1rem 1rem 1rem 3.5rem; background: white; border-radius: 8px; margin-bottom: 0.75rem;">
+                                <div
+                                    style="content: '👤'; position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); font-size: 1.5rem; opacity: 0.7; background: linear-gradient(135deg, rgba(0, 122, 255, 0.1) 0%, rgba(88, 86, 214, 0.1) 100%); width: 2.5rem; height: 2.5rem; display: flex; align-items: center; justify-content: center; border-radius: 50%; border: 2px solid rgba(0, 122, 255, 0.2);">
+                                    👤</div>
+                                <p
+                                    style="font-size: 1.05rem; font-weight: 700; color: #1D1D1F; letter-spacing: -0.01em;">
+                                    Jonas Figueroa</p>
+                            </div>
+                            <div
+                                style="position: relative; padding: 1rem 1rem 1rem 3.5rem; background: white; border-radius: 8px; margin-bottom: 0.75rem;">
+                                <div
+                                    style="content: '👤'; position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); font-size: 1.5rem; opacity: 0.7; background: linear-gradient(135deg, rgba(0, 122, 255, 0.1) 0%, rgba(88, 86, 214, 0.1) 100%); width: 2.5rem; height: 2.5rem; display: flex; align-items: center; justify-content: center; border-radius: 50%; border: 2px solid rgba(0, 122, 255, 0.2);">
+                                    👤</div>
+                                <p
+                                    style="font-size: 1.05rem; font-weight: 700; color: #1D1D1F; letter-spacing: -0.01em;">
+                                    Mauricio Hernandez</p>
+                            </div>
+                            <div
+                                style="position: relative; padding: 1rem 1rem 1rem 3.5rem; background: white; border-radius: 8px;">
+                                <div
+                                    style="content: '👤'; position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); font-size: 1.5rem; opacity: 0.7; background: linear-gradient(135deg, rgba(0, 122, 255, 0.1) 0%, rgba(88, 86, 214, 0.1) 100%); width: 2.5rem; height: 2.5rem; display: flex; align-items: center; justify-content: center; border-radius: 50%; border: 2px solid rgba(0, 122, 255, 0.2);">
+                                    👤</div>
+                                <p
+                                    style="font-size: 1.05rem; font-weight: 700; color: #1D1D1F; letter-spacing: -0.01em;">
+                                    Adriana Martinez</p>
+                            </div>
+                            <p style="margin-top: 1rem; font-size: 0.85rem; color: var(--success); font-weight: 600;">
+                                ✅ Con icono, énfasis visual, fácil de escanear
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabla de Ejemplo -->
+            <div class="glass-panel" style="padding: 2rem; margin-bottom: 2rem;">
+                <h2 style="font-size: 1.5rem; font-weight: 800; margin-bottom: 1.5rem;">
+                    📊 Ejemplo en Tabla Real
+                </h2>
+
+                <div style="overflow-x: auto;">
+                    <table class="schedule-table" style="width: 100%;">
+                        <thead>
+                            <tr>
+                                <th style="text-align: left;">PERSONA</th>
+                                <th>Lunes</th>
+                                <th>Martes</th>
+                                <th>Miércoles</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="person-cell">
+                                    Jonas Figueroa
+                                    <span class="swap-comment">CAMBIO DE GUARDIA POR VACACIONES</span>
+                                </td>
+                                <td>
+                                    <div class="schedule-cell">
+                                        <span class="time">08:30 AM</span>
+                                        <span class="location-badge mitras">MITRAS</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="schedule-cell">
+                                        <span class="time">08:30 AM</span>
+                                        <span class="location-badge mitras">MITRAS</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="schedule-cell">
+                                        <span class="time">08:30 AM</span>
+                                        <span class="location-badge mitras">MITRAS</span>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="person-cell">
+                                    Mauricio Hernandez
+                                </td>
+                                <td>
+                                    <div class="schedule-cell">
+                                        <span class="time">05:30 PM</span>
+                                        <span class="location-badge guardia">GUARDIA</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="schedule-cell">
+                                        <span class="time">05:30 PM</span>
+                                        <span class="location-badge guardia">GUARDIA</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="schedule-cell">
+                                        <span class="time">05:30 PM</span>
+                                        <span class="location-badge guardia">GUARDIA</span>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="person-cell">
+                                    Adriana Martinez
+                                </td>
+                                <td>
+                                    <div class="schedule-cell">
+                                        <span class="time">10:00 AM</span>
+                                        <span class="location-badge valle">VALLE</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="schedule-cell">
+                                        <span class="time">10:00 AM</span>
+                                        <span class="location-badge valle">VALLE</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="schedule-cell">
+                                        <span class="time">10:00 AM</span>
+                                        <span class="location-badge valle">VALLE</span>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="person-cell">
+                                    Conrado Garcia
+                                    <span class="vacation-badge-small">🏖️ Vacaciones</span>
+                                </td>
+                                <td class="vacation-cell">
+                                    <span class="location-badge vacation">VACACIONES</span>
+                                </td>
+                                <td class="vacation-cell">
+                                    <span class="location-badge vacation">VACACIONES</span>
+                                </td>
+                                <td>
+                                    <div class="schedule-cell">
+                                        <span class="time">10:00 AM</span>
+                                        <span class="location-badge mitras">MITRAS</span>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <p
+                    style="margin-top: 1.5rem; padding: 1rem; background: rgba(0, 122, 255, 0.08); border-left: 3px solid var(--primary); border-radius: var(--radius-md); color: var(--text-secondary);">
+                    💡 <strong>Pasa el mouse sobre las filas</strong> para ver el efecto de hover en el icono de persona
+                </p>
+            </div>
+
+            <!-- Características -->
+            <div class="glass-panel" style="padding: 2rem;">
+                <h2 style="font-size: 1.5rem; font-weight: 800; margin-bottom: 1.5rem;">
+                    ✨ Mejoras Implementadas
+                </h2>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
+                    <div>
+                        <h3 style="font-size: 1rem; font-weight: 700; margin-bottom: 0.75rem; color: var(--primary);">
+                            👤 Icono de Persona
+                        </h3>
+                        <ul style="font-size: 0.9rem; color: var(--text-secondary); line-height: 1.8;">
+                            <li>Círculo con gradiente azul</li>
+                            <li>Borde de 2px</li>
+                            <li>Tamaño: 2.5rem</li>
+                            <li>Escala al hover (1.1x)</li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h3 style="font-size: 1rem; font-weight: 700; margin-bottom: 0.75rem; color: var(--success);">
+                            📝 Tipografía Mejorada
+                        </h3>
+                        <ul style="font-size: 0.9rem; color: var(--text-secondary); line-height: 1.8;">
+                            <li>Tamaño: 1.05rem</li>
+                            <li>Peso: 700 (Bold)</li>
+                            <li>Letter-spacing: -0.01em</li>
+                            <li>Line-height: 1.4</li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h3 style="font-size: 1rem; font-weight: 700; margin-bottom: 0.75rem; color: var(--warning);">
+                            🎨 Espaciado
+                        </h3>
+                        <ul style="font-size: 0.9rem; color: var(--text-secondary); line-height: 1.8;">
+                            <li>Padding izq: 3.5rem</li>
+                            <li>Min-width: 200px</li>
+                            <li>Margen inferior: 0.25rem</li>
+                            <li>Espacio para badges</li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h3 style="font-size: 1rem; font-weight: 700; margin-bottom: 0.75rem; color: var(--danger);">
+                            ✨ Animaciones
+                        </h3>
+                        <ul style="font-size: 0.9rem; color: var(--text-secondary); line-height: 1.8;">
+                            <li>Hover: escala icono</li>
+                            <li>Transición: 0.3s spring</li>
+                            <li>Opacidad aumenta a 1</li>
+                            <li>Efecto suave y natural</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Cargar tema guardado
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'dark') {
+            document.body.classList.add('dark-mode');
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demo - Colores de Vacaciones y Comentarios</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="logo-container">
+                    <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 2v20M2 12h20"></path>
+                    </svg>
+                    <div>
+                        <h1>Colores Actualizados</h1>
+                        <p class="subtitle">Vacaciones y Comentarios</p>
+                    </div>
+                </div>
+            </div>
+            <div class="header-actions">
+                <button class="theme-toggle" onclick="document.body.classList.toggle('dark-mode')"
+                    title="Alternar Modo Oscuro">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                </button>
+            </div>
+        </header>
+
+        <!-- Comparación de Colores -->
+        <div style="max-width: 1200px; margin: 0 auto;">
+            <div class="glass-panel" style="padding: 2rem; margin-bottom: 2rem;">
+                <h2 style="font-size: 1.5rem; font-weight: 800; margin-bottom: 1.5rem;">
+                    🎨 Cambios de Color
+                </h2>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem;">
+                    <!-- Antes -->
+                    <div>
+                        <h3
+                            style="font-size: 1.1rem; font-weight: 700; margin-bottom: 1rem; color: var(--text-secondary);">
+                            ❌ Antes
+                        </h3>
+                        <div
+                            style="padding: 1rem; background: rgba(120, 120, 128, 0.08); border-radius: var(--radius-md);">
+                            <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
+                                <strong>Comentarios:</strong> Naranja (warning)
+                            </p>
+                            <div
+                                style="padding: 0.35rem 0.65rem; background: rgba(255, 159, 10, 0.1); border-left: 2px solid #FF9F0A; border-radius: 4px; font-size: 0.75rem; color: #FF9F0A;">
+                                CAMBIO DE GUARDIA POR VACACIONES
+                            </div>
+
+                            <p style="font-size: 0.9rem; color: var(--text-secondary); margin: 1rem 0 0.5rem;">
+                                <strong>Vacaciones:</strong> Rojo (danger)
+                            </p>
+                            <div
+                                style="padding: 0.5rem 1rem; background: rgba(255, 59, 48, 0.1); color: #FF3B30; border-radius: 8px; text-align: center; font-weight: 700;">
+                                VACACIONES
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Después -->
+                    <div>
+                        <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 1rem; color: var(--success);">
+                            ✅ Después
+                        </h3>
+                        <div
+                            style="padding: 1rem; background: rgba(120, 120, 128, 0.08); border-radius: var(--radius-md);">
+                            <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
+                                <strong>Comentarios:</strong> Azul (primary)
+                            </p>
+                            <span class="swap-comment">
+                                CAMBIO DE GUARDIA POR VACACIONES
+                            </span>
+
+                            <p style="font-size: 0.9rem; color: var(--text-secondary); margin: 1rem 0 0.5rem;">
+                                <strong>Vacaciones:</strong> Morado/Lavanda
+                            </p>
+                            <span class="location-badge vacation">VACACIONES</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabla de Ejemplo -->
+            <div class="glass-panel" style="padding: 2rem; margin-bottom: 2rem;">
+                <h2 style="font-size: 1.5rem; font-weight: 800; margin-bottom: 1.5rem;">
+                    📊 Ejemplo en Tabla
+                </h2>
+
+                <div style="overflow-x: auto;">
+                    <table style="width: 100%; border-collapse: separate; border-spacing: 0;">
+                        <thead>
+                            <tr>
+                                <th
+                                    style="padding: 1rem; text-align: left; background: var(--glass-bg); border-bottom: 2px solid var(--border);">
+                                    Persona</th>
+                                <th
+                                    style="padding: 1rem; text-align: center; background: var(--glass-bg); border-bottom: 2px solid var(--border);">
+                                    Lunes</th>
+                                <th
+                                    style="padding: 1rem; text-align: center; background: var(--glass-bg); border-bottom: 2px solid var(--border);">
+                                    Martes</th>
+                                <th
+                                    style="padding: 1rem; text-align: center; background: var(--glass-bg); border-bottom: 2px solid var(--border);">
+                                    Miércoles</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td style="padding: 1rem; border-bottom: 1px solid var(--border);">
+                                    <strong>Jonas Figueroa</strong>
+                                    <span class="swap-comment">CAMBIO DE GUARDIA POR VACACIONES</span>
+                                </td>
+                                <td class="vacation-cell"
+                                    style="padding: 1rem; text-align: center; border-bottom: 1px solid var(--border);">
+                                    <span class="location-badge vacation">VACACIONES</span>
+                                </td>
+                                <td class="vacation-cell"
+                                    style="padding: 1rem; text-align: center; border-bottom: 1px solid var(--border);">
+                                    <span class="location-badge vacation">VACACIONES</span>
+                                </td>
+                                <td style="padding: 1rem; text-align: center; border-bottom: 1px solid var(--border);">
+                                    <div class="schedule-cell">
+                                        <span class="time">08:30 AM</span>
+                                        <span class="location-badge mitras">MITRAS</span>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 1rem; border-bottom: 1px solid var(--border);">
+                                    <strong>Felix Gonzalez</strong>
+                                </td>
+                                <td style="padding: 1rem; text-align: center; border-bottom: 1px solid var(--border);">
+                                    <div class="schedule-cell">
+                                        <span class="time">05:30 PM</span>
+                                        <span class="location-badge guardia">GUARDIA</span>
+                                    </div>
+                                </td>
+                                <td style="padding: 1rem; text-align: center; border-bottom: 1px solid var(--border);">
+                                    <div class="schedule-cell">
+                                        <span class="time">05:30 PM</span>
+                                        <span class="location-badge guardia">GUARDIA</span>
+                                    </div>
+                                </td>
+                                <td style="padding: 1rem; text-align: center; border-bottom: 1px solid var(--border);">
+                                    <div class="schedule-cell">
+                                        <span class="time">05:30 PM</span>
+                                        <span class="location-badge guardia">GUARDIA</span>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Detalles de Colores -->
+            <div class="glass-panel" style="padding: 2rem;">
+                <h2 style="font-size: 1.5rem; font-weight: 800; margin-bottom: 1.5rem;">
+                    🎨 Paleta de Colores
+                </h2>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
+                    <!-- Comentarios -->
+                    <div>
+                        <h3 style="font-size: 1rem; font-weight: 700; margin-bottom: 0.75rem;">
+                            💬 Comentarios (Azul)
+                        </h3>
+                        <div
+                            style="padding: 1rem; background: rgba(0, 122, 255, 0.12); border-left: 3px solid #007AFF; border-radius: var(--radius-md);">
+                            <p style="font-size: 0.85rem; margin: 0.25rem 0;"><strong>Color:</strong> #007AFF</p>
+                            <p style="font-size: 0.85rem; margin: 0.25rem 0;"><strong>Fondo:</strong> rgba(0, 122, 255,
+                                0.12)</p>
+                            <p style="font-size: 0.85rem; margin: 0.25rem 0;"><strong>Borde:</strong> 3px solid #007AFF
+                            </p>
+                            <p style="font-size: 0.85rem; margin: 0.25rem 0; color: var(--text-secondary);"><em>Indica
+                                    información importante</em></p>
+                        </div>
+                    </div>
+
+                    <!-- Vacaciones Badge -->
+                    <div>
+                        <h3 style="font-size: 1rem; font-weight: 700; margin-bottom: 0.75rem;">
+                            🏖️ Badge Vacaciones (Morado)
+                        </h3>
+                        <div
+                            style="padding: 1rem; background: linear-gradient(135deg, #E9D5FF 0%, #DDD6FE 100%); border-radius: var(--radius-md);">
+                            <p style="font-size: 0.85rem; margin: 0.25rem 0;"><strong>Color:</strong> #7C3AED</p>
+                            <p style="font-size: 0.85rem; margin: 0.25rem 0;"><strong>Fondo:</strong> Gradiente lavanda
+                            </p>
+                            <p style="font-size: 0.85rem; margin: 0.25rem 0;"><strong>Sombra:</strong> rgba(124, 58,
+                                237, 0.15)</p>
+                            <p style="font-size: 0.85rem; margin: 0.25rem 0; color: #7C3AED;"><em>Distintivo y
+                                    relajante</em></p>
+                        </div>
+                    </div>
+
+                    <!-- Celda Vacaciones -->
+                    <div>
+                        <h3 style="font-size: 1rem; font-weight: 700; margin-bottom: 0.75rem;">
+                            📅 Celda Vacaciones (Morado claro)
+                        </h3>
+                        <div
+                            style="padding: 1rem; background: linear-gradient(135deg, rgba(233, 213, 255, 0.3) 0%, rgba(221, 214, 254, 0.3) 100%); border-left: 3px solid #7C3AED; border-radius: var(--radius-md);">
+                            <p style="font-size: 0.85rem; margin: 0.25rem 0;"><strong>Fondo:</strong> Gradiente lavanda
+                                30%</p>
+                            <p style="font-size: 0.85rem; margin: 0.25rem 0;"><strong>Borde izq:</strong> 3px solid
+                                #7C3AED</p>
+                            <p style="font-size: 0.85rem; margin: 0.25rem 0;"><strong>Overlay:</strong> Gradiente sutil
+                            </p>
+                            <p style="font-size: 0.85rem; margin: 0.25rem 0; color: var(--text-secondary);"><em>Fácil de
+                                    identificar</em></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Razones del Cambio -->
+            <div style="margin-top: 2rem;">
+                <div class="glass-panel" style="padding: 2rem;">
+                    <h2 style="font-size: 1.5rem; font-weight: 800; margin-bottom: 1.5rem;">
+                        💡 Razones del Cambio
+                    </h2>
+                    <ul style="color: var(--text-secondary); line-height: 2;">
+                        <li><strong>Comentarios (Naranja → Azul):</strong> El naranja sugiere advertencia/peligro. El
+                            azul es más neutral e informativo.</li>
+                        <li><strong>Vacaciones (Rojo → Morado):</strong> El rojo sugiere error/peligro. El
+                            morado/lavanda es más relajante y apropiado para vacaciones.</li>
+                        <li><strong>Mejor distinción visual:</strong> Los colores ahora son más distintivos entre sí.
+                        </li>
+                        <li><strong>Psicología del color:</strong> Morado = descanso, relajación. Azul = información,
+                            confianza.</li>
+                        <li><strong>Accesibilidad:</strong> Mejor contraste y legibilidad en ambos modos.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Cargar tema guardado
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'dark') {
+            document.body.classList.add('dark-mode');
+        }
+    </script>
+</body>
+
+</html>
