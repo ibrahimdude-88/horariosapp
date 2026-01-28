@@ -1961,48 +1961,73 @@ body {
     }
 }
 
-/* 4. Tabla General Compacta "Zoomable" - Ajuste "Todo en Pantalla" */
+/* 4. Tabla General Compacta "Vista Panorámica Total" */
 @media (max-width: 600px) {
     .general-view {
         gap: 0.5rem;
+        width: 100%;
+        overflow: hidden;
+        /* Asegurar que nada se salga del contenedor principal */
     }
 
     #general-tab .table-container {
-        /* Full width */
-        width: 100vw;
-        margin-left: -1.25rem;
-        margin-right: -1.25rem;
-        padding: 0;
-
-        overflow-x: auto;
-
-        /* Zoom calculado para que quepan ~950px en ~390px iPhone */
-        zoom: 0.42;
-
         display: block;
+        width: 100%;
+        /* Ocupar todo el ancho disponible del padre */
+        overflow: hidden;
+        /* Eliminar scroll, queremos ver todo */
+        padding: 0;
+        margin: 0;
         background: transparent;
-        margin-bottom: 0;
     }
 
     #general-tab .schedule-table {
-        /* Ancho justo para llenar el viewport al zoom 0.42 (100 / 0.42 = 238%) */
-        width: 235vw;
-        min-width: 235vw;
-        margin: 0 auto;
+        /* FÓRMULA MATEMÁTICA EXACTA: */
+        /* Queremos mostrar mucho contenido en poco espacio. */
+        /* Factor de Escala: 0.35 (35% del tamaño original) */
+
+        transform: scale(0.35);
+        transform-origin: top left;
+
+        /* El ancho debe ser el inverso de la escala para llenar el 100% visual final */
+        /* 100% / 0.35 = 285.7% */
+        width: 286%;
+        min-width: 286%;
+
+        margin: 0;
+        /* Eliminar layout forzado previo */
+        table-layout: fixed;
     }
 
     #general-tab th,
     #general-tab td {
-        padding: 3px 2px;
-        /* Padding mínimo para ganar espacio */
-        font-size: 1.15rem;
-        /* Texto compensado */
-        line-height: 1.1;
+        padding: 8px 4px;
+        /* Padding cómodo ya que tenemos mucho "ancho virtual" */
+        font-size: 1.8rem;
+        /* Fuente muy grande para que al reducirse al 35% sea legible (~10px visual) */
+        line-height: 1.2;
+        word-wrap: break-word;
+        /* Permitir romper palabras largas */
     }
 
-    /* Reducir ancho columna nombre si es posible */
-    #general-tab .person-cell {
-        min-width: 120px !important;
-        white-space: normal;
+    /* Ajustar anchos de columnas para aprovechar el espacio virtual de 286% */
+    #general-tab th:first-child,
+    #general-tab td:first-child {
+        width: 12%;
+        /* Columna Nombre */
+    }
+
+    #general-tab th:not(:first-child),
+    #general-tab td:not(:first-child) {
+        width: 12.5%;
+        /* 7 días equitativos */
+    }
+
+    /* Layout vertical para las horas para ahorrar espacio horizontal */
+    .time {
+        display: block;
+        white-space: pre-line;
+        /* Permitir saltos de línea */
+        margin-bottom: 4px;
     }
 }
