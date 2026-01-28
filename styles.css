@@ -1961,11 +1961,10 @@ body {
     }
 }
 
-/* 4. Tabla General Compacta "Zoomable" */
+/* 4. Tabla General Compacta "Zoomable" - Ajuste "Todo en Pantalla" */
 @media (max-width: 600px) {
     .general-view {
-        gap: 1rem;
-        /* Reducir espacio entre secciones drásticamente */
+        gap: 0.5rem;
     }
 
     #general-tab .table-container {
@@ -1977,29 +1976,33 @@ body {
 
         overflow-x: auto;
 
-        /* USAR SOLO ZOOM: Esto colapsa el espacio vertical vacío correctamente en iPhone/Android. */
-        /* Eliminamos 'transform' porque deja un hueco fantasma. */
-        zoom: 0.58;
+        /* Zoom calculado para que quepan ~950px en ~390px iPhone */
+        zoom: 0.42;
 
         display: block;
         background: transparent;
-        margin-bottom: -10px;
-        /* Ajuste fino */
+        margin-bottom: 0;
     }
 
     #general-tab .schedule-table {
-        /* Ancho suficiente para que al hacer zoom se vea llena la pantalla */
-        width: 160vw;
-        /* 160% * 0.58 ~= 92% screen width */
-        min-width: 160vw;
+        /* Ancho justo para llenar el viewport al zoom 0.42 (100 / 0.42 = 238%) */
+        width: 235vw;
+        min-width: 235vw;
         margin: 0 auto;
     }
 
     #general-tab th,
     #general-tab td {
-        padding: 4px 6px;
-        font-size: 1.2rem;
-        /* Texto grande para compensar el zoom out */
-        line-height: 1.2;
+        padding: 3px 2px;
+        /* Padding mínimo para ganar espacio */
+        font-size: 1.15rem;
+        /* Texto compensado */
+        line-height: 1.1;
+    }
+
+    /* Reducir ancho columna nombre si es posible */
+    #general-tab .person-cell {
+        min-width: 120px !important;
+        white-space: normal;
     }
 }
