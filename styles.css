@@ -1962,31 +1962,41 @@ body {
 }
 
 /* 4. Tabla General Compacta "Zoomable" */
-/* "Se vea en pequeño y pellizcando la pantalla se expanda" */
 @media (max-width: 600px) {
     #general-tab .table-container {
-        width: 100%;
+        width: 100vw;
+        /* Usar todo el ancho del viewport */
+        margin-left: -1.25rem;
+        /* Compensar padding del container padre */
+        margin-right: -1.25rem;
         overflow-x: auto;
-        /* Reducir escala inicial para ver todo el panorama */
-        zoom: 0.55;
-        /* Fallback para navegadores no-webkit */
-        -moz-transform: scale(0.55);
-        -moz-transform-origin: top left;
-        transform: scale(0.55);
+
+        /* Zoom agresivo para que quepa toda la semana (Lunes-Dom) */
+        zoom: 0.38;
+
+        /* Standard transforms para compatibilidad */
+        transform: scale(0.38);
         transform-origin: top left;
+
+        /* Espacio para scroll y visualización */
+        padding-bottom: 20px;
+        display: block;
+        white-space: nowrap;
     }
 
-    /* Asegurar que la tabla tenga ancho suficiente para no aplastar el texto */
+    /* Forzar un ancho fijo grande para que al reducirse se vea bien */
     #general-tab .schedule-table {
-        min-width: 800px;
+        min-width: 950px;
+        margin: 0 auto;
     }
 
-    /* Ajustes visuales para que se vea bien en pequeño */
+    /* Ajustes visuales para la versión mini */
     #general-tab th,
     #general-tab td {
-        padding: 4px 8px;
-        /* Menos padding */
-        font-size: 0.9rem;
-        /* Fuente legible al hacer zoom */
+        padding: 6px 4px;
+        font-size: 1rem;
+        /* Texto tamaño normal para que al reducirse 0.38x sea legible al zoom */
+        white-space: normal;
+        /* Permitir saltos de línea dentro de celdas */
     }
 }
