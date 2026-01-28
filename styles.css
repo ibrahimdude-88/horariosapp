@@ -1964,10 +1964,11 @@ body {
 /* 4. Tabla General Compacta "Vista Panorámica Total" */
 @media (max-width: 600px) {
     .general-view {
-        gap: 0;
-        /* Eliminar gap para controlar espacio con margen negativo */
+        gap: 1rem;
+        /* Espacio normal entre secciones */
         width: 100%;
-        overflow: hidden;
+        overflow: visible;
+        /* Permitir que el contenido fluya */
     }
 
     #general-tab .table-container {
@@ -1975,17 +1976,14 @@ body {
         width: 100%;
         overflow: hidden;
         padding: 0;
-        margin: 0;
+        margin: 0 0 1rem 0;
+        /* Margen inferior normal */
         background: transparent;
 
-        /* CORRECCIÓN ESPACIO VACÍO: */
-        /* Al escalar al 35%, queda un 65% de espacio vacío abajo. */
-        /* Compensamos con un margen negativo grande. */
-        margin-bottom: -120%;
-        /* Si el porcentaje no funciona bien en todos los navegadores, usar px estimado */
-        /* Fallback seguro si el contenido es dinámico */
-        height: 300px;
-        /* Forzar altura visual aproximada del contenedor */
+        /* CORRECCIÓN: Forzar altura basada en el contenido escalado */
+        /* La tabla original tiene ~800px de alto, al escalar 0.35 = 280px */
+        /* Dejamos que el navegador calcule automáticamente */
+        position: relative;
     }
 
     #general-tab .schedule-table {
@@ -1995,54 +1993,61 @@ body {
         min-width: 286%;
         margin: 0;
         table-layout: fixed;
-
-        /* Asegurar que la tabla tenga altura automática para el cálculo */
         height: auto;
+
+        /* Forzar que el contenedor padre reconozca la altura real */
+        display: table;
     }
 
     /* ESTILOS DE CELDAS (DATOS) */
     #general-tab td {
-        padding: 6px 4px;
+        padding: 8px 6px;
         font-size: 1.8rem;
-        /* Mantener datos legibles */
-        line-height: 1.2;
+        line-height: 1.3;
         word-wrap: break-word;
+        vertical-align: top;
     }
 
-    /* CORRECCIÓN ENCABEZADOS (QUE NO SE SALTEN LÍNEA) */
+    /* ENCABEZADOS - Más pequeños para evitar saltos de línea */
     #general-tab th {
-        padding: 4px 2px;
-        font-size: 1.3rem;
-        /* Reducir ESTRICTAMENTE los títulos */
-        line-height: 1;
+        padding: 6px 3px;
+        font-size: 1.4rem;
+        /* Reducido para que quepa */
+        line-height: 1.1;
         white-space: nowrap;
-        /* Forzar una sola línea si es posible */
         overflow: hidden;
-        text-overflow: ellipsis;
-        /* Puntos suspensivos si no cabe */
+        text-overflow: clip;
+        font-weight: 700;
     }
 
-    /* Ajuste específico para Lunes-Domingo para ganar espacio */
+    /* Días de la semana aún más compactos */
     #general-tab th:not(:first-child) {
-        font-size: 1.2rem;
-        /* Días de la semana un poco más pequeños */
+        font-size: 1.3rem;
+        letter-spacing: -0.02em;
+        /* Comprimir ligeramente */
     }
 
-    /* Anchos de columnas */
+    /* Anchos de columnas optimizados */
     #general-tab th:first-child,
     #general-tab td:first-child {
-        width: 14%;
-        /* Un poco más de espacio para Nombres */
+        width: 15%;
     }
 
     #general-tab th:not(:first-child),
     #general-tab td:not(:first-child) {
-        width: 12.2%;
+        width: 12.14%;
+        /* 85% / 7 días */
     }
 
     .time {
         display: block;
         white-space: pre-line;
-        margin-bottom: 4px;
+        margin-bottom: 2px;
+        font-size: 1.7rem;
+    }
+
+    /* Ajustar el espacio después de la tabla para que Personal por Ubicación suba */
+    .main-schedule-section {
+        margin-bottom: 0.5rem;
     }
 }
