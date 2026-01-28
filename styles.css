@@ -1963,42 +1963,43 @@ body {
 
 /* 4. Tabla General Compacta "Zoomable" */
 @media (max-width: 600px) {
+    .general-view {
+        gap: 1rem;
+        /* Reducir espacio entre secciones drásticamente */
+    }
+
     #general-tab .table-container {
-        /* Técnica Full-Bleed para ignorar padding del padre y usar borde a borde */
+        /* Full width */
         width: 100vw;
-        position: relative;
-        left: 50%;
-        right: 50%;
-        margin-left: -50vw;
-        margin-right: -50vw;
+        margin-left: -1.25rem;
+        margin-right: -1.25rem;
+        padding: 0;
 
         overflow-x: auto;
 
-        /* Ajuste de escala visual */
-        zoom: 0.48;
-        /* Un poco más grande para llenar mejor */
-        transform: scale(0.48);
-        transform-origin: top center;
-        /* Centrar el escalado horizontalmente */
+        /* USAR SOLO ZOOM: Esto colapsa el espacio vertical vacío correctamente en iPhone/Android. */
+        /* Eliminamos 'transform' porque deja un hueco fantasma. */
+        zoom: 0.58;
 
-        padding-bottom: 20px;
         display: block;
         background: transparent;
+        margin-bottom: -10px;
+        /* Ajuste fino */
     }
 
     #general-tab .schedule-table {
-        /* Definir ancho explícito relativo al viewport para asegurar llenado */
-        /* Al escalar 0.48, necesitamos aprox 208% de ancho para llenar el 100% */
-        width: 200vw;
-        min-width: 200vw;
+        /* Ancho suficiente para que al hacer zoom se vea llena la pantalla */
+        width: 160vw;
+        /* 160% * 0.58 ~= 92% screen width */
+        min-width: 160vw;
         margin: 0 auto;
     }
 
     #general-tab th,
     #general-tab td {
-        padding: 6px 8px;
-        font-size: 1.1rem;
-        /* Texto legible y nítido */
-        white-space: normal;
+        padding: 4px 6px;
+        font-size: 1.2rem;
+        /* Texto grande para compensar el zoom out */
+        line-height: 1.2;
     }
 }
