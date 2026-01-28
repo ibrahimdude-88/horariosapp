@@ -1964,39 +1964,41 @@ body {
 /* 4. Tabla General Compacta "Zoomable" */
 @media (max-width: 600px) {
     #general-tab .table-container {
+        /* Técnica Full-Bleed para ignorar padding del padre y usar borde a borde */
         width: 100vw;
-        /* Usar todo el ancho del viewport */
-        margin-left: -1.25rem;
-        /* Compensar padding del container padre */
-        margin-right: -1.25rem;
+        position: relative;
+        left: 50%;
+        right: 50%;
+        margin-left: -50vw;
+        margin-right: -50vw;
+
         overflow-x: auto;
 
-        /* Zoom agresivo para que quepa toda la semana (Lunes-Dom) */
-        zoom: 0.38;
+        /* Ajuste de escala visual */
+        zoom: 0.48;
+        /* Un poco más grande para llenar mejor */
+        transform: scale(0.48);
+        transform-origin: top center;
+        /* Centrar el escalado horizontalmente */
 
-        /* Standard transforms para compatibilidad */
-        transform: scale(0.38);
-        transform-origin: top left;
-
-        /* Espacio para scroll y visualización */
         padding-bottom: 20px;
         display: block;
-        white-space: nowrap;
+        background: transparent;
     }
 
-    /* Forzar un ancho fijo grande para que al reducirse se vea bien */
     #general-tab .schedule-table {
-        min-width: 950px;
+        /* Definir ancho explícito relativo al viewport para asegurar llenado */
+        /* Al escalar 0.48, necesitamos aprox 208% de ancho para llenar el 100% */
+        width: 200vw;
+        min-width: 200vw;
         margin: 0 auto;
     }
 
-    /* Ajustes visuales para la versión mini */
     #general-tab th,
     #general-tab td {
-        padding: 6px 4px;
-        font-size: 1rem;
-        /* Texto tamaño normal para que al reducirse 0.38x sea legible al zoom */
+        padding: 6px 8px;
+        font-size: 1.1rem;
+        /* Texto legible y nítido */
         white-space: normal;
-        /* Permitir saltos de línea dentro de celdas */
     }
 }
