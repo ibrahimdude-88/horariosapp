@@ -1865,35 +1865,128 @@ body {
 }
 
 /* 3. Ajuste de Banner (Header) y Título */
-@media (max-width: 400px) {
+@media (max-width: 480px) {
     .header {
-        margin: 0 -1rem 2rem -1rem;
-        /* Desbordar ligeramente para efecto full-width si el container tiene padding */
+        margin: 0 -1rem 1.5rem -1rem;
         width: calc(100% + 2rem);
         border-radius: 0 0 24px 24px;
-        border-left: none;
-        border-right: none;
-        border-top: none;
-        padding: 1.5rem 1rem;
+        border: none;
+        padding: 1.25rem 1rem;
+        background: var(--glass-bg-strong);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
     }
 
-    .app-container {
-        padding: 0 1rem;
-        overflow-x: hidden;
+    .header-content {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
     }
 
+    .logo-container {
+        flex-direction: column;
+        gap: 0.5rem;
+        width: 100%;
+    }
+
+    /* Título más compacto */
     h1 {
-        font-size: 1.4rem !important;
-        /* Forzar tamaño legible */
-        word-break: break-word;
-        /* Romper palabras largas si es necesario */
-        hyphens: auto;
-        /* Guiones automáticos */
-        line-height: 1.2;
+        font-size: 1.5rem !important;
+        line-height: 1.1;
+        text-align: center;
+        margin-bottom: 0.25rem;
     }
 
     .subtitle {
-        font-size: 0.85rem;
-        padding: 0 0.5rem;
+        display: none;
+        /* Ocultar subtítulo en móvil para ahorrar espacio */
+    }
+
+    /* WIDGET DEL CLIMA EN MÓVIL */
+    /* "Minima y maxima se posicione debajo de los grados actuales" */
+    .weather-widget {
+        display: flex !important;
+        /* Asegurar que se vea si estaba oculto */
+        margin: 0 !important;
+        padding: 8px 16px;
+        width: auto;
+        max-width: 100%;
+        justify-content: center;
+        background: rgba(120, 120, 128, 0.08);
+        /* Fondo más sutil */
+    }
+
+    .weather-info {
+        flex-direction: row;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .weather-main {
+        flex-direction: column;
+        /* Apilar Temperatura y Ciudad */
+        align-items: center;
+        gap: 2px;
+    }
+
+    .weather-temp-main {
+        font-size: 1.5rem;
+        line-height: 1;
+    }
+
+    .weather-desc-text {
+        display: none;
+        /* Ocultar descripción larga */
+    }
+
+    .weather-extra {
+        flex-direction: column;
+        /* Apilar info extra */
+        align-items: flex-start;
+        font-size: 0.75rem;
+        gap: 2px;
+        border-left: 1px solid rgba(255, 255, 255, 0.2);
+        padding-left: 10px;
+    }
+
+    /* Colocar max/min debajo visualmente o en bloque compacto */
+    .weather-range {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+    }
+}
+
+/* 4. Tabla General Compacta "Zoomable" */
+/* "Se vea en pequeño y pellizcando la pantalla se expanda" */
+@media (max-width: 600px) {
+    #general-tab .table-container {
+        width: 100%;
+        overflow-x: auto;
+        /* Reducir escala inicial para ver todo el panorama */
+        zoom: 0.55;
+        /* Fallback para navegadores no-webkit */
+        -moz-transform: scale(0.55);
+        -moz-transform-origin: top left;
+        transform: scale(0.55);
+        transform-origin: top left;
+    }
+
+    /* Asegurar que la tabla tenga ancho suficiente para no aplastar el texto */
+    #general-tab .schedule-table {
+        min-width: 800px;
+    }
+
+    /* Ajustes visuales para que se vea bien en pequeño */
+    #general-tab th,
+    #general-tab td {
+        padding: 4px 8px;
+        /* Menos padding */
+        font-size: 0.9rem;
+        /* Fuente legible al hacer zoom */
     }
 }
