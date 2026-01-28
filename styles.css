@@ -1964,70 +1964,85 @@ body {
 /* 4. Tabla General Compacta "Vista Panorámica Total" */
 @media (max-width: 600px) {
     .general-view {
-        gap: 0.5rem;
+        gap: 0;
+        /* Eliminar gap para controlar espacio con margen negativo */
         width: 100%;
         overflow: hidden;
-        /* Asegurar que nada se salga del contenedor principal */
     }
 
     #general-tab .table-container {
         display: block;
         width: 100%;
-        /* Ocupar todo el ancho disponible del padre */
         overflow: hidden;
-        /* Eliminar scroll, queremos ver todo */
         padding: 0;
         margin: 0;
         background: transparent;
+
+        /* CORRECCIÓN ESPACIO VACÍO: */
+        /* Al escalar al 35%, queda un 65% de espacio vacío abajo. */
+        /* Compensamos con un margen negativo grande. */
+        margin-bottom: -120%;
+        /* Si el porcentaje no funciona bien en todos los navegadores, usar px estimado */
+        /* Fallback seguro si el contenido es dinámico */
+        height: 300px;
+        /* Forzar altura visual aproximada del contenedor */
     }
 
     #general-tab .schedule-table {
-        /* FÓRMULA MATEMÁTICA EXACTA: */
-        /* Queremos mostrar mucho contenido en poco espacio. */
-        /* Factor de Escala: 0.35 (35% del tamaño original) */
-
         transform: scale(0.35);
         transform-origin: top left;
-
-        /* El ancho debe ser el inverso de la escala para llenar el 100% visual final */
-        /* 100% / 0.35 = 285.7% */
         width: 286%;
         min-width: 286%;
-
         margin: 0;
-        /* Eliminar layout forzado previo */
         table-layout: fixed;
+
+        /* Asegurar que la tabla tenga altura automática para el cálculo */
+        height: auto;
     }
 
-    #general-tab th,
+    /* ESTILOS DE CELDAS (DATOS) */
     #general-tab td {
-        padding: 8px 4px;
-        /* Padding cómodo ya que tenemos mucho "ancho virtual" */
+        padding: 6px 4px;
         font-size: 1.8rem;
-        /* Fuente muy grande para que al reducirse al 35% sea legible (~10px visual) */
+        /* Mantener datos legibles */
         line-height: 1.2;
         word-wrap: break-word;
-        /* Permitir romper palabras largas */
     }
 
-    /* Ajustar anchos de columnas para aprovechar el espacio virtual de 286% */
+    /* CORRECCIÓN ENCABEZADOS (QUE NO SE SALTEN LÍNEA) */
+    #general-tab th {
+        padding: 4px 2px;
+        font-size: 1.3rem;
+        /* Reducir ESTRICTAMENTE los títulos */
+        line-height: 1;
+        white-space: nowrap;
+        /* Forzar una sola línea si es posible */
+        overflow: hidden;
+        text-overflow: ellipsis;
+        /* Puntos suspensivos si no cabe */
+    }
+
+    /* Ajuste específico para Lunes-Domingo para ganar espacio */
+    #general-tab th:not(:first-child) {
+        font-size: 1.2rem;
+        /* Días de la semana un poco más pequeños */
+    }
+
+    /* Anchos de columnas */
     #general-tab th:first-child,
     #general-tab td:first-child {
-        width: 12%;
-        /* Columna Nombre */
+        width: 14%;
+        /* Un poco más de espacio para Nombres */
     }
 
     #general-tab th:not(:first-child),
     #general-tab td:not(:first-child) {
-        width: 12.5%;
-        /* 7 días equitativos */
+        width: 12.2%;
     }
 
-    /* Layout vertical para las horas para ahorrar espacio horizontal */
     .time {
         display: block;
         white-space: pre-line;
-        /* Permitir saltos de línea */
         margin-bottom: 4px;
     }
 }
