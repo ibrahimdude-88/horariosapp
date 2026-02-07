@@ -2862,16 +2862,55 @@ function renderAllEventsView() {
         eventsByMonth[monthKey].push(event);
     });
 
+    // Helper para colapsar meses (inyectado aquí para asegurar alcance)
+    if (!window.toggleMonthEvents) {
+        window.toggleMonthEvents = function (monthKey) {
+            const container = document.getElementById(`events-grid-${monthKey}`);
+            const icon = document.getElementById(`icon-${monthKey}`);
+            if (container) {
+                const isHidden = container.style.display === 'none';
+                container.style.display = isHidden ? 'grid' : 'none';
+                if (icon) {
+                    icon.style.transform = isHidden ? 'rotate(90deg)' : 'rotate(0deg)';
+                }
+            }
+        };
+    }
+
+    const now = new Date();
+    const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+
     Object.entries(eventsByMonth).forEach(([monthKey, monthEvents]) => {
         const [year, month] = monthKey.split('-');
         const monthName = new Date(parseInt(year), parseInt(month) - 1, 1).toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
 
+        // Lógica de colapsado: Si el mes es anterior al actual, ocultar por defecto
+        const isPastMonth = monthKey < currentMonthKey;
+        const isExpanded = !isPastMonth;
+        const displayStyle = isExpanded ? 'grid' : 'none';
+        const iconRotation = isExpanded ? 'rotate(90deg)' : 'rotate(0deg)';
+        const headerColor = isPastMonth ? 'var(--text-muted)' : 'var(--primary)';
+        const headerClass = isPastMonth ? 'text-muted' : 'text-primary';
+
         html += `
-            <div class="month-section" data-month="${monthKey}" style="margin-bottom: 2.5rem;">
-                <h3 style="text-transform: capitalize; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--primary); color: var(--primary); font-size: 1.3rem;">
-                    📅 ${monthName}
-                </h3>
-                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.75rem;">
+            <div class="month-section" data-month="${monthKey}" style="margin-bottom: 2rem;">
+                <div 
+                    onclick="toggleMonthEvents('${monthKey}')"
+                    style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid ${isPastMonth ? 'var(--border)' : 'var(--primary)'}; transition: all 0.2s;">
+                    
+                    <svg id="icon-${monthKey}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="20" height="20" 
+                        style="transform: ${iconRotation}; transition: transform 0.3s ease; color: ${headerColor};">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+
+                    <h3 style="margin: 0; text-transform: capitalize; color: ${headerColor}; font-size: 1.3rem; flex: 1;">
+                        ${monthName}
+                    </h3>
+                    
+                    ${isPastMonth ? '<span style="font-size: 0.8rem; color: var(--text-muted); background: var(--bg-secondary); padding: 2px 8px; border-radius: 12px;">Historial</span>' : ''}
+                </div>
+
+                <div id="events-grid-${monthKey}" style="display: ${displayStyle}; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.75rem; transition: all 0.3s ease;">
         `;
 
         monthEvents.forEach(event => {
@@ -2882,7 +2921,7 @@ function renderAllEventsView() {
                 dayOfWeek = event.dateObj.toLocaleDateString('es-ES', { weekday: 'long' });
             } catch (e) { }
 
-            // Verificar si el evento ya pasó
+            // Verificar si el evento ya pasó (día específico dentro del mes)
             const hoy = new Date();
             hoy.setHours(0, 0, 0, 0);
             const eventoPasado = event.dateObj < hoy;
@@ -2915,7 +2954,7 @@ function renderAllEventsView() {
                     typeClass = 'notice';
             }
 
-            // Si el evento pasó, usar colores grises
+            // Si el evento pasó, usar colores grises (manteniendo la lógica visual existente)
             if (eventoPasado) {
                 bgColor = 'linear-gradient(135deg, #9ca3af 0%, #6b7280 100%)';
             }
@@ -3057,19 +3096,498 @@ function updateEventFilterStats(visibleCount) {
 // GESTIÓN DE EMPLEADOS
 // ==========================================
 
+// ==========================================
+// SERVICIO DE CORREO (GOOGLE APPS SCRIPT)
+// ==========================================
+
+// ¡IMPORTANTE! Reemplaza este valor con la URL de tu Web App de Apps Script publicada:
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzYCoUUKkv59W_RUS6F1Y5NFAiuHrC8Et1mtGcbIO4EUVFD-eejxAUXARzBJd_9qjOkbg/exec";
+
+// ==========================================
+// GENERADOR DE HTML DE CORREO LOCAL (Agregado para prueba precisa)
+// ==========================================
+
+// ==========================================
+// GENERADOR DE HTML DE CORREO LOCAL (Agregado para prueba precisa)
+// ==========================================
+
+function generateGeneralScheduleHtml(weekOffset) {
+    const weekKey = weekOffset.toString();
+    const daysLabel = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
+    const locationColors = {
+        'guardia': { bg: 'rgba(255, 214, 10, 0.2)', text: '#FFD60A' },
+        'valle': { bg: 'rgba(10, 132, 255, 0.2)', text: '#0A84FF' },
+        'mitras': { bg: 'rgba(48, 209, 88, 0.2)', text: '#30D158' }
+    };
+    const days = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo'];
+
+    let html = `
+    <div style="margin-top: 30px; background: #2C2C2E; border-radius: 16px; padding: 20px; border: 1px solid #3A3A3C;">
+        <h3 style="color: #FFFFFF; font-size: 18px; margin: 0 0 15px 0; font-weight: 600;">Horario General del Equipo</h3>
+        <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: separate; border-spacing: 0; font-size: 10px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+                <thead>
+                    <tr>
+                        <th style="padding: 10px; text-align: left; color: #8E8E93; border-bottom: 1px solid #3A3A3C;">Emp</th>
+                        ${daysLabel.map(d => `<th style="padding: 10px; text-align: center; color: #8E8E93; border-bottom: 1px solid #3A3A3C;">${d}</th>`).join('')}
+                    </tr>
+                </thead>
+                <tbody>`;
+
+    for (let i = 1; i <= 7; i++) {
+        let employeeId = null;
+        let displayName = 'Vacante';
+
+        if (state.weeklyOverrides[weekKey] && state.weeklyOverrides[weekKey][i]) {
+            employeeId = state.weeklyOverrides[weekKey][i].person;
+        } else {
+            let baseId = (i - 1 - weekOffset) % 7;
+            if (baseId < 0) baseId += 7;
+            baseId += 1;
+            employeeId = state.assignments[baseId];
+        }
+
+        if (employeeId) {
+            const profile = state.employeeProfiles[employeeId];
+            displayName = profile ? (profile.displayName || employeeId) : employeeId;
+            displayName = displayName.split(' ')[0];
+        }
+
+        const schedule = scheduleData.find(s => s.id === i);
+        const borderStyle = i === 7 ? '' : 'border-bottom: 1px solid #3A3A3C;';
+
+        html += `<tr>
+            <td style="padding: 8px 4px; ${borderStyle} font-weight: 500; color: #FFFFFF;">${displayName}</td>`;
+
+        days.forEach(d => {
+            const dayData = schedule ? schedule[d] : null;
+            if (dayData) {
+                const loc = dayData.location;
+                const colors = locationColors[loc] || { bg: '#3A3A3C', text: '#FFFFFF' };
+                html += `
+                <td style="padding: 4px; ${borderStyle} text-align: center;">
+                    <div style="font-size: 8px; font-weight: 700; color: ${colors.text}; background: ${colors.bg}; border-radius: 4px; padding: 2px 4px; display: inline-block;">
+                        ${loc.substring(0, 1).toUpperCase()}
+                    </div>
+                </td>`;
+            } else {
+                html += `<td style="padding: 4px; ${borderStyle} text-align: center; color: #48484A;">-</td>`;
+            }
+        });
+
+        html += `</tr>`;
+    }
+
+    html += `</tbody></table></div></div>`;
+    return html;
+}
+
+function generateEmailHtmlForEmployee(employeeId, weekOffset) {
+    const weekStart = getWeekStartDate(weekOffset);
+    const weekEnd = getWeekEndDate(weekOffset);
+    const dateRange = `${weekStart.getDate()} ${weekStart.toLocaleString('es-ES', { month: 'short' })} - ${weekEnd.getDate()} ${weekEnd.toLocaleString('es-ES', { month: 'short' })}`;
+    const capitalizedDateRange = dateRange.replace(/\b\w/g, c => c.toUpperCase());
+
+    const scheduleId = getScheduleForPerson(employeeId, weekOffset);
+    const schedule = scheduleData.find(s => s.id === scheduleId);
+
+    const profile = state.employeeProfiles[employeeId] || {};
+    const displayName = profile.displayName || employeeId;
+
+    const weekKey = weekOffset.toString();
+    let esTemporal = false;
+    let comentario = '';
+    if (state.weeklyOverrides[weekKey]) {
+        for (const [schId, data] of Object.entries(state.weeklyOverrides[weekKey])) {
+            if (data.person === employeeId && parseInt(schId) === scheduleId) {
+                esTemporal = true;
+                comentario = data.comment;
+            }
+        }
+    }
+
+    const colors = {
+        bg: '#000000',
+        card: '#1C1C1E',
+        // Change header gradient if modified
+        headerGradient: esTemporal
+            ? 'linear-gradient(135deg, #FF9F0A 0%, #FF375F 100%)' // Orange to Red for changes
+            : 'linear-gradient(135deg, #5e5ce6 0%, #bf5af2 100%)', // Original Indigo/Purple
+        text: '#FFFFFF',
+        textSecondary: '#8E8E93',
+        border: '#2C2C2E',
+        accent: esTemporal ? '#FF9F0A' : '#0A84FF', // Accent color changes too
+        locMitras: { text: '#30D158', bg: 'rgba(48, 209, 88, 0.15)', border: 'rgba(48, 209, 88, 0.3)' },
+        locValle: { text: '#0A84FF', bg: 'rgba(10, 132, 255, 0.15)', border: 'rgba(10, 132, 255, 0.3)' },
+        locGuardia: { text: '#FFD60A', bg: 'rgba(255, 214, 10, 0.15)', border: 'rgba(255, 214, 10, 0.3)' }
+    };
+
+    const getLocStyle = (loc) => {
+        if (loc === 'mitras') return colors.locMitras;
+        if (loc === 'valle') return colors.locValle;
+        if (loc === 'guardia') return colors.locGuardia;
+        return { text: '#fff', bg: '#333', border: '#444' };
+    };
+
+    let tableRows = '';
+    const days = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo'];
+    const daysLabel = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+
+    if (schedule) {
+        days.forEach((d, i) => {
+            const diaSchedule = schedule[d];
+            const isLast = i === days.length - 1;
+            const borderStyle = isLast ? '' : `border-bottom: 1px solid ${colors.border};`;
+
+            if (diaSchedule) {
+                const style = getLocStyle(diaSchedule.location);
+                tableRows += `
+                 <tr>
+                    <td style="padding: 12px 0; ${borderStyle} color: ${colors.text}; font-weight: 500;">${daysLabel[i]}</td>
+                    <td style="padding: 12px 0; ${borderStyle} color: ${colors.textSecondary}; text-align: center;">${diaSchedule.time}</td>
+                    <td style="padding: 12px 0; ${borderStyle} text-align: right;">
+                        <span style="background: ${style.bg}; color: ${style.text}; border: 1px solid ${style.border}; padding: 4px 8px; border-radius: 8px; font-size: 11px; font-weight: 600; text-transform: capitalize;">
+                            ${diaSchedule.location}
+                        </span>
+                    </td>
+                 </tr>`;
+            } else {
+                tableRows += `
+                 <tr>
+                    <td style="padding: 12px 0; ${borderStyle} color: ${colors.text}; font-weight: 500;">${daysLabel[i]}</td>
+                    <td colspan="2" style="padding: 12px 0; ${borderStyle} color: ${colors.textSecondary}; text-align: right; font-style: italic;">Descanso</td>
+                 </tr>`;
+            }
+        });
+    }
+
+    let eventosHtml = '';
+    const events = [];
+    const toISODate = (d) => {
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
+    const ws = toISODate(weekStart);
+    const we = toISODate(weekEnd);
+
+    if (state.events) {
+        Object.values(state.events).forEach(ev => {
+            const d = ev.date;
+            if (d && d >= ws && d <= we) events.push(ev);
+        });
+    }
+    if (events.length > 0) {
+        events.sort((a, b) => a.date.localeCompare(b.date));
+        eventosHtml = `
+        <div style="margin-top: 30px; background: ${colors.card}; border-radius: 16px; padding: 20px; border: 1px solid ${colors.border};">
+            <h3 style="color: ${colors.accent}; font-size: 16px; margin: 0 0 15px 0; border-bottom: 2px solid ${colors.accent}; display: inline-block; padding-bottom: 5px;">Eventos de la Semana</h3>
+            <ul style="list-style: none; padding: 0; margin: 0;">
+                ${events.map(e => `
+                    <li style="margin-bottom: 10px; display: flex; align-items: center; gap: 10px;">
+                        <span style="background: #FF9F0A; color: #000; font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 4px;">FESTIVO</span>
+                        <span style="color: ${colors.textSecondary}; font-size: 13px;">${e.date}: ${e.text}</span>
+                    </li>
+                `).join('')}
+            </ul>
+        </div>`;
+    }
+
+    const generalTableHtml = generateGeneralScheduleHtml(weekOffset);
+
+    return `
+    <!DOCTYPE html>
+    <html>
+    <body style="margin: 0; padding: 0; background-color: ${colors.bg}; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+        <div style="max-width: 600px; margin: 0 auto; background-color: ${colors.bg}; text-align: left;">
+            <!-- HEADER -->
+            <div style="background: ${colors.headerGradient}; padding: 40px 20px; text-align: center; border-radius: 0 0 24px 24px;">
+                <h1 style="color: white; margin: 0; font-size: 28px; font-weight: 700; letter-spacing: -0.5px;">Horario Semanal</h1>
+                <p style="color: rgba(255,255,255,0.8); margin: 5px 0 0 0; font-size: 14px;">Semana ${weekOffset + 1} | ${capitalizedDateRange}</p>
+                ${esTemporal ? `
+                    <div style="margin-top: 15px; display: inline-block; background: rgba(0,0,0,0.3); padding: 5px 12px; border-radius: 20px;">
+                        <span style="color: #FFF; font-weight: bold; font-size: 12px;">⚠️ HORARIO MODIFICADO</span>
+                    </div>`
+            : ''}
+            </div>
+
+            <!-- CONTENT -->
+            <div style="padding: 30px 20px;">
+                <p style="color: ${colors.textSecondary}; font-size: 16px; margin-bottom: 30px;">
+                    Hola <strong style="color: ${colors.text};">${displayName}</strong>,<br>
+                    Este es tu horario para la próxima semana:
+                </p>
+
+                ${esTemporal ? `
+                <div style="background: rgba(255, 159, 10, 0.15); border: 1px solid rgba(255, 159, 10, 0.5); padding: 20px; border-radius: 16px; margin-bottom: 25px; display: flex; align-items: start; gap: 15px;">
+                    <span style="font-size: 24px;">📝</span>
+                    <div>
+                        <strong style="color: #FF9F0A; font-size: 15px; display: block; margin-bottom: 5px;">Nota de Cambio:</strong>
+                        <p style="color: #FFFFFF; margin: 0; font-size: 14px; line-height: 1.4;">"${comentario}"</p>
+                    </div>
+                </div>` : ''}
+
+                <!-- MAIN CARD -->
+                <div style="background: ${colors.card}; border-radius: 20px; padding: 25px; border: 1px solid ${esTemporal ? '#FF9F0A' : colors.border}; box-shadow: 0 10px 30px rgba(0,0,0,0.5); position: relative; overflow: hidden;">
+                    ${esTemporal ? `<div style="position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: #FF9F0A;"></div>` : ''}
+                    
+                    <h3 style="color: ${colors.accent}; margin: 0 0 20px 0; font-size: 18px; display: flex; align-items: center; justify-content: space-between;">
+                        Tu Horario
+                        ${esTemporal ? `<span style="font-size: 10px; color: #000; background: #FF9F0A; padding: 2px 8px; border-radius: 10px; font-weight: 800; text-transform: uppercase;">Modificado</span>` : ''}
+                    </h3>
+                    
+                    <div style="background: ${esTemporal ? 'linear-gradient(90deg, #FF9F0A 0%, #FF375F 100%)' : 'linear-gradient(90deg, #5e5ce6 0%, #bf5af2 100%)'}; border-radius: 12px; padding: 15px; text-align: center; margin-bottom: 25px; box-shadow: 0 4px 15px ${esTemporal ? 'rgba(255, 159, 10, 0.3)' : 'rgba(94, 92, 230, 0.3)'};">
+                        <span style="color: white; font-weight: 700; font-size: 18px; letter-spacing: 0.5px;">
+                            ${schedule ? 'Horario ' + schedule.id : 'Sin Asignación'}
+                        </span>
+                    </div>
+
+                    <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                        <tbody>
+                            ${tableRows}
+                        </tbody>
+                    </table>
+                </div>
+
+                ${eventosHtml}
+
+                ${generalTableHtml}
+
+                <div style="text-align: center; margin-top: 40px; border-top: 1px solid #333; padding-top: 20px;">
+                    <p style="color: #48484A; font-size: 12px;">Sistema de Horarios | Ti_St</p>
+                </div>
+            </div>
+        </div>
+    </body>
+    </html>`;
+}
+
+/*
+function generateEmailHtmlForEmployee_OLD(employeeId, weekOffset) {
+    const weekStart = getWeekStartDate(weekOffset);
+    const weekEnd = getWeekEndDate(weekOffset);
+    const dateRange = `${weekStart.getDate()}/${weekStart.getMonth() + 1} - ${weekEnd.getDate()}/${weekEnd.getMonth() + 1}`;
+
+    // 2. Obtener el horario calculado para la persona (ya con overrides aplicados)
+    const scheduleId = getScheduleForPerson(employeeId, weekOffset);
+    const schedule = scheduleData.find(s => s.id === scheduleId);
+
+    // 3. Perfil
+    const profile = state.employeeProfiles[employeeId] || {};
+    const displayName = profile.displayName || employeeId;
+
+    // 4. Detectar si es un cambio temporal (reutilizando lógica local)
+    const weekKey = weekOffset.toString();
+    let esTemporal = false;
+    let comentario = '';
+    if (state.weeklyOverrides[weekKey]) {
+        for (const [schId, data] of Object.entries(state.weeklyOverrides[weekKey])) {
+            if (data.person === employeeId && parseInt(schId) === scheduleId) {
+                esTemporal = true;
+                comentario = data.comment;
+            }
+        }
+    }
+
+    // Estilos
+    const styles = {
+        box: 'background: #f3f4f6; padding: 15px; border-radius: 8px; margin-bottom: 20px;',
+        header: 'background: #4f46e5; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0;',
+        table: 'width: 100%; border-collapse: collapse; font-size: 14px; font-family: sans-serif;',
+        th: 'text-align: left; padding: 8px; border-bottom: 2px solid #ddd; background: #eef2ff;',
+        td: 'padding: 8px; border-bottom: 1px solid #eee;',
+        change: 'background: #fffbeb; color: #b45309; padding: 10px; border-left: 4px solid #f59e0b; margin: 10px 0;'
+    };
+
+    let tableHtml = `<table style="${styles.table}"><thead><tr><th style="${styles.th}">Día</th><th style="${styles.th}">Horario</th><th style="${styles.th}">Ubicación</th></tr></thead><tbody>`;
+    const days = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo'];
+    const daysLabel = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+
+    if (schedule) {
+        days.forEach((d, i) => {
+            const diaSchedule = schedule[d];
+            if (diaSchedule) {
+                tableHtml += `<tr><td style="${styles.td}"><strong>${daysLabel[i]}</strong></td><td style="${styles.td}">${diaSchedule.time}</td><td style="${styles.td}">${diaSchedule.location.toUpperCase()}</td></tr>`;
+            } else {
+                tableHtml += `<tr><td style="${styles.td}"><strong>${daysLabel[i]}</strong></td><td style="${styles.td}" colspan="2">Descanso</td></tr>`;
+            }
+        });
+    } else {
+        tableHtml += `<tr><td colspan="3" style="${styles.td}">Sin asignación esta semana</td></tr>`;
+    }
+    tableHtml += '</tbody></table>';
+
+    // Eventos
+    let eventosHtml = '';
+    const events = [];
+    // Recopilar eventos de esta semana
+    const toISODate = (d) => {
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
+    const ws = toISODate(weekStart);
+    const we = toISODate(weekEnd);
+
+    if (state.events) {
+        Object.values(state.events).forEach(ev => {
+            const d = ev.date;
+            if (d && d >= ws && d <= we) events.push(ev);
+        });
+    }
+    if (events.length > 0) {
+        eventosHtml = `<div style="${styles.box}"><h3 style="margin-top:0;">📅 Eventos</h3><ul style="padding-left: 20px;">${events.map(e => `<li><strong>${e.date}:</strong> ${e.text}</li>`).join('')}</ul></div>`;
+    }
+
+    return `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e5e7eb; border-radius: 8px;">
+        <div style="${styles.header}">
+            <h2 style="margin:0;">Horario Semanal [PRUEBA]</h2>
+            <p style="margin:5px 0 0;">Semana ${weekOffset + 1} (${dateRange})</p>
+        </div>
+        <div style="padding: 20px;">
+            <p>Hola <strong>${displayName}</strong>,</p>
+            <p>Este es un correo de prueba generado desde la App para validar los datos que el usuario ve.</p>
+            ${esTemporal ? `<div style="${styles.change}"><strong>⚠️ Cambio Temporal Activo:</strong> ${comentario}</div>` : ''}
+            ${eventosHtml}
+            <h3 style="color: #4f46e5;">Tu Horario Asignado: ${schedule ? 'Horario ' + schedule.id : 'Ninguno'}</h3>
+            ${tableHtml}
+            <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+            <p style="font-size: 12px; color: #888; text-align: center;">Sistema de Horarios Ti_St</p>
+        </div>
+    </div>`;
+}
+*/
+
+window.sendTestEmail = function () {
+    const emailInput = document.getElementById('testEmailInput');
+    const employeeSelect = document.getElementById('testEmployeeSelect');
+    const email = emailInput ? emailInput.value.trim() : '';
+    const employeeId = employeeSelect ? employeeSelect.value : '';
+    const weekSelect = document.getElementById('testWeekSelect');
+    const selectedOffset = weekSelect ? parseInt(weekSelect.value) : state.currentWeekOffset;
+
+    if (!email) {
+        alert('❌ Por favor ingresa un correo de destino.');
+        if (emailInput) emailInput.focus();
+        return;
+    }
+
+    if (!employeeId) {
+        alert('❌ Por favor selecciona qué empleado quieres simular.');
+        if (employeeSelect) employeeSelect.focus();
+        return;
+    }
+
+    if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL.includes("YOUR_APPS_SCRIPT_URL_HERE")) {
+        alert('⚠️ Error de Configuración: URL de Apps Script no válida.');
+        return;
+    }
+
+    const btn = document.querySelector('button[onclick="sendTestEmail()"]');
+    let originalText = 'Enviar Prueba';
+    if (btn) {
+        originalText = btn.innerHTML;
+        btn.innerHTML = 'Generando... ⏳';
+        btn.disabled = true;
+    }
+
+    // Generar HTML LOCALMENTE usando los datos reales de la App y la semana seleccionada
+    const htmlBodyCountent = generateEmailHtmlForEmployee(employeeId, selectedOffset);
+
+    const testPayload = {
+        action: "send_test",
+        recipient: email,
+        subject: `[PRUEBA] Horario de ${employeeId} - Semana ${selectedOffset + 1}`,
+        bodyHtml: htmlBodyCountent
+    };
+
+    fetch(APPS_SCRIPT_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(testPayload)
+    })
+        .then(() => {
+            alert(`✅ Correo de prueba enviado a ${email}.\n\nSe envió una copia exacta del horario que ${employeeId} tendría en la Semana ${selectedOffset + 1}.`);
+        })
+        .catch(error => {
+            console.error("Error enviando correo:", error);
+            alert('❌ Error de red: ' + error.message);
+        })
+        .finally(() => {
+            if (btn) {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        });
+};
+
 function openManageEmployees() {
     const modal = document.getElementById('employeesModal');
     const modalBody = modal.querySelector('.modal-body');
 
     const employees = state.employees || [];
 
+    // Generar opciones para el select
+    const employeeOptions = employees.map(emp => `<option value="${emp}">${emp}</option>`).join('');
+
+    // Generar opciones de semana
+    const currentOffset = state.currentWeekOffset;
+    const weekOptions = [
+        { offset: currentOffset - 1, label: `Semana Pasada (${currentOffset})` },
+        { offset: currentOffset, label: `Semana Actual (${currentOffset + 1})` },
+        { offset: currentOffset + 1, label: `Próxima Semana (${currentOffset + 2})` },
+        { offset: currentOffset + 2, label: `Semana Subsiguiente (${currentOffset + 3})` }
+    ].map(opt => `<option value="${opt.offset}" ${opt.offset === currentOffset ? 'selected' : ''}>${opt.label}</option>`).join('');
+
     let html = `
         <div style="margin-bottom: 1.5rem;">
             <p style="color: var(--text-muted); margin-bottom: 1rem;">
-                Gestiona la información de contacto de cada empleado. El <strong>Nombre para Mostrar</strong> es cómo aparecerá en los horarios.
+                Gestiona la información de contacto de cada empleado.
+            </p>
+        </div>
+
+        <!-- SECCIÓN DE PRUEBA DE CORREO MEJORADA -->
+        <div style="margin-bottom: 2rem; padding: 1.25rem; background: rgba(120, 120, 128, 0.05); border-radius: 12px; border: 1px dashed var(--primary);">
+            <h3 style="margin-top: 0; margin-bottom: 1rem; color: var(--primary); display: flex; align-items: center; gap: 0.5rem; font-size: 1rem;">
+                📧 Simulador de Envío de Horario
+            </h3>
+            <div style="display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1rem;">
+                <!-- Week Selector -->
+                <div>
+                     <label style="display: block; margin-bottom: 0.4rem; font-size: 0.85rem; font-weight: 600;">Semana a Simular:</label>
+                     <select id="testWeekSelect" style="width: 100%; padding: 0.6rem; border: 1px solid var(--border); border-radius: 8px; font-size: 0.95rem;">
+                        ${weekOptions}
+                     </select>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div>
+                        <label style="display: block; margin-bottom: 0.4rem; font-size: 0.85rem; font-weight: 600;">Simular Horario de:</label>
+                        <select id="testEmployeeSelect" style="width: 100%; padding: 0.6rem; border: 1px solid var(--border); border-radius: 8px; font-size: 0.95rem;">
+                            <option value="">-- Seleccionar Empleado --</option>
+                            ${employeeOptions}
+                        </select>
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 0.4rem; font-size: 0.85rem; font-weight: 600;">Enviar Copia A:</label>
+                        <input type="email" id="testEmailInput" placeholder="tucorreo@ejemplo.com" style="width: 100%; padding: 0.6rem; border: 1px solid var(--border); border-radius: 8px; font-size: 0.95rem;">
+                    </div>
+                </div>
+            </div>
+            <button onclick="sendTestEmail()" class="btn-primary" style="width: 100%; padding: 0.6rem 1rem; font-size: 0.9rem;">
+                Enviar Prueba de Horario Real
+            </button>
+             <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.75rem; margin-bottom: 0; text-align: center;">
+                Genera el correo usando los datos EXACTOS que existen para la semana seleccionada.
             </p>
         </div>
     `;
+
+
 
     if (employees.length === 0) {
         html += `

@@ -2031,6 +2031,10 @@ body {
     #general-tab th:first-child,
     #general-tab td:first-child {
         width: 15%;
+        font-size: 2.6rem;
+        /* Nombre más grande en móvil */
+        font-weight: 800;
+        line-height: 1.1;
     }
 
     #general-tab th:not(:first-child),
