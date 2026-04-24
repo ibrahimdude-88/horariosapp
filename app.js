@@ -3168,9 +3168,14 @@ function generateGeneralScheduleHtml(weekOffset) {
         if (state.weeklyOverrides[weekKey] && state.weeklyOverrides[weekKey][i]) {
             employeeId = state.weeklyOverrides[weekKey][i].person;
         } else {
-            let baseId = (i - 1 - weekOffset) % 7;
-            if (baseId < 0) baseId += 7;
-            baseId += 1;
+            let baseId;
+            if (i === 7) {
+                baseId = 7;
+            } else {
+                baseId = (i - 1 - weekOffset) % 6;
+                if (baseId < 0) baseId += 6;
+                baseId += 1;
+            }
             employeeId = state.assignments[baseId];
         }
 
@@ -3182,12 +3187,21 @@ function generateGeneralScheduleHtml(weekOffset) {
 
         const schedule = scheduleData.find(s => s.id === i);
         const borderStyle = i === 7 ? '' : 'border-bottom: 1px solid #3A3A3C;';
+        const rowStyle = i === 7 ? 'background: rgba(48, 209, 88, 0.05);' : '';
 
-        html += `<tr>
+        html += `<tr style="${rowStyle}">
             <td style="padding: 8px 4px; ${borderStyle} font-weight: 500; color: #FFFFFF;">${displayName}</td>`;
 
-        days.forEach(d => {
-            const dayData = schedule ? schedule[d] : null;
+        days.forEach((d, dayIndex) => {
+            let dayData = schedule ? schedule[d] : null;
+            
+            // Apply location changes if present
+            if (dayData && state.locationChanges && state.locationChanges[weekKey] && state.locationChanges[weekKey][employeeId]) {
+                const locChange = state.locationChanges[weekKey][employeeId];
+                if (locChange.days && locChange.days.includes(dayIndex) && locChange.originalLocation === dayData.location) {
+                    dayData = { ...dayData, location: locChange.newLocation };
+                }
+            }
             if (dayData) {
                 const loc = dayData.location;
                 const colors = locationColors[loc] || { bg: '#3A3A3C', text: '#FFFFFF' };
@@ -3366,7 +3380,7 @@ function generateEmailHtmlForEmployee(employeeId, weekOffset) {
                     
                     <div style="background: ${esTemporal ? 'linear-gradient(90deg, #FF9F0A 0%, #FF375F 100%)' : 'linear-gradient(90deg, #5e5ce6 0%, #bf5af2 100%)'}; border-radius: 12px; padding: 15px; text-align: center; margin-bottom: 25px; box-shadow: 0 4px 15px ${esTemporal ? 'rgba(255, 159, 10, 0.3)' : 'rgba(94, 92, 230, 0.3)'};">
                         <span style="color: white; font-weight: 700; font-size: 18px; letter-spacing: 0.5px;">
-                            ${schedule ? 'Horario ' + schedule.id : 'Sin Asignación'}
+                            ${schedule ? schedule.name : 'Sin Asignación'}
                         </span>
                     </div>
 
