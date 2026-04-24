@@ -524,7 +524,10 @@ function generarTablaHorarioGeneral(data, semana) {
     tabla += '</tr>';
 
     for (let i = 1; i <= 7; i++) {
-        const bgColor = i % 2 === 0 ? '#f9fafb' : 'white';
+        let bgColor = i % 2 === 0 ? '#f9fafb' : 'white';
+        if (i === 7) {
+            bgColor = '#f0fdf4'; // Light green for Fijo Mitras
+        }
         let employeeId = null;
         let displayName = 'Sin asignar';
         let isTemp = false;
