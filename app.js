@@ -514,7 +514,7 @@ function getWeeksFromStart(date) {
     const current = new Date(date);
     current.setHours(0, 0, 0, 0);
     const diffTime = current - start;
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
     return Math.floor(diffDays / 7);
 }
 
