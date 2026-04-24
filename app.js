@@ -21,6 +21,7 @@ let db; // Referencia a la base de datos
 const scheduleData = [
     {
         id: 1,
+        name: '1º Guardia',
         lunes: { time: '05:30 PM - 09:00 PM', location: 'guardia' },
         martes: { time: '05:30 PM - 09:00 PM', location: 'guardia' },
         miercoles: { time: '05:30 PM - 09:00 PM', location: 'guardia' },
@@ -31,6 +32,7 @@ const scheduleData = [
     },
     {
         id: 2,
+        name: '2º Valle',
         lunes: { time: '10:00 AM - 07:00 PM', location: 'valle' },
         martes: { time: '10:00 AM - 07:00 PM', location: 'valle' },
         miercoles: { time: '10:00 AM - 07:00 PM', location: 'valle' },
@@ -41,16 +43,18 @@ const scheduleData = [
     },
     {
         id: 3,
-        lunes: { time: '10:00 AM - 07:00 PM', location: 'mitras' },
-        martes: { time: '10:00 AM - 07:00 PM', location: 'mitras' },
-        miercoles: { time: '10:00 AM - 07:00 PM', location: 'mitras' },
-        jueves: { time: '10:00 AM - 07:00 PM', location: 'mitras' },
-        viernes: { time: '10:00 AM - 07:00 PM', location: 'mitras' },
+        name: '3º Mitras',
+        lunes: { time: '08:30 AM - 05:30 PM', location: 'mitras' },
+        martes: { time: '08:30 AM - 05:30 PM', location: 'mitras' },
+        miercoles: { time: '08:30 AM - 05:30 PM', location: 'mitras' },
+        jueves: { time: '08:30 AM - 05:30 PM', location: 'mitras' },
+        viernes: { time: '08:30 AM - 05:30 PM', location: 'mitras' },
         sabado: null,
         domingo: null
     },
     {
         id: 4,
+        name: '4º Guardia',
         lunes: { time: '05:30 PM - 09:00 PM', location: 'guardia' },
         martes: { time: '05:30 PM - 09:00 PM', location: 'guardia' },
         miercoles: { time: '05:30 PM - 09:00 PM', location: 'guardia' },
@@ -61,6 +65,7 @@ const scheduleData = [
     },
     {
         id: 5,
+        name: '5º Valle',
         lunes: { time: '10:00 AM - 07:00 PM', location: 'valle' },
         martes: { time: '10:00 AM - 07:00 PM', location: 'valle' },
         miercoles: { time: '10:00 AM - 07:00 PM', location: 'valle' },
@@ -71,6 +76,7 @@ const scheduleData = [
     },
     {
         id: 6,
+        name: '6º Mitras',
         lunes: { time: '08:30 AM - 05:30 PM', location: 'mitras' },
         martes: { time: '08:30 AM - 05:30 PM', location: 'mitras' },
         miercoles: { time: '08:30 AM - 05:30 PM', location: 'mitras' },
@@ -81,11 +87,12 @@ const scheduleData = [
     },
     {
         id: 7,
-        lunes: { time: '08:30 AM - 05:30 PM', location: 'mitras' },
-        martes: { time: '08:30 AM - 05:30 PM', location: 'mitras' },
-        miercoles: { time: '08:30 AM - 05:30 PM', location: 'mitras' },
-        jueves: { time: '08:30 AM - 05:30 PM', location: 'mitras' },
-        viernes: { time: '08:30 AM - 05:30 PM', location: 'mitras' },
+        name: 'Fijo Mitras',
+        lunes: { time: '10:00 AM - 07:00 PM', location: 'mitras' },
+        martes: { time: '10:00 AM - 07:00 PM', location: 'mitras' },
+        miercoles: { time: '10:00 AM - 07:00 PM', location: 'mitras' },
+        jueves: { time: '10:00 AM - 07:00 PM', location: 'mitras' },
+        viernes: { time: '10:00 AM - 07:00 PM', location: 'mitras' },
         sabado: null,
         domingo: null
     }
@@ -531,8 +538,9 @@ function getWeekDateRange(offset) {
 }
 
 function getRotatedScheduleId(baseId, weekOffset) {
-    let rotated = (baseId - 1 + weekOffset) % 7;
-    if (rotated < 0) rotated += 7;
+    if (baseId === 7) return 7;
+    let rotated = (baseId - 1 + weekOffset) % 6;
+    if (rotated < 0) rotated += 6;
     return rotated + 1;
 }
 
@@ -689,9 +697,14 @@ function getPersonForSchedule(scheduleId, weekOffset) {
         };
     }
 
-    let baseId = (scheduleId - 1 - weekOffset) % 7;
-    if (baseId < 0) baseId += 7;
-    baseId += 1;
+    let baseId;
+    if (scheduleId === 7) {
+        baseId = 7;
+    } else {
+        baseId = (scheduleId - 1 - weekOffset) % 6;
+        if (baseId < 0) baseId += 6;
+        baseId += 1;
+    }
 
     const personName = state.assignments[baseId];
 
@@ -754,7 +767,7 @@ function renderConfigTable() {
         tr.innerHTML = `
             <td>
                 <div style="display: flex; align-items: center; gap: 0.5rem;">
-                    <strong>Horario ${schedule.id}</strong>
+                    <strong>${schedule.name}</strong>
                     ${actionBtn}
                 </div>
             </td>
@@ -1228,6 +1241,7 @@ function renderGeneralView() {
 
         tr.innerHTML = `
             <td class="person-cell">
+                <strong>${schedule.name}</strong><br>
                 ${personDisplay}
                 ${commentDisplay}
                 ${vacationDisplay}
@@ -1329,31 +1343,44 @@ function addToLocationTables(personData, schedule) {
 
 function openManageAssignments() {
     const modalBody = document.querySelector('#assignModal .modal-body');
+    const weekDisplay = `Semana ${state.currentWeekOffset + 1}`;
     modalBody.innerHTML = `
-        <h3>Gestionar Asignaciones Base</h3>
-        <p class="text-muted" style="margin-bottom: 1rem;">Asigna las personas a los horarios iniciales (Semana 1).</p>
+        <h3>Gestionar Asignaciones (${weekDisplay})</h3>
+        <p class="text-muted" style="margin-bottom: 1rem;">Asigna quién trabajará cada turno durante esta semana. La rotación continuará desde este punto.</p>
         <div class="assignments-list" style="max-height: 300px; overflow-y: auto;">
-            ${scheduleData.map(s => `
+            ${scheduleData.map(s => {
+                let baseId;
+                if (s.id === 7) {
+                    baseId = 7;
+                } else {
+                    baseId = (s.id - 1 - state.currentWeekOffset) % 6;
+                    if (baseId < 0) baseId += 6;
+                    baseId += 1;
+                }
+                const currentAssignee = state.assignments[baseId] || 'Asignar';
+                return `
                 <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.5rem; border-bottom: 1px solid var(--border);">
-                    <span>Horario ${s.id}</span>
-                    <button class="btn-secondary btn-sm" onclick="editBaseAssignment(${s.id})">
-                        ${state.assignments[s.id] || 'Asignar'}
+                    <span>${s.name}</span>
+                    <button class="btn-secondary btn-sm" onclick="editBaseAssignment(${s.id}, ${baseId})">
+                        ${currentAssignee}
                     </button>
                 </div>
-            `).join('')}
+                `;
+            }).join('')}
         </div>
     `;
     document.querySelector('#assignModal .modal-footer').style.display = 'none';
     elements.assignModal.classList.add('active');
 }
 
-window.editBaseAssignment = function (scheduleId) {
-    currentEditingScheduleId = scheduleId;
+window.editBaseAssignment = function (scheduleId, baseId) {
+    currentEditingScheduleId = baseId;
     document.getElementById('modalScheduleId').textContent = scheduleId;
 
     const modalBody = document.querySelector('#assignModal .modal-body');
+    const scheduleName = scheduleData.find(s => s.id === scheduleId).name;
     modalBody.innerHTML = `
-        <p>Asignar persona al <strong>Horario ${scheduleId}</strong> (Base)</p>
+        <p>Asignar persona al <strong>${scheduleName}</strong> (Semana actual)</p>
         <div class="form-group">
             <label>Seleccionar Empleado</label>
             <div class="employee-select-group">
@@ -1372,7 +1399,7 @@ window.editBaseAssignment = function (scheduleId) {
     `;
     document.querySelector('#assignModal .modal-footer').style.display = 'flex';
     setupNewEmployeeListeners();
-    const currentName = state.assignments[scheduleId];
+    const currentName = state.assignments[baseId];
     if (currentName) {
         setTimeout(() => {
             const select = document.getElementById('assignPersonSelect');

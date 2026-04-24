@@ -24,6 +24,7 @@ const CONFIG = {
 const scheduleData = [
     {
         id: 1,
+        name: '1º Guardia',
         lunes: { time: '05:30 PM - 09:00 PM', location: 'guardia' },
         martes: { time: '05:30 PM - 09:00 PM', location: 'guardia' },
         miercoles: { time: '05:30 PM - 09:00 PM', location: 'guardia' },
@@ -34,6 +35,7 @@ const scheduleData = [
     },
     {
         id: 2,
+        name: '2º Valle',
         lunes: { time: '10:00 AM - 07:00 PM', location: 'valle' },
         martes: { time: '10:00 AM - 07:00 PM', location: 'valle' },
         miercoles: { time: '10:00 AM - 07:00 PM', location: 'valle' },
@@ -44,16 +46,18 @@ const scheduleData = [
     },
     {
         id: 3,
-        lunes: { time: '10:00 AM - 07:00 PM', location: 'mitras' },
-        martes: { time: '10:00 AM - 07:00 PM', location: 'mitras' },
-        miercoles: { time: '10:00 AM - 07:00 PM', location: 'mitras' },
-        jueves: { time: '10:00 AM - 07:00 PM', location: 'mitras' },
-        viernes: { time: '10:00 AM - 07:00 PM', location: 'mitras' },
+        name: '3º Mitras',
+        lunes: { time: '08:30 AM - 05:30 PM', location: 'mitras' },
+        martes: { time: '08:30 AM - 05:30 PM', location: 'mitras' },
+        miercoles: { time: '08:30 AM - 05:30 PM', location: 'mitras' },
+        jueves: { time: '08:30 AM - 05:30 PM', location: 'mitras' },
+        viernes: { time: '08:30 AM - 05:30 PM', location: 'mitras' },
         sabado: null,
         domingo: null
     },
     {
         id: 4,
+        name: '4º Guardia',
         lunes: { time: '05:30 PM - 09:00 PM', location: 'guardia' },
         martes: { time: '05:30 PM - 09:00 PM', location: 'guardia' },
         miercoles: { time: '05:30 PM - 09:00 PM', location: 'guardia' },
@@ -64,6 +68,7 @@ const scheduleData = [
     },
     {
         id: 5,
+        name: '5º Valle',
         lunes: { time: '10:00 AM - 07:00 PM', location: 'valle' },
         martes: { time: '10:00 AM - 07:00 PM', location: 'valle' },
         miercoles: { time: '10:00 AM - 07:00 PM', location: 'valle' },
@@ -74,6 +79,7 @@ const scheduleData = [
     },
     {
         id: 6,
+        name: '6º Mitras',
         lunes: { time: '08:30 AM - 05:30 PM', location: 'mitras' },
         martes: { time: '08:30 AM - 05:30 PM', location: 'mitras' },
         miercoles: { time: '08:30 AM - 05:30 PM', location: 'mitras' },
@@ -84,11 +90,12 @@ const scheduleData = [
     },
     {
         id: 7,
-        lunes: { time: '08:30 AM - 05:30 PM', location: 'mitras' },
-        martes: { time: '08:30 AM - 05:30 PM', location: 'mitras' },
-        miercoles: { time: '08:30 AM - 05:30 PM', location: 'mitras' },
-        jueves: { time: '08:30 AM - 05:30 PM', location: 'mitras' },
-        viernes: { time: '08:30 AM - 05:30 PM', location: 'mitras' },
+        name: 'Fijo Mitras',
+        lunes: { time: '10:00 AM - 07:00 PM', location: 'mitras' },
+        martes: { time: '10:00 AM - 07:00 PM', location: 'mitras' },
+        miercoles: { time: '10:00 AM - 07:00 PM', location: 'mitras' },
+        jueves: { time: '10:00 AM - 07:00 PM', location: 'mitras' },
+        viernes: { time: '10:00 AM - 07:00 PM', location: 'mitras' },
         sabado: null,
         domingo: null
     }
@@ -253,10 +260,14 @@ function obtenerHorarioEmpleado(employeeId, semana, data) {
         }
 
         if (baseScheduleId) {
-            // Calcular horario rotado
-            let rotated = (baseScheduleId - 1 + semana.weekOffset) % 7;
-            if (rotated < 0) rotated += 7;
-            scheduleId = rotated + 1;
+            if (baseScheduleId === 7) {
+                scheduleId = 7;
+            } else {
+                // Calcular horario rotado
+                let rotated = (baseScheduleId - 1 + semana.weekOffset) % 6;
+                if (rotated < 0) rotated += 6;
+                scheduleId = rotated + 1;
+            }
         }
     }
 
@@ -272,7 +283,7 @@ function obtenerHorarioEmpleado(employeeId, semana, data) {
     const schedule = scheduleData.find(s => s.id === scheduleId);
 
     return {
-        horario: `Horario ${scheduleId}`,
+        horario: schedule.name,
         horarioDetallado: schedule,
         scheduleId: scheduleId,
         esTemporal: esTemporal,
@@ -475,7 +486,7 @@ function generarTablaHorarioGeneral(data, semana) {
     };
 
     let tabla = '<table style="width: 100%; border-collapse: collapse; font-size: 0.85em;">';
-    tabla += '<tr style="background: #667eea; color: white;"><th style="padding: 10px; text-align: left; border-radius: 8px 0 0 0;">Empleado</th>';
+    tabla += '<tr style="background: #667eea; color: white;"><th style="padding: 10px; text-align: left; border-radius: 8px 0 0 0;">Turno / Empleado</th>';
 
     // Agregar columnas para cada día
     diasNombres.forEach((dia, index) => {
@@ -497,9 +508,14 @@ function generarTablaHorarioGeneral(data, semana) {
             employeeId = weeklyOverrides[weekKey][i].person;
         } else {
             // Calcular rotación inversa para encontrar el empleado base
-            let baseId = (i - 1 - semana.weekOffset) % 7;
-            if (baseId < 0) baseId += 7;
-            baseId += 1;
+            let baseId;
+            if (i === 7) {
+                baseId = 7;
+            } else {
+                baseId = (i - 1 - semana.weekOffset) % 6;
+                if (baseId < 0) baseId += 6;
+                baseId += 1;
+            }
             employeeId = assignments[baseId];
         }
 
@@ -512,7 +528,7 @@ function generarTablaHorarioGeneral(data, semana) {
         // Obtener el horario detallado
         const schedule = scheduleData.find(s => s.id === i);
 
-        tabla += `<tr style="background: ${bgColor};"><td style="padding: 10px; border-bottom: 1px solid #e5e7eb;"><strong style="color: #667eea;">${displayName}</strong></td>`;
+        tabla += `<tr style="background: ${bgColor};"><td style="padding: 10px; border-bottom: 1px solid #e5e7eb;"><strong>${schedule ? schedule.name : 'Horario '+i}</strong><br><strong style="color: #667eea;">${displayName}</strong></td>`;
 
         // Agregar información de cada día
         dias.forEach(dia => {
