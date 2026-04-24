@@ -499,8 +499,29 @@ function generarTablaHorarioGeneral(data, semana) {
     const weeklyOverrides = data.weeklyOverrides || {};
     const weekKey = semana.weekOffset.toString();
 
-    let tabla = '<table style="width: 100%; border-collapse: collapse; font-size: 0.9em; margin-top: 10px;">';
-    tabla += '<tr style="background: #667eea; color: white;"><th style="padding: 12px; text-align: left; border-radius: 8px 0 0 0;">Turno</th><th style="padding: 12px; text-align: left; border-radius: 0 8px 0 0;">Empleado Asignado</th></tr>';
+    const dias = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo'];
+    const diasNombres = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+    const locationNames = {
+        'guardia': 'Guardia',
+        'valle': 'Valle',
+        'mitras': 'Mitras'
+    };
+
+    const locationColors = {
+        'guardia': { bg: '#fef3c7', text: '#92400e' },
+        'valle': { bg: '#dbeafe', text: '#1e40af' },
+        'mitras': { bg: '#dcfce7', text: '#166534' }
+    };
+
+    let tabla = '<table style="width: 100%; border-collapse: collapse; font-size: 0.85em;">';
+    tabla += '<tr style="background: #667eea; color: white;"><th style="padding: 10px; text-align: left; border-radius: 8px 0 0 0;">Turno / Empleado</th>';
+
+    // Agregar columnas para cada día
+    diasNombres.forEach((dia, index) => {
+        const isLast = index === diasNombres.length - 1;
+        tabla += `<th style="padding: 10px; text-align: center; font-size: 0.85em; ${isLast ? 'border-radius: 0 8px 0 0;' : ''}">${dia}</th>`;
+    });
+    tabla += '</tr>';
 
     for (let i = 1; i <= 7; i++) {
         const bgColor = i % 2 === 0 ? '#f9fafb' : 'white';
@@ -508,12 +529,10 @@ function generarTablaHorarioGeneral(data, semana) {
         let displayName = 'Sin asignar';
         let isTemp = false;
 
-        // Verificar si hay un cambio temporal para este horario
         if (weeklyOverrides[weekKey] && weeklyOverrides[weekKey][i]) {
             employeeId = weeklyOverrides[weekKey][i].person;
             isTemp = true;
         } else {
-            // Calcular rotación inversa para encontrar el empleado base
             let baseId;
             if (i === 7) {
                 baseId = 7;
@@ -533,10 +552,31 @@ function generarTablaHorarioGeneral(data, semana) {
 
         const schedule = scheduleData.find(s => s.id === i);
         const shiftName = schedule ? schedule.name : `Horario ${i}`;
-        
-        const tempBadge = isTemp ? ' <span style="background: #f59e0b; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.7em; margin-left: 5px;">Temp</span>' : '';
+        const tempBadge = isTemp ? ' <span style="background: #f59e0b; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.7em;">Temp</span>' : '';
 
-        tabla += `<tr style="background: ${bgColor};"><td style="padding: 12px; border-bottom: 1px solid #e5e7eb; font-weight: bold; color: #374151;">${shiftName}</td><td style="padding: 12px; border-bottom: 1px solid #e5e7eb; color: #667eea; font-weight: bold;">${displayName}${tempBadge}</td></tr>`;
+        tabla += `<tr style="background: ${bgColor};"><td style="padding: 10px; border-bottom: 1px solid #e5e7eb;"><strong>${shiftName}</strong><br><strong style="color: #667eea;">${displayName}</strong>${tempBadge}</td>`;
+
+        dias.forEach((dia, dayIndex) => {
+            let dayData = schedule ? schedule[dia] : null;
+            
+            // Check for location changes
+            if (dayData && data.locationChanges && data.locationChanges[weekKey] && data.locationChanges[weekKey][employeeId]) {
+                const locChange = data.locationChanges[weekKey][employeeId];
+                if (locChange.days && locChange.days.includes(dayIndex) && locChange.originalLocation === dayData.location) {
+                    // Clone the day data so we don't modify the global scheduleData
+                    dayData = { ...dayData, location: locChange.newLocation };
+                }
+            }
+
+            if (dayData) {
+                const locationColor = locationColors[dayData.location] || { bg: '#f3f4f6', text: '#374151' };
+                tabla += `<td style="padding: 8px; border-bottom: 1px solid #e5e7eb; text-align: center; font-size: 0.7em;"><div style="font-weight: 600; color: #374151; margin-bottom: 2px;">${dayData.time}</div><div style="background: ${locationColor.bg}; color: ${locationColor.text}; padding: 2px 6px; border-radius: 8px; font-weight: 600; display: inline-block;">${locationNames[dayData.location] || dayData.location}</div></td>`;
+            } else {
+                tabla += `<td style="padding: 8px; border-bottom: 1px solid #e5e7eb; text-align: center; color: #9ca3af; font-size: 0.7em;">-</td>`;
+            }
+        });
+
+        tabla += '</tr>';
     }
 
     tabla += '</table>';
