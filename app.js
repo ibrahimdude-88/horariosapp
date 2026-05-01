@@ -855,18 +855,8 @@ function renderConfigDayCells(schedule, weekOffset) {
         const isOnVacation = vacationDays.includes(dayIndex);
         const locationChange = personName ? getEmployeeLocationChange(personName, weekOffset) : null;
         
-        // Obtener el schedule de la persona para este día
-        let daySchedule = schedule;
-        if (isTemp && personName) {
-            // Si es un cambio temporal, obtener el horario que esta persona tiene en este día
-            const scheduleIdForPerson = getScheduleForPerson(personName, weekOffset, dayIndex);
-            if (scheduleIdForPerson) {
-                const personSchedule = scheduleData.find(s => s.id === scheduleIdForPerson);
-                if (personSchedule) daySchedule = personSchedule;
-            }
-        }
-        
-        const displaySchedule = locationChange ? applyLocationChangeToSchedule(daySchedule, locationChange) : daySchedule;
+        // Usar siempre el schedule de la fila (no el de la persona temporal)
+        const displaySchedule = locationChange ? applyLocationChangeToSchedule(schedule, locationChange) : schedule;
         const data = displaySchedule[days[dayIndex]];
         
         // Calcular si es hoy
@@ -915,25 +905,28 @@ function renderConfigDayCells(schedule, weekOffset) {
         const hasLocationChange = locationChange && data.location === locationChange.newLocation;
         let classes = hasLocationChange ? 'location-change-cell' : '';
         
-        // Indicador de cambio temporal por día
+        // Estilo para cambio temporal: fondo azul sutil + borde
+        let tempStyle = '';
         let tempDayIndicator = '';
         if (isTemp) {
-            tempDayIndicator = `<span style="display:block; font-size: 0.6rem; color: var(--primary); font-weight: 600; margin-top: 2px;">🔄 ${personName}</span>`;
+            tempStyle = 'background: rgba(59, 130, 246, 0.12); border: 1.5px solid rgba(59, 130, 246, 0.4); border-radius: 6px;';
+            tempDayIndicator = `<span style="display:block; font-size: 0.65rem; color: var(--primary); font-weight: 700; margin-top: 3px; background: rgba(59, 130, 246, 0.15); padding: 1px 4px; border-radius: 3px; text-align: center;">🔄 ${personName}</span>`;
         }
         
         if (applyHolidayEffect) {
-            let styles = todayStyle + 'background-color: rgba(16, 185, 129, 0.15); position: relative;';
+            let styles = todayStyle + tempStyle + 'background-color: rgba(16, 185, 129, 0.15); position: relative;';
             results.push(`<td class="${classes}" style="${styles}">
                 <div class="schedule-cell" style="opacity: 0.25; filter: blur(1.5px);">
                     <span class="time">${displayTime}</span>
                     <span class="location-badge ${data.location}">${data.location}</span>
                 </div>
-                <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: var(--success); font-weight: bold; font-size: 0.85rem; text-shadow: 0 1px 2px rgba(255,255,255,0.9); pointer-events: none; width: 100%; text-align: center;">
+                <div style="position: absolute; top: ${isTemp ? '35%' : '50%'}; left: 50%; transform: translate(-50%, -50%); color: var(--success); font-weight: bold; font-size: 0.85rem; text-shadow: 0 1px 2px rgba(255,255,255,0.9); pointer-events: none; width: 100%; text-align: center;">
                     FESTIVO
                 </div>
+                ${isTemp ? `<div style="position: relative; z-index: 2; margin-top: -0.5rem;">${tempDayIndicator}</div>` : ''}
             </td>`);
         } else {
-            results.push(`<td class="${classes}" style="${todayStyle}">
+            results.push(`<td class="${classes}" style="${todayStyle} ${tempStyle}">
                 <div class="schedule-cell">
                     <span class="time" ${isSpecialSchedule ? 'style="color: var(--success); font-weight: bold;"' : ''}>${displayTime}</span>
                     <span class="location-badge ${data.location}">${data.location}</span>
@@ -1561,6 +1554,7 @@ function renderGeneralDayCells(schedule, scheduleId, weekOffset) {
     for (let dayIndex = 0; dayIndex < 7; dayIndex++) {
         const personData = getPersonForSchedule(scheduleId, weekOffset, dayIndex);
         const personName = personData ? personData.name : null;
+        const isTemp = personData ? personData.isTemp : false;
         
         const vacationDays = personName ? getVacationDaysInWeek(personName, weekOffset) : [];
         const isOnVacation = vacationDays.includes(dayIndex);
@@ -1615,24 +1609,34 @@ function renderGeneralDayCells(schedule, scheduleId, weekOffset) {
         const hasLocationChange = locationChange && data.location === locationChange.newLocation;
         let classes = hasLocationChange ? 'location-change-cell' : '';
         
+        // Estilo para cambio temporal: fondo azul sutil + borde
+        let tempStyle = '';
+        let tempDayIndicator = '';
+        if (isTemp) {
+            tempStyle = 'background: rgba(59, 130, 246, 0.12); border: 1.5px solid rgba(59, 130, 246, 0.4); border-radius: 6px;';
+            tempDayIndicator = `<span style="display:block; font-size: 0.65rem; color: var(--primary); font-weight: 700; margin-top: 3px; background: rgba(59, 130, 246, 0.15); padding: 1px 4px; border-radius: 3px; text-align: center;">🔄 ${personName}</span>`;
+        }
+        
         if (applyHolidayEffect) {
-            let styles = todayStyle + 'background-color: rgba(16, 185, 129, 0.15); position: relative;';
+            let styles = todayStyle + tempStyle + 'background-color: rgba(16, 185, 129, 0.15); position: relative;';
             results.push(`<td class="${classes}" style="${styles}">
                 <div class="schedule-cell" style="opacity: 0.25; filter: blur(1.5px);">
                     <span class="time">${displayTime}</span>
                     <span class="location-badge ${data.location}">${data.location}</span>
                 </div>
-                <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: var(--success); font-weight: bold; font-size: 0.85rem; text-shadow: 0 1px 2px rgba(255,255,255,0.9); pointer-events: none; width: 100%; text-align: center;">
+                <div style="position: absolute; top: ${isTemp ? '35%' : '50%'}; left: 50%; transform: translate(-50%, -50%); color: var(--success); font-weight: bold; font-size: 0.85rem; text-shadow: 0 1px 2px rgba(255,255,255,0.9); pointer-events: none; width: 100%; text-align: center;">
                     FESTIVO
                 </div>
+                ${isTemp ? `<div style="position: relative; z-index: 2; margin-top: -0.5rem;">${tempDayIndicator}</div>` : ''}
             </td>`);
         } else {
-            results.push(`<td class="${classes}" style="${todayStyle}">
+            results.push(`<td class="${classes}" style="${todayStyle} ${tempStyle}">
                 <div class="schedule-cell">
                     <span class="time" ${isSpecialSchedule ? 'style="color: var(--success); font-weight: bold;"' : ''}>${displayTime}</span>
                     <span class="location-badge ${data.location}">${data.location}</span>
                     ${hasLocationChange ? '<span class="location-change-indicator">📍 Cambio</span>' : ''}
                     ${isSpecialSchedule ? '<span class="location-change-indicator" style="background: var(--success); color: white;">🕒 Especial</span>' : ''}
+                    ${tempDayIndicator}
                 </div>
             </td>`);
         }
