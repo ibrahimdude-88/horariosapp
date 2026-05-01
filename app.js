@@ -3110,6 +3110,30 @@ function renderEventsBannerV3(containerId) {
         }
     });
 
+    // Añadir vacaciones a la lista de eventos del banner (solo si caen en esta semana)
+    if (state.vacations) {
+        Object.entries(state.vacations).forEach(([employeeName, vacations]) => {
+            vacations.forEach(vac => {
+                if (vac.startDate && vac.endDate) {
+                    // Verificar si hay superposición entre las vacaciones y esta semana
+                    if (vac.startDate <= weekEndStr && vac.endDate >= weekStartStr) {
+                        // Usar la fecha de inicio o el inicio de la semana, lo que sea mayor, para mostrar el evento
+                        const displayDate = vac.startDate >= weekStartStr ? vac.startDate : weekStartStr;
+                        let endText = `(hasta el ${parseLocalDate(vac.endDate).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })})`;
+                        eventsToShow.push({
+                            dateStr: displayDate,
+                            dateObj: parseLocalDate(displayDate),
+                            type: 'vacation',
+                            text: `Vacaciones de ${employeeName} ${endText}`,
+                            employee: employeeName,
+                            endDate: vac.endDate
+                        });
+                    }
+                }
+            });
+        });
+    }
+
     // Si no hay en esta semana
     if (eventsToShow.length === 0) {
         container.innerHTML = `<div style="padding: 10px; background: #f9f9f9; border: 1px dashed #ccc; color: #aaa; text-align: center; font-size: 0.8em;">
@@ -3136,6 +3160,7 @@ function renderEventsBannerV3(containerId) {
             case 'holiday': bgColor = 'linear-gradient(135deg, #059669 0%, #10b981 100%)'; icon = '🎉'; break;
             case 'alert': bgColor = 'linear-gradient(135deg, #dc2626 0%, #ef4444 100%)'; icon = '⚠️'; break;
             case 'payday': bgColor = 'linear-gradient(135deg, #d97706 0%, #f59e0b 100%)'; icon = '💰'; break;
+            case 'vacation': bgColor = 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)'; icon = '🌴'; break;
             default: bgColor = 'linear-gradient(135deg, #2563eb 0%, #3b82f6 100%)'; icon = 'ℹ️';
         }
 
