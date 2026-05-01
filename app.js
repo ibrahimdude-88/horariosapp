@@ -1291,9 +1291,15 @@ window.renderSelectedIndividual = function (personName) {
     if (state.weeklyOverrides[weekKey]) {
         for (const [schId, data] of Object.entries(state.weeklyOverrides[weekKey])) {
             if (data.person === personName) {
-                let baseId = (parseInt(schId) - 1 - state.currentWeekOffset) % 7;
-                if (baseId < 0) baseId += 7;
-                baseId += 1;
+                const sid = parseInt(schId);
+                let baseId;
+                if (sid === 7) {
+                    baseId = 7;
+                } else {
+                    baseId = (sid - 1 - state.currentWeekOffset) % 6;
+                    if (baseId < 0) baseId += 6;
+                    baseId += 1;
+                }
                 const originalPerson = state.assignments[baseId] || 'Vacante';
                 
                 const dayNamesLong = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
