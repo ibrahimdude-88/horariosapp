@@ -544,7 +544,15 @@ function getRotatedScheduleId(baseId, weekOffset) {
     return rotated + 1;
 }
 
-function getScheduleForPerson(personName, weekOffset) {
+// Helper: ¿El override está activo en este día?
+// Si no tiene campo 'days' o está vacío, se trata como semana completa (retrocompatible)
+function isOverrideActiveOnDay(overrideData, dayIndex) {
+    if (dayIndex === null || dayIndex === undefined) return true;
+    if (!overrideData.days || overrideData.days.length === 0) return true;
+    return overrideData.days.includes(dayIndex);
+}
+
+function getScheduleForPerson(personName, weekOffset, dayIndex) {
     let baseScheduleId = null;
     for (const [id, name] of Object.entries(state.assignments)) {
         if (name === personName) {
@@ -557,7 +565,7 @@ function getScheduleForPerson(personName, weekOffset) {
     const weekKey = weekOffset.toString();
     if (state.weeklyOverrides[weekKey]) {
         for (const [schId, data] of Object.entries(state.weeklyOverrides[weekKey])) {
-            if (data.person === personName) {
+            if (data.person === personName && isOverrideActiveOnDay(data, dayIndex)) {
                 return parseInt(schId);
             }
         }
@@ -566,16 +574,19 @@ function getScheduleForPerson(personName, weekOffset) {
     const rotatedId = getRotatedScheduleId(baseScheduleId, weekOffset);
 
     if (state.weeklyOverrides[weekKey] && state.weeklyOverrides[weekKey][rotatedId]) {
-        const intruderName = state.weeklyOverrides[weekKey][rotatedId].person;
-        let intruderBaseId = null;
-        for (const [id, name] of Object.entries(state.assignments)) {
-            if (name === intruderName) {
-                intruderBaseId = parseInt(id);
-                break;
+        const overrideData = state.weeklyOverrides[weekKey][rotatedId];
+        if (isOverrideActiveOnDay(overrideData, dayIndex)) {
+            const intruderName = overrideData.person;
+            let intruderBaseId = null;
+            for (const [id, name] of Object.entries(state.assignments)) {
+                if (name === intruderName) {
+                    intruderBaseId = parseInt(id);
+                    break;
+                }
             }
-        }
-        if (intruderBaseId) {
-            return getRotatedScheduleId(intruderBaseId, weekOffset);
+            if (intruderBaseId) {
+                return getRotatedScheduleId(intruderBaseId, weekOffset);
+            }
         }
     }
     return rotatedId;
@@ -686,15 +697,19 @@ function applyLocationChangeToSchedule(schedule, locationChange) {
     return modifiedSchedule;
 }
 
-function getPersonForSchedule(scheduleId, weekOffset) {
+function getPersonForSchedule(scheduleId, weekOffset, dayIndex) {
     const weekKey = weekOffset.toString();
 
     if (state.weeklyOverrides[weekKey] && state.weeklyOverrides[weekKey][scheduleId]) {
-        return {
-            name: state.weeklyOverrides[weekKey][scheduleId].person,
-            isTemp: true,
-            comment: state.weeklyOverrides[weekKey][scheduleId].comment
-        };
+        const overrideData = state.weeklyOverrides[weekKey][scheduleId];
+        if (isOverrideActiveOnDay(overrideData, dayIndex)) {
+            return {
+                name: overrideData.person,
+                isTemp: true,
+                comment: overrideData.comment,
+                days: overrideData.days || null
+            };
+        }
     }
 
     let baseId;
@@ -711,7 +726,8 @@ function getPersonForSchedule(scheduleId, weekOffset) {
     if (personName) {
         if (state.weeklyOverrides[weekKey]) {
             for (const [sId, data] of Object.entries(state.weeklyOverrides[weekKey])) {
-                if (data.person === personName) {
+                // Solo considerar que la persona está "movida" si el override aplica en este día
+                if (data.person === personName && isOverrideActiveOnDay(data, dayIndex)) {
                     return null;
                 }
             }
@@ -751,10 +767,49 @@ function renderConfigTable() {
     scheduleData.forEach(schedule => {
         const tr = document.createElement('tr');
 
-        const personData = getPersonForSchedule(schedule.id, state.currentWeekOffset);
-        const assignedPersonName = personData ? personData.name : 'Vacante';
-        const isSwap = personData && personData.isTemp;
-        const isOnVacation = personData && isEmployeeOnVacation(personData.name, state.currentWeekOffset);
+        // Para la columna "Persona Asignada", verificar override a nivel semanal (sin dayIndex)
+        const personDataWeek = getPersonForSchedule(schedule.id, state.currentWeekOffset);
+        const weekKey = state.currentWeekOffset.toString();
+        const overrideData = state.weeklyOverrides[weekKey] && state.weeklyOverrides[weekKey][schedule.id];
+        
+        // Determinar si es un cambio parcial (solo algunos días)
+        const isPartialSwap = overrideData && overrideData.days && overrideData.days.length > 0 && overrideData.days.length < 7;
+        const isFullSwap = overrideData && (!overrideData.days || overrideData.days.length === 0 || overrideData.days.length === 7);
+        
+        let assignedPersonName, isSwap;
+        if (isFullSwap) {
+            assignedPersonName = overrideData.person;
+            isSwap = true;
+        } else if (isPartialSwap) {
+            // Mostrar la persona normal con indicador de cambio parcial
+            const normalPerson = getPersonForSchedule(schedule.id, state.currentWeekOffset, -1); // -1 = un día que no estará en days
+            // Intentar obtener persona sin override
+            let basePerson = null;
+            let baseId;
+            if (schedule.id === 7) { baseId = 7; } else {
+                baseId = (schedule.id - 1 - state.currentWeekOffset) % 6;
+                if (baseId < 0) baseId += 6;
+                baseId += 1;
+            }
+            basePerson = state.assignments[baseId] || 'Vacante';
+            assignedPersonName = basePerson;
+            isSwap = true;
+        } else {
+            assignedPersonName = personDataWeek ? personDataWeek.name : 'Vacante';
+            isSwap = personDataWeek && personDataWeek.isTemp;
+        }
+        
+        const isOnVacation = assignedPersonName !== 'Vacante' && isEmployeeOnVacation(assignedPersonName, state.currentWeekOffset);
+
+        // Construir info del swap para la columna persona
+        let swapLabel = '';
+        if (isFullSwap) {
+            swapLabel = `<span class="text-xs text-muted" style="display:block; font-size: 0.7rem;">(Cambio Temporal)</span>`;
+        } else if (isPartialSwap) {
+            const dayNamesShort = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+            const daysText = overrideData.days.map(d => dayNamesShort[d]).join(', ');
+            swapLabel = `<span class="text-xs text-muted" style="display:block; font-size: 0.7rem;">🔄 ${overrideData.person} (${daysText})</span>`;
+        }
 
         const actionBtn = `
             <button class="btn-icon" onclick="openSwapModal(${schedule.id})" title="Cambio Temporal (Esta Semana)">
@@ -763,6 +818,9 @@ function renderConfigTable() {
                 </svg>
             </button>
         `;
+
+        // Renderizar celdas de día con resolución por día
+        const dayCells = renderConfigDayCells(schedule, state.currentWeekOffset);
 
         tr.innerHTML = `
             <td>
@@ -773,14 +831,121 @@ function renderConfigTable() {
             </td>
             <td class="person-cell">
                 ${assignedPersonName}
-                ${isSwap ? `<span class="text-xs text-muted" style="display:block; font-size: 0.7rem;">(Cambio Temporal)</span>` : ''}
+                ${swapLabel}
                 ${isOnVacation ? `<span class="vacation-badge-small">🏖️ Vacaciones</span>` : ''}
             </td>
-            ${renderDayCells(schedule, personData ? personData.name : null, state.currentWeekOffset).join('')}
+            ${dayCells}
         `;
         tbody.appendChild(tr);
     });
     updateDayHeaders();
+}
+
+// Renderizar celdas de día para config table con resolución por día
+function renderConfigDayCells(schedule, weekOffset) {
+    const days = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo'];
+    const results = [];
+    
+    for (let dayIndex = 0; dayIndex < 7; dayIndex++) {
+        const personData = getPersonForSchedule(schedule.id, weekOffset, dayIndex);
+        const personName = personData ? personData.name : null;
+        const isTemp = personData ? personData.isTemp : false;
+        
+        const vacationDays = personName ? getVacationDaysInWeek(personName, weekOffset) : [];
+        const isOnVacation = vacationDays.includes(dayIndex);
+        const locationChange = personName ? getEmployeeLocationChange(personName, weekOffset) : null;
+        
+        // Obtener el schedule de la persona para este día
+        let daySchedule = schedule;
+        if (isTemp && personName) {
+            // Si es un cambio temporal, obtener el horario que esta persona tiene en este día
+            const scheduleIdForPerson = getScheduleForPerson(personName, weekOffset, dayIndex);
+            if (scheduleIdForPerson) {
+                const personSchedule = scheduleData.find(s => s.id === scheduleIdForPerson);
+                if (personSchedule) daySchedule = personSchedule;
+            }
+        }
+        
+        const displaySchedule = locationChange ? applyLocationChangeToSchedule(daySchedule, locationChange) : daySchedule;
+        const data = displaySchedule[days[dayIndex]];
+        
+        // Calcular si es hoy
+        const todayDate = new Date();
+        const todayIndex = (todayDate.getDay() + 6) % 7;
+        const isCurrentWeek = weekOffset === getWeeksFromStart(todayDate);
+        const isToday = isCurrentWeek && dayIndex === todayIndex;
+        const todayStyle = isToday ? 'box-shadow: inset 0 0 0 2px rgba(59, 130, 246, 0.5);' : '';
+        
+        // Verificar festivos
+        let isHoliday = false;
+        let holidayEvent = null;
+        if (state.events) {
+            const weekStart = getWeekStartDate(weekOffset);
+            const currentDay = new Date(weekStart);
+            currentDay.setDate(currentDay.getDate() + dayIndex);
+            const year = currentDay.getFullYear();
+            const month = String(currentDay.getMonth() + 1).padStart(2, '0');
+            const isoDay = String(currentDay.getDate()).padStart(2, '0');
+            const dateKey = `${year}-${month}-${isoDay}`;
+            const eventsOnDate = getEventsForDate(dateKey);
+            holidayEvent = eventsOnDate.find(e => e.type === 'holiday');
+            isHoliday = !!holidayEvent;
+        }
+        
+        const isGuardia = data && data.location === 'guardia';
+        const applyHolidayEffect = isHoliday && !isGuardia;
+        
+        if (isOnVacation) {
+            results.push(`<td class="vacation-cell" style="${todayStyle}"><span class="location-badge vacation">VACACIONES</span></td>`);
+            continue;
+        }
+        
+        if (!data) {
+            results.push(`<td class="descanso" style="${todayStyle}"><span class="location-badge descanso">Descanso</span></td>`);
+            continue;
+        }
+        
+        let displayTime = data.time;
+        let isSpecialSchedule = false;
+        if (isHoliday && isGuardia && holidayEvent.guardiaStart && holidayEvent.guardiaEnd) {
+            displayTime = `${holidayEvent.guardiaStart} - ${holidayEvent.guardiaEnd}`;
+            isSpecialSchedule = true;
+        }
+        
+        const hasLocationChange = locationChange && data.location === locationChange.newLocation;
+        let classes = hasLocationChange ? 'location-change-cell' : '';
+        
+        // Indicador de cambio temporal por día
+        let tempDayIndicator = '';
+        if (isTemp) {
+            tempDayIndicator = `<span style="display:block; font-size: 0.6rem; color: var(--primary); font-weight: 600; margin-top: 2px;">🔄 ${personName}</span>`;
+        }
+        
+        if (applyHolidayEffect) {
+            let styles = todayStyle + 'background-color: rgba(16, 185, 129, 0.15); position: relative;';
+            results.push(`<td class="${classes}" style="${styles}">
+                <div class="schedule-cell" style="opacity: 0.25; filter: blur(1.5px);">
+                    <span class="time">${displayTime}</span>
+                    <span class="location-badge ${data.location}">${data.location}</span>
+                </div>
+                <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: var(--success); font-weight: bold; font-size: 0.85rem; text-shadow: 0 1px 2px rgba(255,255,255,0.9); pointer-events: none; width: 100%; text-align: center;">
+                    FESTIVO
+                </div>
+            </td>`);
+        } else {
+            results.push(`<td class="${classes}" style="${todayStyle}">
+                <div class="schedule-cell">
+                    <span class="time" ${isSpecialSchedule ? 'style="color: var(--success); font-weight: bold;"' : ''}>${displayTime}</span>
+                    <span class="location-badge ${data.location}">${data.location}</span>
+                    ${hasLocationChange ? '<span class="location-change-indicator">📍 Cambio</span>' : ''}
+                    ${isSpecialSchedule ? '<span class="location-change-indicator" style="background: var(--success); color: white;">🕒 Especial</span>' : ''}
+                    ${tempDayIndicator}
+                </div>
+            </td>`);
+        }
+    }
+    
+    return results.join('');
 }
 
 window.openSwapModal = function (scheduleId) {
@@ -811,6 +976,41 @@ window.openSwapModal = function (scheduleId) {
                     ${sortedEmployees.filter(e => e !== currentName).map(emp => `<option value="${emp}">${emp}</option>`).join('')}
                 </select>
                 
+                <label style="margin-top: 1rem; display: block;">Duración del Cambio</label>
+                <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem; margin-top: 0.5rem;">
+                    <button type="button" id="swapFullWeekBtn" class="btn-primary" style="flex: 1; padding: 0.5rem; font-size: 0.85rem;" onclick="setSwapMode('full')">📅 Semana Completa</button>
+                    <button type="button" id="swapSpecificDaysBtn" class="btn-secondary" style="flex: 1; padding: 0.5rem; font-size: 0.85rem;" onclick="setSwapMode('specific')">📌 Días Específicos</button>
+                </div>
+                <input type="hidden" id="swapMode" value="full">
+                
+                <div id="swapDaysContainer" style="display: none; margin-bottom: 1rem; padding: 1rem; background: var(--bg-body); border-radius: 8px; border: 1px solid var(--border);">
+                    <label style="font-size: 0.85rem; margin-bottom: 0.5rem; display: block; color: var(--text-muted);">Selecciona los días del cambio:</label>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 0.5rem;">
+                        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.9rem;">
+                            <input type="checkbox" class="swap-day-checkbox" value="0"> Lunes
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.9rem;">
+                            <input type="checkbox" class="swap-day-checkbox" value="1"> Martes
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.9rem;">
+                            <input type="checkbox" class="swap-day-checkbox" value="2"> Miércoles
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.9rem;">
+                            <input type="checkbox" class="swap-day-checkbox" value="3"> Jueves
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.9rem;">
+                            <input type="checkbox" class="swap-day-checkbox" value="4"> Viernes
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.9rem;">
+                            <input type="checkbox" class="swap-day-checkbox" value="5"> Sábado
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.9rem;">
+                            <input type="checkbox" class="swap-day-checkbox" value="6"> Domingo
+                        </label>
+                    </div>
+                    <button type="button" onclick="selectAllSwapDays()" style="margin-top: 0.5rem; padding: 0.4rem 0.75rem; background: var(--bg-input); border: 1px solid var(--border); border-radius: 4px; cursor: pointer; font-size: 0.8rem; color: var(--text-muted);">Seleccionar / Deseleccionar Todos</button>
+                </div>
+
                 <label>Comentario (Obligatorio)</label>
                 <textarea id="swapReason" rows="2" placeholder="Motivo del cambio..." style="width: 100%;"></textarea>
             </div>
@@ -823,10 +1023,24 @@ window.openSwapModal = function (scheduleId) {
 function saveSwap() {
     const targetPerson = document.getElementById('swapPersonSelect').value;
     const reason = document.getElementById('swapReason').value.trim();
+    const swapMode = document.getElementById('swapMode') ? document.getElementById('swapMode').value : 'full';
 
     if (!targetPerson || !reason) {
         alert('Por favor selecciona una persona y escribe un comentario.');
         return;
+    }
+
+    // Obtener días seleccionados
+    let selectedDays = [];
+    if (swapMode === 'specific') {
+        selectedDays = Array.from(document.querySelectorAll('.swap-day-checkbox:checked'))
+            .map(cb => parseInt(cb.value));
+        if (selectedDays.length === 0) {
+            alert('Por favor selecciona al menos un día.');
+            return;
+        }
+    } else {
+        selectedDays = [0, 1, 2, 3, 4, 5, 6]; // Semana completa
     }
 
     const weekKey = state.currentWeekOffset.toString();
@@ -836,7 +1050,8 @@ function saveSwap() {
 
     state.weeklyOverrides[weekKey][currentEditingScheduleId] = {
         person: targetPerson,
-        comment: reason
+        comment: reason,
+        days: selectedDays
     };
 
     let targetPersonOriginalScheduleId = null;
@@ -854,14 +1069,16 @@ function saveSwap() {
 
         state.weeklyOverrides[weekKey][currentEditingScheduleId] = {
             person: targetPerson,
-            comment: reason
+            comment: reason,
+            days: selectedDays
         };
 
         if (originName) {
             const targetPhysicalSchedule = getRotatedScheduleId(targetPersonOriginalScheduleId, state.currentWeekOffset);
             state.weeklyOverrides[weekKey][targetPhysicalSchedule] = {
                 person: originName,
-                comment: `Intercambio con H${currentEditingScheduleId}: ${reason}`
+                comment: `Intercambio con H${currentEditingScheduleId}: ${reason}`,
+                days: selectedDays
             };
         }
     }
@@ -871,6 +1088,34 @@ function saveSwap() {
 
     closeModal();
 }
+
+// Funciones globales para el modal de swap
+window.setSwapMode = function(mode) {
+    const modeInput = document.getElementById('swapMode');
+    const daysContainer = document.getElementById('swapDaysContainer');
+    const fullWeekBtn = document.getElementById('swapFullWeekBtn');
+    const specificDaysBtn = document.getElementById('swapSpecificDaysBtn');
+    
+    if (modeInput) modeInput.value = mode;
+    
+    if (mode === 'specific') {
+        if (daysContainer) daysContainer.style.display = 'block';
+        if (fullWeekBtn) { fullWeekBtn.className = 'btn-secondary'; }
+        if (specificDaysBtn) { specificDaysBtn.className = 'btn-primary'; }
+    } else {
+        if (daysContainer) daysContainer.style.display = 'none';
+        if (fullWeekBtn) { fullWeekBtn.className = 'btn-primary'; }
+        if (specificDaysBtn) { specificDaysBtn.className = 'btn-secondary'; }
+        // Deseleccionar todos los checkboxes
+        document.querySelectorAll('.swap-day-checkbox').forEach(cb => cb.checked = false);
+    }
+};
+
+window.selectAllSwapDays = function() {
+    const checkboxes = document.querySelectorAll('.swap-day-checkbox');
+    const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+    checkboxes.forEach(cb => cb.checked = !allChecked);
+};
 
 function renderDayCells_Legacy(schedule, personName = null, weekOffset = null) {
     const days = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo'];
@@ -1040,27 +1285,7 @@ window.renderSelectedIndividual = function (personName) {
     }
     sessionStorage.setItem('lastViewedPerson', personName);
 
-    const scheduleId = getScheduleForPerson(personName, state.currentWeekOffset);
-    const schedule = scheduleData.find(s => s.id === scheduleId);
-
-    let swapInfo = null;
     const weekKey = state.currentWeekOffset.toString();
-
-    if (state.weeklyOverrides[weekKey] && state.weeklyOverrides[weekKey][scheduleId]) {
-        const override = state.weeklyOverrides[weekKey][scheduleId];
-        if (override.person === personName) {
-            let baseId = (scheduleId - 1 - state.currentWeekOffset) % 7;
-            if (baseId < 0) baseId += 7;
-            baseId += 1;
-            const originalPerson = state.assignments[baseId] || 'Vacante';
-
-            swapInfo = {
-                comment: override.comment,
-                originalPerson: originalPerson
-            };
-        }
-    }
-
     const days = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo'];
     const today = new Date().getDay();
     const jsDayToIndex = [6, 0, 1, 2, 3, 4, 5];
@@ -1068,8 +1293,29 @@ window.renderSelectedIndividual = function (personName) {
     const vacationDays = getVacationDaysInWeek(personName, state.currentWeekOffset);
     const locationChange = getEmployeeLocationChange(personName, state.currentWeekOffset);
 
-    // Aplicar cambio de ubicación si existe
-    const displaySchedule = locationChange ? applyLocationChangeToSchedule(schedule, locationChange) : schedule;
+    // Verificar si esta persona tiene un override activo
+    let swapInfo = null;
+    if (state.weeklyOverrides[weekKey]) {
+        for (const [schId, data] of Object.entries(state.weeklyOverrides[weekKey])) {
+            if (data.person === personName) {
+                let baseId = (parseInt(schId) - 1 - state.currentWeekOffset) % 7;
+                if (baseId < 0) baseId += 7;
+                baseId += 1;
+                const originalPerson = state.assignments[baseId] || 'Vacante';
+                
+                const dayNamesLong = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+                const isPartial = data.days && data.days.length > 0 && data.days.length < 7;
+                const daysText = isPartial ? data.days.map(d => dayNamesLong[d]).join(', ') : 'Toda la semana';
+                
+                swapInfo = {
+                    comment: data.comment,
+                    originalPerson: originalPerson,
+                    daysText: daysText
+                };
+                break;
+            }
+        }
+    }
 
     let html = '';
 
@@ -1077,6 +1323,7 @@ window.renderSelectedIndividual = function (personName) {
         html += `
             <div style="background-color: var(--primary-light); color: var(--primary-dark); padding: 1rem; border-radius: var(--radius); margin-bottom: 1.5rem; border: 1px solid var(--primary);">
                 <strong>⚠️ Cambio de Guardia:</strong> Cubriendo a <strong>${swapInfo.originalPerson}</strong>.
+                <div style="margin-top: 0.5rem;">📅 <strong>${swapInfo.daysText}</strong></div>
                 <div style="margin-top: 0.5rem; font-style: italic;">"${swapInfo.comment}"</div>
             </div>
         `;
@@ -1105,7 +1352,7 @@ window.renderSelectedIndividual = function (personName) {
         `;
     }
 
-    // Obtener eventos de la semana (mapa índice -> evento) para esta vista
+    // Obtener eventos de la semana
     const weekEvents = {};
     if (state.events) {
         const weekStart = getWeekStartDate(state.currentWeekOffset);
@@ -1118,11 +1365,10 @@ window.renderSelectedIndividual = function (personName) {
             const dateKey = `${year}-${month}-${isoDay}`;
 
             const eventsOnDate = getEventsForDate(dateKey);
-            // Priorizar: Holiday > Alert > Payday > Notice
             let priorityEvent = eventsOnDate.find(e => e.type === 'holiday');
             if (!priorityEvent) priorityEvent = eventsOnDate.find(e => e.type === 'alert');
             if (!priorityEvent) priorityEvent = eventsOnDate.find(e => e.type === 'payday');
-            if (!priorityEvent) priorityEvent = eventsOnDate.find(e => e.type === 'notice'); // Opcional
+            if (!priorityEvent) priorityEvent = eventsOnDate.find(e => e.type === 'notice');
 
             if (priorityEvent) {
                 weekEvents[i] = priorityEvent;
@@ -1133,12 +1379,33 @@ window.renderSelectedIndividual = function (personName) {
     html += `<div class="individual-days-list">`;
 
     days.forEach((day, index) => {
+        // Resolver el horario de esta persona para ESTE DÍA específico
+        const scheduleIdForDay = getScheduleForPerson(personName, state.currentWeekOffset, index);
+        const scheduleForDay = scheduleData.find(s => s.id === scheduleIdForDay);
+        
+        if (!scheduleForDay) {
+            html += `<div class="day-card"><div class="day-name"><strong>${day.charAt(0).toUpperCase() + day.slice(1)}</strong></div><div class="day-schedule"><span class="text-muted">Sin horario</span></div></div>`;
+            return;
+        }
+        
+        const displaySchedule = locationChange ? applyLocationChangeToSchedule(scheduleForDay, locationChange) : scheduleForDay;
         const data = displaySchedule[day];
+        
         const isToday = index === currentDayIndex && state.currentWeekOffset === getWeeksFromStart(new Date());
         const isOnVacation = vacationDays.includes(index);
         const hasLocationChange = locationChange && data && data.location === locationChange.newLocation;
+        
+        // Verificar si este día específico es un cambio temporal
+        let isDaySwapped = false;
+        if (state.weeklyOverrides[weekKey]) {
+            for (const [schId, ovData] of Object.entries(state.weeklyOverrides[weekKey])) {
+                if (ovData.person === personName && isOverrideActiveOnDay(ovData, index)) {
+                    isDaySwapped = true;
+                    break;
+                }
+            }
+        }
 
-        // Lógica de Eventos
         const event = weekEvents[index];
         const isHoliday = event && event.type === 'holiday';
         const isPayday = event && event.type === 'payday';
@@ -1169,18 +1436,17 @@ window.renderSelectedIndividual = function (personName) {
                 </div>
             `;
         } else if (isPayday) {
-            // Estilo Quincena
             cardStyle = 'border: 1px solid #F59E0B; background: linear-gradient(to bottom right, var(--bg-card), rgba(245, 158, 11, 0.1));';
             eventBadge = `<span class="badge-event" style="background: rgba(245, 158, 11, 0.15); color: #D97706; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; font-weight: 600; vertical-align: middle; margin-left: 0.5rem; border: 1px solid rgba(245, 158, 11, 0.3);">💰 ${event.text || 'QUINCENA'}</span>`;
         } else if (isAlert) {
-            // Estilo Alerta
             cardStyle = 'border: 1px solid var(--danger); background: linear-gradient(to bottom right, var(--bg-card), rgba(239, 68, 68, 0.1));';
             eventBadge = `<span class="badge-event" style="background: rgba(239, 68, 68, 0.15); color: var(--danger); padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; font-weight: 600; vertical-align: middle; margin-left: 0.5rem; border: 1px solid rgba(239, 68, 68, 0.3);">🚨 ${event.text || 'ALERTA'}</span>`;
         } else if (event && event.type === 'notice') {
-            // Estilo Aviso
             cardStyle = 'border: 1px solid var(--primary);';
             eventBadge = `<span class="badge-event" style="background: rgba(59, 130, 246, 0.15); color: var(--primary); padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; font-weight: 600; vertical-align: middle; margin-left: 0.5rem; border: 1px solid rgba(59, 130, 246, 0.3);">ℹ️ ${event.text || 'AVISO'}</span>`;
         }
+
+        const swapDayBadge = isDaySwapped ? '<span class="badge-location-change" style="background: var(--primary);">🔄 CAMBIO TEMPORAL</span>' : '';
 
         html += `
             <div class="day-card ${isToday ? 'today' : ''} ${isOnVacation ? 'vacation' : ''} ${hasLocationChange ? 'location-change' : ''}" style="${cardStyle}">
@@ -1192,6 +1458,7 @@ window.renderSelectedIndividual = function (personName) {
                         ${isOnVacation ? '<span class="badge-vacation">VACACIONES</span>' : ''}
                         ${hasLocationChange ? '<span class="badge-location-change">CAMBIO UBICACIÓN</span>' : ''}
                         ${isSpecialSchedule ? '<span class="badge-location-change" style="background: var(--success);">🕒 HORARIO ESPECIAL</span>' : ''}
+                        ${swapDayBadge}
                         ${eventBadge}
                     </div>
                     <div class="day-schedule">
@@ -1225,19 +1492,49 @@ function renderGeneralView() {
 
         const tr = document.createElement('tr');
 
-        if (personData && personData.isTemp) {
+        // Verificar override para esta semana
+        const weekKey = state.currentWeekOffset.toString();
+        const overrideData = state.weeklyOverrides[weekKey] && state.weeklyOverrides[weekKey][i];
+        const isPartialSwap = overrideData && overrideData.days && overrideData.days.length > 0 && overrideData.days.length < 7;
+        const isFullSwap = overrideData && (!overrideData.days || overrideData.days.length === 0 || overrideData.days.length === 7);
+
+        if (isFullSwap || (personData && personData.isTemp && !isPartialSwap)) {
             tr.classList.add('row-swap');
         }
 
-        const isOnVacation = personData && isEmployeeOnVacation(personData.name, state.currentWeekOffset);
+        let personDisplay, commentDisplay, vacationDisplay;
 
-        // Eliminado: if (isOnVacation) { tr.classList.add('row-vacation'); }
+        if (isFullSwap) {
+            const isOnVacation = isEmployeeOnVacation(overrideData.person, state.currentWeekOffset);
+            personDisplay = overrideData.person;
+            commentDisplay = `<span class="swap-comment">${overrideData.comment}</span>`;
+            vacationDisplay = isOnVacation ? `<span class="vacation-badge-small">🏖️ Vacaciones</span>` : '';
+        } else if (isPartialSwap) {
+            // Obtener persona base (sin override)
+            let baseId;
+            if (i === 7) { baseId = 7; } else {
+                baseId = (i - 1 - state.currentWeekOffset) % 6;
+                if (baseId < 0) baseId += 6;
+                baseId += 1;
+            }
+            const basePerson = state.assignments[baseId] || '--';
+            const dayNamesShort = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+            const daysText = overrideData.days.map(d => dayNamesShort[d]).join(', ');
+            
+            personDisplay = basePerson;
+            commentDisplay = `<span class="swap-comment" style="font-size: 0.75rem;">🔄 ${overrideData.person} (${daysText})</span>`;
+            vacationDisplay = '';
+        } else {
+            const isOnVacation = personData && isEmployeeOnVacation(personData.name, state.currentWeekOffset);
+            personDisplay = personData ? personData.name : '<span class="text-muted">--</span>';
+            commentDisplay = (personData && personData.isTemp)
+                ? `<span class="swap-comment">${personData.comment}</span>`
+                : '';
+            vacationDisplay = isOnVacation ? `<span class="vacation-badge-small">🏖️ Vacaciones</span>` : '';
+        }
 
-        const personDisplay = personData ? personData.name : '<span class="text-muted">--</span>';
-        const commentDisplay = (personData && personData.isTemp)
-            ? `<span class="swap-comment">${personData.comment}</span>`
-            : '';
-        const vacationDisplay = isOnVacation ? `<span class="vacation-badge-small">🏖️ Vacaciones</span>` : '';
+        // Usar celdas de día con resolución por día
+        const dayCells = renderGeneralDayCells(schedule, i, state.currentWeekOffset);
 
         tr.innerHTML = `
             <td class="person-cell">
@@ -1246,15 +1543,102 @@ function renderGeneralView() {
                 ${commentDisplay}
                 ${vacationDisplay}
             </td>
-            ${renderDayCells(schedule, personData ? personData.name : null, state.currentWeekOffset).join('')}
+            ${dayCells}
         `;
         tbody.appendChild(tr);
 
-        if (personData) {
-            addToLocationTables(personData, schedule);
-        }
+        // Agregar a tablas de ubicación (resolver por día)
+        addToLocationTablesWithDays(i, schedule, state.currentWeekOffset);
     }
     updateDayHeaders();
+}
+
+// Renderizar celdas de día para general view con resolución por día
+function renderGeneralDayCells(schedule, scheduleId, weekOffset) {
+    const days = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo'];
+    const results = [];
+    
+    for (let dayIndex = 0; dayIndex < 7; dayIndex++) {
+        const personData = getPersonForSchedule(scheduleId, weekOffset, dayIndex);
+        const personName = personData ? personData.name : null;
+        
+        const vacationDays = personName ? getVacationDaysInWeek(personName, weekOffset) : [];
+        const isOnVacation = vacationDays.includes(dayIndex);
+        const locationChange = personName ? getEmployeeLocationChange(personName, weekOffset) : null;
+        
+        const displaySchedule = locationChange ? applyLocationChangeToSchedule(schedule, locationChange) : schedule;
+        const data = displaySchedule[days[dayIndex]];
+        
+        // Calcular si es hoy
+        const todayDate = new Date();
+        const todayIndex = (todayDate.getDay() + 6) % 7;
+        const isCurrentWeek = weekOffset === getWeeksFromStart(todayDate);
+        const isToday = isCurrentWeek && dayIndex === todayIndex;
+        const todayStyle = isToday ? 'box-shadow: inset 0 0 0 2px rgba(59, 130, 246, 0.5);' : '';
+        
+        // Verificar festivos
+        let isHoliday = false;
+        let holidayEvent = null;
+        if (state.events) {
+            const weekStart = getWeekStartDate(weekOffset);
+            const currentDay = new Date(weekStart);
+            currentDay.setDate(currentDay.getDate() + dayIndex);
+            const year = currentDay.getFullYear();
+            const month = String(currentDay.getMonth() + 1).padStart(2, '0');
+            const isoDay = String(currentDay.getDate()).padStart(2, '0');
+            const dateKey = `${year}-${month}-${isoDay}`;
+            const eventsOnDate = getEventsForDate(dateKey);
+            holidayEvent = eventsOnDate.find(e => e.type === 'holiday');
+            isHoliday = !!holidayEvent;
+        }
+        
+        const isGuardia = data && data.location === 'guardia';
+        const applyHolidayEffect = isHoliday && !isGuardia;
+        
+        if (isOnVacation) {
+            results.push(`<td class="vacation-cell" style="${todayStyle}"><span class="location-badge vacation">VACACIONES</span></td>`);
+            continue;
+        }
+        
+        if (!data) {
+            results.push(`<td class="descanso" style="${todayStyle}"><span class="location-badge descanso">Descanso</span></td>`);
+            continue;
+        }
+        
+        let displayTime = data.time;
+        let isSpecialSchedule = false;
+        if (isHoliday && isGuardia && holidayEvent.guardiaStart && holidayEvent.guardiaEnd) {
+            displayTime = `${holidayEvent.guardiaStart} - ${holidayEvent.guardiaEnd}`;
+            isSpecialSchedule = true;
+        }
+        
+        const hasLocationChange = locationChange && data.location === locationChange.newLocation;
+        let classes = hasLocationChange ? 'location-change-cell' : '';
+        
+        if (applyHolidayEffect) {
+            let styles = todayStyle + 'background-color: rgba(16, 185, 129, 0.15); position: relative;';
+            results.push(`<td class="${classes}" style="${styles}">
+                <div class="schedule-cell" style="opacity: 0.25; filter: blur(1.5px);">
+                    <span class="time">${displayTime}</span>
+                    <span class="location-badge ${data.location}">${data.location}</span>
+                </div>
+                <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: var(--success); font-weight: bold; font-size: 0.85rem; text-shadow: 0 1px 2px rgba(255,255,255,0.9); pointer-events: none; width: 100%; text-align: center;">
+                    FESTIVO
+                </div>
+            </td>`);
+        } else {
+            results.push(`<td class="${classes}" style="${todayStyle}">
+                <div class="schedule-cell">
+                    <span class="time" ${isSpecialSchedule ? 'style="color: var(--success); font-weight: bold;"' : ''}>${displayTime}</span>
+                    <span class="location-badge ${data.location}">${data.location}</span>
+                    ${hasLocationChange ? '<span class="location-change-indicator">📍 Cambio</span>' : ''}
+                    ${isSpecialSchedule ? '<span class="location-change-indicator" style="background: var(--success); color: white;">🕒 Especial</span>' : ''}
+                </div>
+            </td>`);
+        }
+    }
+    
+    return results.join('');
 }
 
 function addToLocationTables(personData, schedule) {
@@ -1338,6 +1722,100 @@ function addToLocationTables(personData, schedule) {
             `;
             container.appendChild(div);
         }
+    });
+}
+
+// Versión con resolución por día para las tablas de ubicación
+function addToLocationTablesWithDays(scheduleId, schedule, weekOffset) {
+    const days = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo'];
+    const dayNamesShort = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+    
+    // Obtener festivos
+    const holidayIndices = [];
+    if (state.events) {
+        const weekStart = getWeekStartDate(weekOffset);
+        for (let i = 0; i < 7; i++) {
+            const currentDay = new Date(weekStart);
+            currentDay.setDate(currentDay.getDate() + i);
+            const year = currentDay.getFullYear();
+            const month = String(currentDay.getMonth() + 1).padStart(2, '0');
+            const isoDay = String(currentDay.getDate()).padStart(2, '0');
+            const dateKey = `${year}-${month}-${isoDay}`;
+            const eventsOnDate = getEventsForDate(dateKey);
+            if (eventsOnDate.find(e => e.type === 'holiday')) {
+                holidayIndices.push(i);
+            }
+        }
+    }
+    
+    // Agrupar por persona+ubicación
+    const personLocations = {}; // { personName: { loc: { days: [], startTime: '' } } }
+    
+    days.forEach((day, dayIndex) => {
+        const personData = getPersonForSchedule(scheduleId, weekOffset, dayIndex);
+        if (!personData) return;
+        
+        const personName = personData.name;
+        const vacationDays = getVacationDaysInWeek(personName, weekOffset);
+        if (vacationDays.includes(dayIndex)) return;
+        
+        const locationChange = getEmployeeLocationChange(personName, weekOffset);
+        const displaySchedule = locationChange ? applyLocationChangeToSchedule(schedule, locationChange) : schedule;
+        
+        if (!displaySchedule[day]) return;
+        
+        const loc = displaySchedule[day].location;
+        const isHoliday = holidayIndices.includes(dayIndex);
+        if (isHoliday && loc !== 'guardia') return;
+        
+        if (!personLocations[personName]) personLocations[personName] = {};
+        if (!personLocations[personName][loc]) {
+            personLocations[personName][loc] = { days: [], dayIndices: [], startTime: '', isTemp: personData.isTemp, comment: personData.comment || '' };
+        }
+        personLocations[personName][loc].days.push(dayNamesShort[dayIndex]);
+        personLocations[personName][loc].dayIndices.push(dayIndex);
+        
+        if (!personLocations[personName][loc].startTime) {
+            const timeParts = displaySchedule[day].time.split(' - ');
+            personLocations[personName][loc].startTime = timeParts[0];
+        }
+    });
+    
+    // Renderizar en las tablas de ubicación
+    Object.entries(personLocations).forEach(([personName, locs]) => {
+        Object.entries(locs).forEach(([loc, data]) => {
+            const listId = `${loc}List`;
+            const container = document.getElementById(listId);
+            if (container) {
+                // Verificar si ya existe este persona en esta ubicación
+                const existingItems = container.querySelectorAll('.location-item');
+                let alreadyExists = false;
+                existingItems.forEach(item => {
+                    if (item.querySelector('strong') && item.querySelector('strong').textContent === personName) {
+                        alreadyExists = true;
+                    }
+                });
+                if (alreadyExists) return;
+                
+                const div = document.createElement('div');
+                div.className = 'location-item';
+                
+                const locationChange = getEmployeeLocationChange(personName, state.currentWeekOffset);
+                const hasLocationChange = locationChange && locationChange.newLocation === loc &&
+                    data.dayIndices.some(d => locationChange.days.includes(d));
+                
+                div.innerHTML = `
+                    <div>
+                        <strong>${personName}</strong>
+                        <div class="text-xs text-muted">${data.days.join(', ')}</div>
+                        ${data.isTemp ? `<span class="comment-text">${data.comment}</span>` : ''}
+                        ${hasLocationChange ? `<span class="location-change-indicator" style="font-size: 0.7rem;">📍 Cambio temporal</span>` : ''}
+                    </div>
+                    <span class="text-sm font-bold" style="color: var(--primary);">${data.startTime}</span>
+                `;
+                container.appendChild(div);
+            }
+        });
     });
 }
 
@@ -2687,12 +3165,18 @@ function openManageTempChanges() {
         const weekRange = getWeekDateRange(weekOffset);
 
         Object.entries(schedules).forEach(([scheduleId, data]) => {
+            const dayNamesShort = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+            const isPartial = data.days && data.days.length > 0 && data.days.length < 7;
+            const daysText = isPartial ? data.days.map(d => dayNamesShort[d]).join(', ') : 'Semana Completa';
+            
             tempChanges.push({
                 weekOffset,
                 weekRange,
                 scheduleId: parseInt(scheduleId),
                 person: data.person,
-                comment: data.comment
+                comment: data.comment,
+                daysText: daysText,
+                isPartial: isPartial
             });
         });
     });
@@ -2732,6 +3216,9 @@ function openManageTempChanges() {
                             </div>
                             <div style="font-size: 0.9rem; margin-bottom: 0.25rem;">
                                 <strong>Horario ${change.scheduleId}</strong> → <strong>${change.person}</strong>
+                            </div>
+                            <div style="font-size: 0.85rem; margin-bottom: 0.25rem;">
+                                📅 <span style="color: ${change.isPartial ? 'var(--primary)' : 'var(--text-muted)'}; font-weight: ${change.isPartial ? '600' : 'normal'};">${change.daysText}</span>
                             </div>
                             <div style="font-size: 0.85rem; color: var(--text-muted); font-style: italic;">
                                 "${change.comment}"
