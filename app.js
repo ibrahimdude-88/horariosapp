@@ -905,11 +905,10 @@ function renderConfigDayCells(schedule, weekOffset) {
         const hasLocationChange = locationChange && data.location === locationChange.newLocation;
         let classes = hasLocationChange ? 'location-change-cell' : '';
         
-        // Estilo para cambio temporal: fondo azul sutil + borde
+        // Estilo para cambio temporal: solo mostramos el indicador, sin fondo/borde extra en la celda
         let tempStyle = '';
         let tempDayIndicator = '';
         if (isTemp) {
-            tempStyle = 'background: rgba(59, 130, 246, 0.12); border: 1.5px solid rgba(59, 130, 246, 0.4); border-radius: 6px;';
             tempDayIndicator = `<span style="display:block; font-size: 0.65rem; color: var(--primary); font-weight: 700; margin-top: 3px; background: rgba(59, 130, 246, 0.15); padding: 1px 4px; border-radius: 3px; text-align: center;">🔄 ${personName}</span>`;
         }
         
@@ -1291,16 +1290,16 @@ window.renderSelectedIndividual = function (personName) {
     if (state.weeklyOverrides[weekKey]) {
         for (const [schId, data] of Object.entries(state.weeklyOverrides[weekKey])) {
             if (data.person === personName) {
+                // Encontrar la persona original que normalmente estaría en este horario
                 const sid = parseInt(schId);
-                let baseId;
-                if (sid === 7) {
-                    baseId = 7;
-                } else {
-                    baseId = (sid - 1 - state.currentWeekOffset) % 6;
-                    if (baseId < 0) baseId += 6;
-                    baseId += 1;
+                let originalPerson = 'Vacante';
+                for (const [baseIdStr, assignedName] of Object.entries(state.assignments)) {
+                    const rotated = getRotatedScheduleId(parseInt(baseIdStr), state.currentWeekOffset);
+                    if (rotated === sid) {
+                        originalPerson = assignedName;
+                        break;
+                    }
                 }
-                const originalPerson = state.assignments[baseId] || 'Vacante';
                 
                 const dayNamesLong = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
                 const isPartial = data.days && data.days.length > 0 && data.days.length < 7;
@@ -1615,11 +1614,10 @@ function renderGeneralDayCells(schedule, scheduleId, weekOffset) {
         const hasLocationChange = locationChange && data.location === locationChange.newLocation;
         let classes = hasLocationChange ? 'location-change-cell' : '';
         
-        // Estilo para cambio temporal: fondo azul sutil + borde
+        // Estilo para cambio temporal: solo mostramos el indicador, sin fondo/borde extra en la celda
         let tempStyle = '';
         let tempDayIndicator = '';
         if (isTemp) {
-            tempStyle = 'background: rgba(59, 130, 246, 0.12); border: 1.5px solid rgba(59, 130, 246, 0.4); border-radius: 6px;';
             tempDayIndicator = `<span style="display:block; font-size: 0.65rem; color: var(--primary); font-weight: 700; margin-top: 3px; background: rgba(59, 130, 246, 0.15); padding: 1px 4px; border-radius: 3px; text-align: center;">🔄 ${personName}</span>`;
         }
         
