@@ -3304,6 +3304,25 @@ function renderAllEventsView() {
         }
     });
 
+    // Añadir vacaciones a la lista de eventos
+    if (state.vacations) {
+        Object.entries(state.vacations).forEach(([employeeName, vacations]) => {
+            vacations.forEach(vac => {
+                if (vac.startDate) {
+                    let endText = vac.endDate ? ` (hasta el ${parseLocalDate(vac.endDate).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })})` : '';
+                    eventsList.push({
+                        dateStr: vac.startDate,
+                        dateObj: parseLocalDate(vac.startDate),
+                        type: 'vacation',
+                        text: `Vacaciones de ${employeeName}${endText}`,
+                        employee: employeeName,
+                        endDate: vac.endDate
+                    });
+                }
+            });
+        });
+    }
+
     if (eventsList.length === 0) {
         container.innerHTML = `
             <div style="text-align: center; padding: 3rem; color: var(--text-muted);">
@@ -3357,6 +3376,7 @@ function renderAllEventsView() {
                         <option value="holiday">🎉 Días Festivos</option>
                         <option value="alert">⚠️ Alertas</option>
                         <option value="payday">💰 Quincenas</option>
+                        <option value="vacation">🌴 Vacaciones</option>
                     </select>
                 </div>
                 <div style="display: flex; align-items: flex-end;">
@@ -3468,6 +3488,12 @@ function renderAllEventsView() {
                     icon = '💰';
                     typeName = 'Quincena';
                     typeClass = 'payday';
+                    break;
+                case 'vacation':
+                    bgColor = 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)';
+                    icon = '🌴';
+                    typeName = 'Vacaciones';
+                    typeClass = 'vacation';
                     break;
                 default:
                     bgColor = 'linear-gradient(135deg, #2563eb 0%, #3b82f6 100%)';
