@@ -1,12 +1,12 @@
 {
-  "name": "Ti_St Horarios Rotativos",
-  "short_name": "Ti_St",
-  "description": "Sistema de gestión de turnos semanales",
+  "name": "HorariosApp 2.0",
+  "short_name": "HorariosApp",
+  "description": "Sistema de gestión de turnos semanales rotativos",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#6366f1",
+  "background_color": "#0F0F1A",
+  "theme_color": "#8B5CF6",
   "orientation": "portrait-primary",
   "icons": [
     {

@@ -4,10 +4,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Horarios Rotativos - 2026</title>
+    <title>HorariosApp 2.0 — Executive Cyber-Dashboard</title>
+    
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <!-- PWA & Icons -->
     <link rel="manifest" href="manifest.json">
@@ -15,26 +17,95 @@
     <link rel="alternate icon" type="image/png" href="icon-192.png">
     <link rel="apple-touch-icon" sizes="180x180" href="icon-192.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="Ti_St Horarios">
-    <meta name="theme-color" content="#6366f1">
-    <meta name="description" content="Sistema de gestión de turnos semanales rotativos">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="HorariosApp 2.0">
+    <meta name="theme-color" content="#07070E">
+    <meta name="description" content="HorariosApp 2.0 — Sistema de gestión de turnos semanales rotativos">
 
-    <link rel="stylesheet" href="styles.css?v=3.7">
+    <link rel="stylesheet" href="styles.css?v=5.0">
 </head>
 
 <body>
     <div class="app-container">
-        <header class="header">
-            <div class="header-content">
-                <div class="logo-container">
-                    <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                        <line x1="16" y1="2" x2="16" y2="6"></line>
-                        <line x1="8" y1="2" x2="8" y2="6"></line>
-                        <line x1="3" y1="10" x2="21" y2="10"></line>
-                    </svg>
-                    <h1 data-editable-id="main-title">Horarios Rotativos 2026</h1>
+        <!-- Left Executive Navigation Sidebar -->
+        <aside class="app-sidebar">
+            <div>
+                <div class="brand-wrapper">
+                    <div class="brand-icon-box">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                            <rect x="3" y="4" width="18" height="18" rx="3"></rect>
+                            <line x1="16" y1="2" x2="16" y2="6"></line>
+                            <line x1="8" y1="2" x2="8" y2="6"></line>
+                            <line x1="3" y1="10" x2="21" y2="10"></line>
+                        </svg>
+                    </div>
+                    <div class="brand-info">
+                        <h1 data-editable-id="main-title">HorariosApp</h1>
+                        <span class="brand-badge">v2.0 Cyber</span>
+                    </div>
+                </div>
+
+                <!-- Navigation Tabs (Sidebar Layout) -->
+                <nav class="tabs-nav">
+                    <button class="tab-button active" data-tab="individual">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="12" cy="7" r="4"></circle>
+                        </svg>
+                        <span data-editable-id="tab-ind">Mi Horario</span>
+                    </button>
+                    <button class="tab-button" data-tab="general">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="9" cy="7" r="4"></circle>
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                        </svg>
+                        <span data-editable-id="tab-gen">Horario General</span>
+                    </button>
+                    <button class="tab-button" data-tab="events">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                            <line x1="16" y1="2" x2="16" y2="6"></line>
+                            <line x1="8" y1="2" x2="8" y2="6"></line>
+                            <line x1="3" y1="10" x2="21" y2="10"></line>
+                            <path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01"></path>
+                        </svg>
+                        <span data-editable-id="tab-events">Eventos y Avisos</span>
+                    </button>
+                    <button class="tab-button" data-tab="config" id="configTabBtn" style="display: none;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.09a2 2 0 0 1-1-1.74v-.51a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path>
+                            <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                        <span data-editable-id="tab-config">Administración</span>
+                    </button>
+                </nav>
+            </div>
+
+            <!-- Sidebar Footer Status Pill -->
+            <div class="sidebar-footer">
+                <div class="sidebar-status-card">
+                    <div class="status-dot-pulse"></div>
+                    <div class="status-info-text">
+                        <strong>Sistema En Línea</strong>
+                        Turnos Sincronizados
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Viewport Area -->
+        <main class="main-viewport">
+            <!-- Top Dashboard Bar -->
+            <header class="top-header">
+                <div class="header-title-area">
+                    <h2>Panel de Horarios</h2>
+                    <p class="subtitle" data-editable-id="sub-title">Gestión inteligente de turnos rotativos semanales</p>
+                </div>
+
+                <div class="header-actions-group">
+                    <!-- Weather Widget Capsule -->
                     <div id="weather-widget" class="weather-widget" style="display: none;">
                         <span id="weather-icon" class="weather-icon-large">☀️</span>
                         <div class="weather-info">
@@ -47,139 +118,71 @@
                             </div>
                             <div class="weather-extra">
                                 <span class="weather-range">
-                                    <span style="color: #ff9999;">max<span id="weather-max">--</span>°</span>
-                                    <span style="color: #99ccff;">min<span id="weather-min">--</span>°</span>
+                                    <span style="color: #F87171;">max<span id="weather-max">--</span>°</span>
+                                    <span style="color: #60A5FA;">min<span id="weather-min">--</span>°</span>
                                 </span>
                                 <span id="weather-rain" class="weather-rain-badge">☔ --%</span>
                             </div>
                         </div>
                     </div>
+
+                    <button id="aboutBtn" class="header-action-btn" title="Acerca de HorariosApp">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="16" x2="12" y2="12"></line>
+                            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                        </svg>
+                    </button>
+                    <button id="loginBtn" class="header-action-btn" title="Iniciar Sesión Admin">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="12" cy="7" r="4"></circle>
+                        </svg>
+                    </button>
+                    <button id="themeToggle" class="theme-toggle" title="Modo Neón Alterno">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                        </svg>
+                    </button>
                 </div>
+            </header>
 
-                <p class="subtitle" data-editable-id="sub-title">Sistema de gestión de turnos semanales</p>
-            </div>
-            <div class="header-actions">
-                <button id="aboutBtn" class="theme-toggle" title="Acerca de la App">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24">
-                        <path d="M16 18l6-6-6-6"></path>
-                        <path d="M8 6l-6 6 6 6"></path>
-                    </svg>
-                </button>
-                <button id="loginBtn" class="theme-toggle" title="Iniciar Sesión Admin">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24">
-                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                        <circle cx="12" cy="7" r="4"></circle>
-                    </svg>
-                </button>
-                <button id="themeToggle" class="theme-toggle" title="Alternar Modo Oscuro">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24">
-                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
-                    </svg>
-                </button>
-            </div>
-        </header>
-
-        <main class="main-content">
-            <!-- Tab Navigation -->
-            <nav class="tabs-nav">
-                <button class="tab-button" data-tab="config" id="configTabBtn" style="display: none;">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path
-                            d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.09a2 2 0 0 1-1-1.74v-.51a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z">
-                        </path>
-                        <circle cx="12" cy="12" r="3"></circle>
-                    </svg>
-                    <span data-editable-id="tab-config">Configuración de Horarios</span>
-                </button>
-                <button class="tab-button active" data-tab="individual">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                        <circle cx="12" cy="7" r="4"></circle>
-                    </svg>
-                    <span data-editable-id="tab-ind">Mi Horario</span>
-                </button>
-                <button class="tab-button" data-tab="general">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                        <circle cx="9" cy="7" r="4"></circle>
-                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                    </svg>
-                    <span data-editable-id="tab-gen">Horario General</span>
-                </button>
-                <button class="tab-button" data-tab="events">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                        <line x1="16" y1="2" x2="16" y2="6"></line>
-                        <line x1="8" y1="2" x2="8" y2="6"></line>
-                        <line x1="3" y1="10" x2="21" y2="10"></line>
-                        <path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01"></path>
-                    </svg>
-                    <span data-editable-id="tab-events">Eventos y Avisos</span>
-                </button>
-            </nav>
-
-            <!-- Config Tab -->
-            <section id="config-tab" class="tab-content">
-                <div class="controls-bar">
-                    <div class="week-navigation">
-                        <button id="prevWeekConfig" class="nav-btn" title="Semana Anterior">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <polyline points="15 18 9 12 15 6"></polyline>
-                            </svg>
-                        </button>
-                        <div class="week-info">
-                            <h2 id="weekDisplayConfig">Semana 1</h2>
-                            <span id="dateRangeConfig">29 Dic - 04 Ene</span>
-                        </div>
-                        <button id="nextWeekConfig" class="nav-btn" title="Semana Siguiente">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <polyline points="9 18 15 12 9 6"></polyline>
-                            </svg>
-                        </button>
-                    </div>
-                    <div class="config-actions">
-                        <button id="manageAssignmentsBtn" class="btn-secondary">Gestionar Asignaciones</button>
-                        <button id="manageEmployeesBtn" class="btn-secondary">👥 Gestionar Empleados</button>
-                        <button id="manageVacationsBtn" class="btn-secondary">Gestionar Vacaciones</button>
-                        <button id="manageLocationChangesBtn" class="btn-secondary">Cambio de Ubicación</button>
-                        <button id="manageTempChangesBtn" class="btn-secondary">🔄 Cambios Temporales</button>
-                        <button id="manageEventsBtn" class="btn-secondary">📅 Eventos y Avisos</button>
-                        <button id="changePasswordBtn" class="btn-primary">🔐 Cambiar Contraseña</button>
-                        <button id="todayBtnConfig" class="today-btn">Ir a Hoy</button>
-
+            <!-- Metrics Summary Cards -->
+            <section class="metrics-row">
+                <div class="metric-card">
+                    <div class="metric-icon-wrapper">👥</div>
+                    <div class="metric-body">
+                        <h4>Equipo Registrado</h4>
+                        <div class="metric-value">7 Integrantes</div>
                     </div>
                 </div>
-
-                <div class="table-container">
-                    <table class="schedule-table">
-                        <thead>
-                            <tr>
-                                <th>Horario</th>
-                                <th>Persona Asignada</th>
-                                <th>Lunes</th>
-                                <th>Martes</th>
-                                <th>Miércoles</th>
-                                <th>Jueves</th>
-                                <th>Viernes</th>
-                                <th>Sábado</th>
-                                <th>Domingo</th>
-                            </tr>
-                        </thead>
-                        <tbody id="configTableBody">
-                            <!-- Generated by JS -->
-                        </tbody>
-                    </table>
+                <div class="metric-card cyan">
+                    <div class="metric-icon-wrapper">🔄</div>
+                    <div class="metric-body">
+                        <h4>Rotación Activa</h4>
+                        <div class="metric-value">Turno Semanal</div>
+                    </div>
                 </div>
-
-                <div class="danger-zone">
-                    <h3 class="danger-title">Zona de Peligro</h3>
-                    <p class="danger-text">Esta acción eliminará permanentemente todos los datos de la aplicación.</p>
-                    <button id="resetDatabaseBtn" class="btn-danger">⚠️ Borrar Base de Datos</button>
+                <div class="metric-card pink">
+                    <div class="metric-icon-wrapper">📍</div>
+                    <div class="metric-body">
+                        <h4>Ubicaciones</h4>
+                        <div class="metric-value">Guardia / Valle / Mitras</div>
+                    </div>
+                </div>
+                <div class="metric-card amber">
+                    <div class="metric-icon-wrapper">⚡</div>
+                    <div class="metric-body">
+                        <h4>Estado Sync</h4>
+                        <div class="metric-value" style="color: var(--accent-emerald);">Firebase Realtime</div>
+                    </div>
                 </div>
             </section>
 
-            <!-- Individual Tab -->
+            <div class="glow-divider"></div>
+
+            <!-- Tab Content Sections -->
+            <!-- Individual View Tab -->
             <section id="individual-tab" class="tab-content active">
                 <div class="controls-bar">
                     <div class="week-navigation">
@@ -204,11 +207,11 @@
                 <div id="eventsBannerInd"></div>
 
                 <div id="individualScheduleContainer" class="individual-view">
-                    <!-- Generated by JS -->
+                    <!-- Dynamic Content -->
                 </div>
             </section>
 
-            <!-- General Tab -->
+            <!-- General Schedule View Tab -->
             <section id="general-tab" class="tab-content">
                 <div class="controls-bar">
                     <div class="week-navigation">
@@ -234,12 +237,12 @@
 
                 <div class="general-view">
                     <div class="main-schedule-section">
-                        <h3 data-editable-id="section-gen-full">Vista General Completa</h3>
+                        <h3 data-editable-id="section-gen-full" style="margin-bottom: 1rem; font-weight: 800;">Vista General de Horarios</h3>
                         <div class="table-container">
                             <table class="schedule-table">
                                 <thead>
                                     <tr>
-                                        <th>Turno / Persona</th>
+                                        <th>Persona</th>
                                         <th>Lunes</th>
                                         <th>Martes</th>
                                         <th>Miércoles</th>
@@ -250,14 +253,14 @@
                                     </tr>
                                 </thead>
                                 <tbody id="generalTableBody">
-                                    <!-- Generated by JS -->
+                                    <!-- Dynamic Content -->
                                 </tbody>
                             </table>
                         </div>
                     </div>
 
                     <div class="locations-section">
-                        <h3 data-editable-id="section-locations">Personal por Ubicación</h3>
+                        <h3 data-editable-id="section-locations">Personal Distribución por Ubicación</h3>
                         <div class="locations-grid">
                             <div class="location-card guardia">
                                 <div class="location-header" data-editable-id="loc-guardia">GUARDIA</div>
@@ -276,38 +279,98 @@
                 </div>
             </section>
 
-            <!-- Events Tab -->
+            <!-- Events View Tab -->
             <section id="events-tab" class="tab-content">
                 <div class="controls-bar" style="justify-content: space-between;">
-                    <h2 data-editable-id="events-title">📅 Eventos y Avisos</h2>
+                    <h2 data-editable-id="events-title">📅 Eventos, Avisos y Festivos</h2>
                 </div>
 
-                <div id="allEventsContainer" style="margin-top: 2rem;">
-                    <!-- Generated by JS -->
+                <div id="allEventsContainer" style="margin-top: 1rem;">
+                    <!-- Dynamic Content -->
+                </div>
+            </section>
+
+            <!-- Admin Config View Tab -->
+            <section id="config-tab" class="tab-content">
+                <div class="controls-bar">
+                    <div class="week-navigation">
+                        <button id="prevWeekConfig" class="nav-btn">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="15 18 9 12 15 6"></polyline>
+                            </svg>
+                        </button>
+                        <div class="week-info">
+                            <h2 id="weekDisplayConfig">Semana 1</h2>
+                            <span id="dateRangeConfig">29 Dic - 04 Ene</span>
+                        </div>
+                        <button id="nextWeekConfig" class="nav-btn">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="9 18 15 12 9 6"></polyline>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="config-actions">
+                        <button id="manageAssignmentsBtn" class="btn-secondary">Asignaciones</button>
+                        <button id="manageEmployeesBtn" class="btn-secondary">👥 Empleados</button>
+                        <button id="manageVacationsBtn" class="btn-secondary">🏖️ Vacaciones</button>
+                        <button id="manageLocationChangesBtn" class="btn-secondary">📍 Ubicación</button>
+                        <button id="manageTempChangesBtn" class="btn-secondary">🔄 Cambios Temp.</button>
+                        <button id="manageEventsBtn" class="btn-secondary">📅 Eventos</button>
+                        <button id="changePasswordBtn" class="btn-primary">🔐 Contraseña</button>
+                        <button id="todayBtnConfig" class="today-btn">Ir a Hoy</button>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <table class="schedule-table">
+                        <thead>
+                            <tr>
+                                <th>Horario</th>
+                                <th>Persona Asignada</th>
+                                <th>Lunes</th>
+                                <th>Martes</th>
+                                <th>Miércoles</th>
+                                <th>Jueves</th>
+                                <th>Viernes</th>
+                                <th>Sábado</th>
+                                <th>Domingo</th>
+                            </tr>
+                        </thead>
+                        <tbody id="configTableBody">
+                            <!-- Dynamic Content -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="danger-zone">
+                    <h3 class="danger-title">⚠️ Zona de Peligro</h3>
+                    <p class="danger-text">Esta acción eliminará permanentemente todos los datos de la aplicación.</p>
+                    <button id="resetDatabaseBtn" class="btn-danger">Borrar Base de Datos</button>
                 </div>
             </section>
         </main>
     </div>
 
+    <!-- Modals Section (Preserving all elements & IDs for app.js compatibility) -->
     <!-- Login Modal -->
     <div id="loginModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>Iniciar Sesión</h2>
+                <h2>Acceso Administrativo</h2>
                 <button class="close-modal">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="form-group">
-                    <label>Contraseña</label>
-                    <input type="password" id="loginPass" placeholder="••••••">
+                    <label>Contraseña de Administrador</label>
+                    <input type="password" id="loginPass" placeholder="••••••••">
                 </div>
-                <div id="loginError" style="display: none; color: var(--danger); margin-top: 0.5rem;">
-                    Usuario o contraseña incorrectos
+                <div id="loginError" style="display: none; color: var(--danger); margin-top: 0.5rem; font-weight: 600;">
+                    Contraseña incorrecta
                 </div>
             </div>
             <div class="modal-footer">
                 <button class="btn-secondary close-modal">Cancelar</button>
-                <button id="doLoginBtn" class="btn-primary">Iniciar Sesión</button>
+                <button id="doLoginBtn" class="btn-primary">Ingresar</button>
             </div>
         </div>
     </div>
@@ -319,9 +382,7 @@
                 <h2>Asignar Persona - Horario <span id="modalScheduleId"></span></h2>
                 <button class="close-modal">&times;</button>
             </div>
-            <div class="modal-body">
-                <!-- Dynamic content -->
-            </div>
+            <div class="modal-body"></div>
             <div class="modal-footer">
                 <button class="btn-secondary close-modal">Cancelar</button>
                 <button id="saveAssignBtn" class="btn-primary">Guardar</button>
@@ -333,12 +394,10 @@
     <div id="swapModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>Cambio de Guardia</h2>
+                <h2>Cambio de Turno / Guardia</h2>
                 <button class="close-modal">&times;</button>
             </div>
-            <div class="modal-body">
-                <!-- Dynamic content -->
-            </div>
+            <div class="modal-body"></div>
             <div class="modal-footer">
                 <button class="btn-secondary close-modal">Cancelar</button>
                 <button id="saveSwapBtn" class="btn-primary">Guardar Cambio</button>
@@ -353,9 +412,7 @@
                 <h2>Gestionar Vacaciones</h2>
                 <button class="close-modal">&times;</button>
             </div>
-            <div class="modal-body">
-                <!-- Dynamic content -->
-            </div>
+            <div class="modal-body"></div>
             <div class="modal-footer">
                 <button class="btn-secondary close-modal">Cerrar</button>
             </div>
@@ -369,9 +426,7 @@
                 <h2>Cambio de Ubicación</h2>
                 <button class="close-modal">&times;</button>
             </div>
-            <div class="modal-body">
-                <!-- Dynamic content -->
-            </div>
+            <div class="modal-body"></div>
             <div class="modal-footer">
                 <button class="btn-secondary close-modal">Cerrar</button>
             </div>
@@ -382,12 +437,10 @@
     <div id="tempChangesModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>Gestionar Cambios Temporales</h2>
+                <h2>Cambios Temporales Activos</h2>
                 <button class="close-modal">&times;</button>
             </div>
-            <div class="modal-body">
-                <!-- Dynamic content -->
-            </div>
+            <div class="modal-body"></div>
             <div class="modal-footer">
                 <button class="btn-secondary close-modal">Cerrar</button>
             </div>
@@ -398,12 +451,10 @@
     <div id="employeesModal" class="modal">
         <div class="modal-content" style="max-width: 900px;">
             <div class="modal-header">
-                <h2>👥 Gestionar Empleados</h2>
+                <h2>👥 Directorio de Empleados</h2>
                 <button class="close-modal">&times;</button>
             </div>
-            <div class="modal-body" style="max-height: 60vh; overflow-y: auto;">
-                <!-- Dynamic content -->
-            </div>
+            <div class="modal-body"></div>
             <div class="modal-footer">
                 <button class="btn-secondary close-modal">Cerrar</button>
             </div>
@@ -414,7 +465,7 @@
     <div id="changePasswordModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>Cambiar Contraseña de Administrador</h2>
+                <h2>Cambiar Contraseña</h2>
                 <button class="close-modal">&times;</button>
             </div>
             <div class="modal-body">
@@ -437,24 +488,24 @@
             </div>
             <div class="modal-footer">
                 <button class="btn-secondary close-modal">Cancelar</button>
-                <button id="savePasswordBtn" class="btn-primary">Cambiar Contraseña</button>
+                <button id="savePasswordBtn" class="btn-primary">Guardar Nueva Contraseña</button>
             </div>
         </div>
     </div>
 
     <!-- Confirmation Modal -->
     <div id="confirmModal" class="modal">
-        <div class="modal-content" style="max-width: 400px;">
+        <div class="modal-content" style="max-width: 420px;">
             <div class="modal-header">
-                <h2 id="confirmTitle">Confirmar</h2>
+                <h2 id="confirmTitle">Confirmar Acción</h2>
                 <button class="close-modal">&times;</button>
             </div>
             <div class="modal-body">
-                <p id="confirmMessage" style="margin: 0;"></p>
+                <p id="confirmMessage" style="margin: 0; font-weight: 500;"></p>
             </div>
             <div class="modal-footer">
                 <button id="confirmCancelBtn" class="btn-secondary">Cancelar</button>
-                <button id="confirmOkBtn" class="btn-primary" style="background: var(--danger);">Eliminar</button>
+                <button id="confirmOkBtn" class="btn-danger">Confirmar</button>
             </div>
         </div>
     </div>
@@ -481,12 +532,10 @@
                     </select>
                 </div>
 
-                <!-- Campos para horario especial de guardia (solo visible para holiday) -->
-                <div id="guardiaTimeContainer"
-                    style="display: none; background: rgba(16, 185, 129, 0.1); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid rgba(16, 185, 129, 0.3);">
-                    <label
-                        style="color: var(--success); font-weight: bold; margin-bottom: 0.5rem; display: block;">Horario
-                        Especial Guardia (Opcional)</label>
+                <div id="guardiaTimeContainer" style="display: none; background: rgba(16, 185, 129, 0.1); padding: 1rem; border-radius: 12px; border: 1px solid rgba(16, 185, 129, 0.3);">
+                    <label style="color: var(--success); font-weight: bold; margin-bottom: 0.5rem; display: block;">
+                        Horario Especial Guardia (Opcional)
+                    </label>
                     <div style="display: flex; gap: 1rem;">
                         <div style="flex: 1;">
                             <label style="font-size: 0.8rem;">Entrada</label>
@@ -497,25 +546,20 @@
                             <input type="time" id="guardiaEnd">
                         </div>
                     </div>
-                    <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.5rem; margin-bottom: 0;">Si se
-                        deja vacío, se usa el horario normal.</p>
                 </div>
 
                 <div class="form-group">
                     <label>Mensaje del Evento</label>
-                    <input type="text" id="eventText" placeholder="Ej: Juntá de equipo a las 10am">
+                    <input type="text" id="eventText" placeholder="Ej: Junta general a las 10am">
                 </div>
 
-                <h4
-                    style="margin-top: 2rem; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
-                    Eventos Próximos
-                    <button id="deleteAllEventsBtn" onclick="forceDeleteEvents()"
-                        style="font-size: 0.75rem; color: var(--danger); background: #fee2e2; border: 1px solid #fca5a5; padding: 4px 8px; border-radius: 4px; cursor: pointer;">🗑️
-                        Borrar Todo</button>
+                <h4 style="margin-top: 1.5rem; margin-bottom: 0.75rem; display: flex; justify-content: space-between; align-items: center;">
+                    Eventos Registrados
+                    <button id="deleteAllEventsBtn" onclick="forceDeleteEvents()" style="font-size: 0.75rem; color: var(--danger); background: rgba(244, 63, 94, 0.1); border: 1px solid rgba(244, 63, 94, 0.3); padding: 4px 10px; border-radius: var(--radius-pill); cursor: pointer;">
+                        🗑️ Borrar Todo
+                    </button>
                 </h4>
-                <div id="eventsList" style="max-height: 200px; overflow-y: auto;">
-                    <!-- Lista de eventos generada por JS -->
-                </div>
+                <div id="eventsList" style="max-height: 220px; overflow-y: auto;"></div>
             </div>
             <div class="modal-footer">
                 <button class="btn-secondary close-modal">Cerrar</button>
@@ -526,53 +570,99 @@
 
     <!-- About Modal -->
     <div id="aboutModal" class="modal">
-        <div class="modal-content" style="max-width: 450px; text-align: center;">
+        <div class="modal-content" style="max-width: 460px; text-align: center;">
             <div class="modal-header">
-                <h2>💻 Acerca de la App</h2>
+                <h2>Acerca de HorariosApp</h2>
                 <button class="close-modal">&times;</button>
             </div>
-            <div class="modal-body">
-                <img src="icon-192.png" alt="Ti_St Logo" class="about-logo">
-
-                <h2 style="font-size: 1.5rem; margin-bottom: 0.2rem; color: var(--primary); font-weight: 700;">Ti_St
-                    Horarios</h2>
-                <p style="color: var(--text-muted); margin-bottom: 2rem;">Sistema de gestión de turnos 2026</p>
-
-                <h4 style="margin-bottom: 1rem; color: var(--text-main); text-align: left;">🛠️ Tecnologías Utilizadas:
-                </h4>
-                <ul class="tech-list">
-                    <li class="tech-item"><span style="color: #e34c26;">🟠</span> HTML5</li>
-                    <li class="tech-item"><span style="color: #264de4;">🔵</span> CSS3</li>
-                    <li class="tech-item"><span style="color: #f7df1e;">🟡</span> JavaScript</li>
-                    <li class="tech-item"><span style="color: #ffca28;">🔥</span> Firebase</li>
-                    <li class="tech-item" style="grid-column: span 2;"><span style="color: #6366f1;">☀️</span>
-                        Open-Meteo API</li>
-                </ul>
-
-                <a href="https://github.com/ibrahimdude-88/horariosapp/" target="_blank" class="btn-primary"
-                    style="display: flex; align-items: center; justify-content: center; gap: 10px; text-decoration: none; width: 100%; margin-bottom: 1.5rem;">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
-                        <path
-                            d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22">
-                        </path>
+            <div class="modal-body" style="align-items: center;">
+                <div style="width: 70px; height: 70px; border-radius: var(--radius-lg); background: var(--gradient-main); display: flex; align-items: center; justify-content: center; box-shadow: var(--glow-primary); margin-bottom: 0.5rem;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" width="36" height="36">
+                        <rect x="3" y="4" width="18" height="18" rx="3"></rect>
+                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                        <line x1="3" y1="10" x2="21" y2="10"></line>
                     </svg>
-                    Ver Repositorio
-                </a>
-
-                <div
-                    style="font-size: 0.75rem; color: var(--text-muted); padding-top: 1rem; border-top: 1px solid var(--border);">
-                    Designed by <strong style="color: var(--primary);">ibrahimdude</strong>
                 </div>
+                <h2 style="font-size: 1.5rem; font-weight: 800; background: var(--gradient-main); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                    HorariosApp 2.0
+                </h2>
+                <p style="color: var(--text-secondary); font-size: 0.9rem;">Executive Cyber-Dashboard Edition</p>
+
+                <div style="width: 100%; border-top: 1px solid var(--border-glass); margin: 1rem 0;"></div>
+
+                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: center;">
+                    <span style="background: rgba(99, 102, 241, 0.15); color: var(--accent-primary); padding: 4px 10px; border-radius: var(--radius-pill); font-size: 0.75rem; font-weight: 700;">HTML5 / CSS3</span>
+                    <span style="background: rgba(6, 182, 212, 0.15); color: var(--accent-secondary); padding: 4px 10px; border-radius: var(--radius-pill); font-size: 0.75rem; font-weight: 700;">Vanilla JS</span>
+                    <span style="background: rgba(245, 158, 11, 0.15); color: var(--accent-amber); padding: 4px 10px; border-radius: var(--radius-pill); font-size: 0.75rem; font-weight: 700;">Firebase RTDB</span>
+                    <span style="background: rgba(16, 185, 129, 0.15); color: var(--accent-emerald); padding: 4px 10px; border-radius: var(--radius-pill); font-size: 0.75rem; font-weight: 700;">Open-Meteo API</span>
+                </div>
+
+                <a href="https://github.com/ibrahimdude-88/horariosapp/" target="_blank" class="btn-primary" style="margin-top: 1.25rem; width: 100%; text-decoration: none;">
+                    🐙 Ver Repositorio en GitHub
+                </a>
             </div>
         </div>
     </div>
 
-    <!-- Firebase SDK (Version 8 stable for direct HTML usage) -->
+    <!-- Floating Schedule Assistant Agent Widget -->
+    <div id="schedule-agent-widget">
+        <!-- Floating Launcher Button -->
+        <button id="agent-toggle-btn" class="agent-fab-btn" title="Asistente IA de Horarios">
+            <span class="agent-fab-icon">🤖</span>
+        </button>
+
+        <!-- Chat Drawer Container -->
+        <div id="agent-chat-drawer" class="agent-drawer">
+            <div class="agent-header">
+                <div class="agent-title-info">
+                    <div class="agent-avatar">🤖</div>
+                    <div>
+                        <h3>Agente de Horarios</h3>
+                        <span class="agent-status-text" id="agent-status-indicator">● Gemini 2.5 Flash AI Activo</span>
+                    </div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.4rem;">
+                    <button id="agent-clear-btn" class="agent-clear-btn" title="Borrar Conversación">🗑️</button>
+                    <button id="agent-close-btn" class="agent-close">&times;</button>
+                </div>
+            </div>
+
+            <!-- Suggestion Chips -->
+            <div class="agent-chips-bar">
+                <button class="agent-chip" data-query="¿Qué semanas le toca guardia a Roberto Lombart en todo el año?">🛡️ Guardias del Año</button>
+                <button class="agent-chip" data-query="¿Quiénes estarán en Valle el 20 de noviembre?">📍 Personal por Fecha</button>
+                <button class="agent-chip" data-query="En los asuetos siguientes ¿a quiénes les toca la guardia?">🎉 Guardias en Asuetos</button>
+            </div>
+
+            <!-- Messages Log -->
+            <div id="agent-messages-container" class="agent-messages">
+                <div class="agent-msg bot">
+                    <div class="msg-bubble">
+                        👋 ¡Hola! Soy tu <strong>Agente de Horarios</strong>. Estoy listo para ayudarte con cualquier consulta sobre los horarios, guardias, ubicaciones y eventos de todo el año.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chat Input Box -->
+            <div class="agent-input-box">
+                <input type="text" id="agent-input-field" placeholder="Escribe tu consulta de horarios..." autocomplete="off">
+                <button id="agent-send-btn" class="agent-send-btn" title="Enviar Consulta">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                        <line x1="22" y1="2" x2="11" y2="13"></line>
+                        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
-    <!-- App Logic -->
-    <script src="app.js?v=3.7" defer></script>
+    <!-- Main Logic -->
+    <script src="app.js?v=5.0" defer></script>
 </body>
 
 </html>

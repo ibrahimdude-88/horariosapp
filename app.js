@@ -87,7 +87,18 @@ const scheduleData = [
     },
     {
         id: 7,
-        name: 'Fijo Mitras',
+        name: 'Fijo Mitras (Fernando Gomez)',
+        lunes: { time: '10:00 AM - 07:00 PM', location: 'mitras' },
+        martes: { time: '10:00 AM - 07:00 PM', location: 'mitras' },
+        miercoles: { time: '10:00 AM - 07:00 PM', location: 'mitras' },
+        jueves: { time: '10:00 AM - 07:00 PM', location: 'mitras' },
+        viernes: { time: '10:00 AM - 07:00 PM', location: 'mitras' },
+        sabado: null,
+        domingo: null
+    },
+    {
+        id: 8,
+        name: 'Fijo Mitras (Roberto Lombart)',
         lunes: { time: '10:00 AM - 07:00 PM', location: 'mitras' },
         martes: { time: '10:00 AM - 07:00 PM', location: 'mitras' },
         miercoles: { time: '10:00 AM - 07:00 PM', location: 'mitras' },
@@ -219,10 +230,17 @@ function loadFromFirebase() {
             state.locationChanges = data.locationChanges || {};
             state.events = data.events || {};
 
+            if (!state.assignments[7]) state.assignments[7] = 'Fernando Gomez';
+            if (!state.assignments[8]) state.assignments[8] = 'Roberto Lombart';
+            if (!state.employees.includes('Fernando Gomez')) state.employees.push('Fernando Gomez');
+            if (!state.employees.includes('Roberto Lombart')) state.employees.push('Roberto Lombart');
+
             console.log("📡 Datos sincronizados desde Firebase");
         } else {
             console.log("⚠️ Base de datos vacía, usando estado limpio.");
-            // Si está vacía, no hacemos nada (el state ya está limpio por defecto)
+            state.assignments[7] = 'Fernando Gomez';
+            state.assignments[8] = 'Roberto Lombart';
+            state.employees = ['Fernando Gomez', 'Roberto Lombart'];
         }
 
         // Re-renderizar la interfaz cada vez que llegan datos
@@ -257,8 +275,12 @@ function saveToLocalStorage() { // Mantengo el nombre para no romper llamadas ex
 }
 
 function initTheme() {
-    const savedTheme = localStorage.getItem('theme'); // Tema se queda local
-    if (savedTheme === 'dark') {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'light') {
+        document.body.classList.add('light-mode');
+        document.body.classList.remove('dark-mode');
+    } else {
+        document.body.classList.remove('light-mode');
         document.body.classList.add('dark-mode');
     }
 }
@@ -280,8 +302,9 @@ function setupEventListeners() {
 
     if (elements.themeToggle) {
         elements.themeToggle.addEventListener('click', () => {
-            document.body.classList.toggle('dark-mode');
-            localStorage.setItem('theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light');
+            const isLight = document.body.classList.toggle('light-mode');
+            document.body.classList.toggle('dark-mode', !isLight);
+            localStorage.setItem('theme', isLight ? 'light' : 'dark');
         });
     }
 
@@ -371,6 +394,11 @@ function setupEventListeners() {
     const manageTempChangesBtn = document.getElementById('manageTempChangesBtn');
     if (manageTempChangesBtn) {
         manageTempChangesBtn.addEventListener('click', openManageTempChanges);
+    }
+
+    const aboutBtn = document.getElementById('aboutBtn');
+    if (aboutBtn) {
+        aboutBtn.addEventListener('click', () => openModal('aboutModal'));
     }
 
     document.querySelectorAll('.close-modal').forEach(btn => {
@@ -538,7 +566,7 @@ function getWeekDateRange(offset) {
 }
 
 function getRotatedScheduleId(baseId, weekOffset) {
-    if (baseId === 7) return 7;
+    if (baseId >= 7) return baseId;
     let rotated = (baseId - 1 + weekOffset) % 6;
     if (rotated < 0) rotated += 6;
     return rotated + 1;
@@ -571,25 +599,7 @@ function getScheduleForPerson(personName, weekOffset, dayIndex) {
         }
     }
 
-    const rotatedId = getRotatedScheduleId(baseScheduleId, weekOffset);
-
-    if (state.weeklyOverrides[weekKey] && state.weeklyOverrides[weekKey][rotatedId]) {
-        const overrideData = state.weeklyOverrides[weekKey][rotatedId];
-        if (isOverrideActiveOnDay(overrideData, dayIndex)) {
-            const intruderName = overrideData.person;
-            let intruderBaseId = null;
-            for (const [id, name] of Object.entries(state.assignments)) {
-                if (name === intruderName) {
-                    intruderBaseId = parseInt(id);
-                    break;
-                }
-            }
-            if (intruderBaseId) {
-                return getRotatedScheduleId(intruderBaseId, weekOffset);
-            }
-        }
-    }
-    return rotatedId;
+    return getRotatedScheduleId(baseScheduleId, weekOffset);
 }
 
 // ==========================================
@@ -713,8 +723,8 @@ function getPersonForSchedule(scheduleId, weekOffset, dayIndex) {
     }
 
     let baseId;
-    if (scheduleId === 7) {
-        baseId = 7;
+    if (scheduleId >= 7) {
+        baseId = scheduleId;
     } else {
         baseId = (scheduleId - 1 - weekOffset) % 6;
         if (baseId < 0) baseId += 6;
@@ -821,6 +831,9 @@ function renderConfigTable() {
 
         // Renderizar celdas de día con resolución por día
         const dayCells = renderConfigDayCells(schedule, state.currentWeekOffset);
+        const locNameClass = schedule.name.toLowerCase().includes('guardia') ? 'name-loc-guardia' 
+                           : schedule.name.toLowerCase().includes('valle') ? 'name-loc-valle' 
+                           : 'name-loc-mitras';
 
         tr.innerHTML = `
             <td>
@@ -830,7 +843,7 @@ function renderConfigTable() {
                 </div>
             </td>
             <td class="person-cell">
-                ${assignedPersonName}
+                <strong class="${locNameClass}">${assignedPersonName}</strong>
                 ${swapLabel}
                 ${isOnVacation ? `<span class="vacation-badge-small">🏖️ Vacaciones</span>` : ''}
             </td>
@@ -1484,7 +1497,7 @@ function renderGeneralView() {
     document.getElementById('valleList').innerHTML = '';
     document.getElementById('mitrasList').innerHTML = '';
 
-    for (let i = 1; i <= 7; i++) {
+    for (let i = 1; i <= scheduleData.length; i++) {
         const personData = getPersonForSchedule(i, state.currentWeekOffset);
         const schedule = scheduleData.find(s => s.id === i);
 
@@ -1510,7 +1523,7 @@ function renderGeneralView() {
         } else if (isPartialSwap) {
             // Obtener persona base (sin override)
             let baseId;
-            if (i === 7) { baseId = 7; } else {
+            if (i >= 7) { baseId = i; } else {
                 baseId = (i - 1 - state.currentWeekOffset) % 6;
                 if (baseId < 0) baseId += 6;
                 baseId += 1;
@@ -1533,11 +1546,13 @@ function renderGeneralView() {
 
         // Usar celdas de día con resolución por día
         const dayCells = renderGeneralDayCells(schedule, i, state.currentWeekOffset);
+        const locNameClass = schedule.name.toLowerCase().includes('guardia') ? 'name-loc-guardia' 
+                           : schedule.name.toLowerCase().includes('valle') ? 'name-loc-valle' 
+                           : 'name-loc-mitras';
 
         tr.innerHTML = `
             <td class="person-cell">
-                <strong>${schedule.name}</strong><br>
-                ${personDisplay}
+                <strong class="${locNameClass}" style="font-size: 1rem;">${personDisplay}</strong>
                 ${commentDisplay}
                 ${vacationDisplay}
             </td>
@@ -1814,7 +1829,7 @@ function addToLocationTablesWithDays(scheduleId, schedule, weekOffset) {
                 
                 div.innerHTML = `
                     <div>
-                        <strong>${personName}</strong>
+                        <strong class="name-loc-${loc}">${personName}</strong>
                         <div class="text-xs text-muted">${data.days.join(', ')}</div>
                         ${data.isTemp ? `<span class="comment-text">${data.comment}</span>` : ''}
                         ${hasLocationChange ? `<span class="location-change-indicator" style="font-size: 0.7rem;">📍 Cambio temporal</span>` : ''}
@@ -1836,8 +1851,8 @@ function openManageAssignments() {
         <div class="assignments-list" style="max-height: 300px; overflow-y: auto;">
             ${scheduleData.map(s => {
                 let baseId;
-                if (s.id === 7) {
-                    baseId = 7;
+                if (s.id >= 7) {
+                    baseId = s.id;
                 } else {
                     baseId = (s.id - 1 - state.currentWeekOffset) % 6;
                     if (baseId < 0) baseId += 6;
@@ -3942,7 +3957,7 @@ function generateEmailHtmlForEmployee(employeeId, weekOffset) {
                 ${generalTableHtml}
 
                 <div style="text-align: center; margin-top: 40px; border-top: 1px solid #333; padding-top: 20px;">
-                    <p style="color: #48484A; font-size: 12px;">Sistema de Horarios | Ti_St</p>
+                    <p style="color: #8E8E93; font-size: 12px;">HorariosApp 2.0 — Sistema de Horarios Rotativos</p>
                 </div>
             </div>
         </div>
@@ -4042,7 +4057,7 @@ function generateEmailHtmlForEmployee_OLD(employeeId, weekOffset) {
             <h3 style="color: #4f46e5;">Tu Horario Asignado: ${schedule ? 'Horario ' + schedule.id : 'Ninguno'}</h3>
             ${tableHtml}
             <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
-            <p style="font-size: 12px; color: #888; text-align: center;">Sistema de Horarios Ti_St</p>
+            <p style="font-size: 12px; color: #888; text-align: center;">HorariosApp 2.0</p>
         </div>
     </div>`;
 }
@@ -4770,4 +4785,1231 @@ function getDayHeaderColor(weekOffset, dayIndex) {
         }
     }
     return '';
+}
+
+/* ==========================================================================
+   AGENTE INTELIGENTE DE HORARIOS (SCHEDULE ASSISTANT ENGINE)
+   ========================================================================== */
+
+function escapeHTML(str) {
+    if (!str) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
+let agentChatHistory = [];
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initAgentWidget);
+} else {
+    setTimeout(initAgentWidget, 100);
+}
+
+function initAgentWidget() {
+    const toggleBtn = document.getElementById('agent-toggle-btn');
+    const closeBtn = document.getElementById('agent-close-btn');
+    const drawer = document.getElementById('agent-chat-drawer');
+    const sendBtn = document.getElementById('agent-send-btn');
+    const inputField = document.getElementById('agent-input-field');
+
+    if (!toggleBtn || !drawer) return;
+
+    toggleBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        drawer.classList.toggle('active');
+        if (drawer.classList.contains('active')) {
+            if (inputField) inputField.focus();
+        }
+    });
+
+    if (closeBtn) {
+        closeBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            drawer.classList.remove('active');
+        });
+    }
+
+    if (sendBtn && inputField) {
+        sendBtn.onclick = (e) => {
+            e.preventDefault();
+            submitAgentQuery();
+        };
+        inputField.onkeydown = (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                submitAgentQuery();
+            }
+        };
+    }
+
+    const clearBtn = document.getElementById('agent-clear-btn');
+    if (clearBtn) {
+        clearBtn.onclick = (e) => {
+            e.preventDefault();
+            clearAgentChat();
+        };
+    }
+
+    // Attach click handlers to suggestion chips
+    document.querySelectorAll('.agent-chip').forEach(chip => {
+        chip.onclick = (e) => {
+            e.preventDefault();
+            const query = chip.dataset.query;
+            if (query) {
+                if (inputField) inputField.value = query;
+                submitAgentQuery();
+            }
+        };
+    });
+}
+
+function clearAgentChat() {
+    agentChatHistory = [];
+    agentContext = {
+        lastPerson: null,
+        lastLocation: null,
+        lastDate: null,
+        lastMonth: null,
+        lastIntent: null
+    };
+    const container = document.getElementById('agent-messages-container');
+    if (container) {
+        container.innerHTML = `
+            <div class="agent-msg bot">
+                <div class="msg-bubble">
+                    👋 ¡Hola! Soy tu <strong>Agente de Horarios</strong>. Estoy listo para ayudarte con cualquier consulta sobre los horarios, guardias, ubicaciones y eventos de todo el año.
+                </div>
+            </div>
+        `;
+    }
+}
+
+async function submitAgentQuery() {
+    const inputField = document.getElementById('agent-input-field');
+    if (!inputField) return;
+
+    const query = inputField.value.trim();
+    if (!query) return;
+
+    // Append user message safely
+    appendAgentMessage('user', escapeHTML(query));
+    inputField.value = '';
+
+    const apiKey = localStorage.getItem('gemini_api_key') || window.GEMINI_API_KEY || '';
+
+    if (apiKey && apiKey.trim().length > 10) {
+        const typingId = appendTypingIndicator();
+        try {
+            const aiResponse = await callGeminiAPI(query, apiKey.trim());
+            removeTypingIndicator(typingId);
+            appendAgentMessage('bot', aiResponse);
+        } catch (err) {
+            console.warn('Gemini API call warning, using intelligent local engine:', err);
+            removeTypingIndicator(typingId);
+            const fallbackResp = processAgentQuery(query);
+            appendAgentMessage('bot', fallbackResp);
+        }
+    } else {
+        const typingId = appendTypingIndicator();
+        setTimeout(() => {
+            removeTypingIndicator(typingId);
+            const response = processAgentQuery(query);
+            appendAgentMessage('bot', response);
+        }, 350);
+    }
+}
+
+function appendTypingIndicator() {
+    const container = document.getElementById('agent-messages-container');
+    if (!container) return null;
+
+    const id = 'typing-' + Date.now();
+    const div = document.createElement('div');
+    div.id = id;
+    div.className = 'agent-msg bot';
+    div.innerHTML = `<div class="msg-bubble" style="display:flex; align-items:center; gap:8px; padding: 0.6rem 0.9rem;">
+        <span class="typing-dot"></span>
+        <span class="typing-dot"></span>
+        <span class="typing-dot"></span>
+        <em style="opacity:0.75; font-size:0.82rem; margin-left:4px;">Gemini 2.5 Flash pensando...</em>
+    </div>`;
+    container.appendChild(div);
+    container.scrollTop = container.scrollHeight;
+    return id;
+}
+
+function removeTypingIndicator(id) {
+    if (!id) return;
+    const el = document.getElementById(id);
+    if (el) el.remove();
+}
+
+async function callGeminiAPI(userQuery, apiKey) {
+    const contextText = buildGeminiScheduleContext();
+
+    // Maintain conversation history
+    agentChatHistory.push({ role: 'user', parts: [{ text: userQuery }] });
+    if (agentChatHistory.length > 10) {
+        agentChatHistory = agentChatHistory.slice(-10);
+    }
+
+    const payload = {
+        system_instruction: {
+            parts: [{ text: contextText }]
+        },
+        contents: agentChatHistory,
+        generationConfig: {
+            temperature: 0.2,
+            maxOutputTokens: 900
+        }
+    };
+
+    const url25 = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+    const url15 = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+
+    let res = await fetch(url25, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    });
+
+    if (!res.ok) {
+        res = await fetch(url15, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+    }
+
+    if (!res.ok) {
+        const errorJson = await res.json().catch(() => ({}));
+        throw new Error(errorJson.error?.message || `HTTP ${res.status}`);
+    }
+
+    const data = await res.json();
+    const botText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+
+    if (!botText) {
+        throw new Error('Gemini API no devolvió contenido.');
+    }
+
+    agentChatHistory.push({ role: 'model', parts: [{ text: botText }] });
+    return formatGeminiMarkdownToHTML(botText);
+}
+
+function buildGeminiScheduleContext() {
+    const currentOffset = state.currentWeekOffset || 0;
+    const todayStr = new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    const peopleList = Array.from(new Set([...(state.employees || []), ...Object.values(state.assignments || {})])).sort();
+
+    // Generate 52-week summary of guardias and assignments for every employee
+    let fullYearAssignments = '';
+    peopleList.forEach(personName => {
+        const guardiaWeeks = [];
+        for (let w = 0; w < 52; w++) {
+            const schId = getScheduleForPerson(personName, w);
+            const sch = scheduleData.find(s => s.id === schId);
+            const dateRange = getWeekDateRange(w);
+            const locChange = getEmployeeLocationChange(personName, w);
+            const displaySch = locChange ? applyLocationChangeToSchedule(sch, locChange) : sch;
+
+            if (displaySch && displaySch.lunes) {
+                const loc = displaySch.lunes.location;
+                if (loc === 'guardia') {
+                    guardiaWeeks.push(`Semana ${w + 1} (${dateRange})`);
+                }
+            }
+        }
+
+        fullYearAssignments += `- ${personName}:\n`;
+        fullYearAssignments += `  Guardias en todo el año (52 semanas): ${guardiaWeeks.length > 0 ? guardiaWeeks.join(', ') : 'Sin guardias rotativas (Horario Fijo)'}\n`;
+    });
+
+    // Format all registered Events / Holidays
+    let eventsFormatted = 'No hay festivos o eventos especiales registrados.';
+    if (state.events && Object.keys(state.events).length > 0) {
+        const evList = [];
+        Object.entries(state.events).forEach(([k, v]) => {
+            if (v && v.text) {
+                evList.push(`• Fecha: ${v.date || k} - Evento: "${v.text}" (Tipo: ${v.type || 'festivo'}${v.guardiaStart ? ', Horario Especial: ' + v.guardiaStart + ' - ' + v.guardiaEnd : ''})`);
+            }
+        });
+        if (evList.length > 0) eventsFormatted = evList.join('\n');
+    }
+
+    // Format all Vacations
+    let vacationsFormatted = 'No hay vacaciones registradas.';
+    if (state.vacations && Object.keys(state.vacations).length > 0) {
+        const vacList = [];
+        Object.entries(state.vacations).forEach(([person, vacData]) => {
+            if (vacData) {
+                vacList.push(`• ${person}: ${JSON.stringify(vacData)}`);
+            }
+        });
+        if (vacList.length > 0) vacationsFormatted = vacList.join('\n');
+    }
+
+    let ctx = `Eres el Asistente Oficial de Inteligencia Artificial para "HorariosApp 2.0", una plataforma de gestión de turnos y guardias de oficina.
+Fecha de hoy: ${todayStr}.
+Offset de semana actual en el sistema: Semana ${currentOffset + 1}.
+Base de fecha de inicio del sistema: ${state.startDate.toISOString().split('T')[0]}.
+
+DIRECTRICES:
+1. Responde SIEMPRE en español de forma profesional, atenta, concisa y usando emojis apropiados (🛡️, 📍, 🏖️, 📅, 🔄).
+2. Usa etiquetas HTML simples para formato como <strong>, <em>, <br>, <ul>, <li>. NO uses bloques markdown \`\`\`html.
+3. Responde con PRECISIÓN ABSOLUTA a cualquier consulta sobre todo el año (52 semanas), turnos, guardias, ubicaciones, vacaciones y eventos festivos usando la información completa del sistema a continuación.
+4. SI LA PREGUNTA DEL USUARIO SE REFIERE A EVENTOS, AVISOS, ASUETOS, FESTIVOS, QUINCENAS, PAGOS O ANUNCIOS (COMO BONAICE/BONO, PAGO DE QUINCENA, REUNIONES):
+   - SI PREGUNTA POR 'LA PRÓXIMA QUINCENA', 'PRÓXIMO FESTIVO', 'CUÁNDO ES LA QUINCENA' O SIN ESPECIFICAR CANTIDAD, MUESTRA ÚNICAMENTE LA PRÓXIMA FECHA MÁS CERCANA A HOY (SOLO 1 EVENTO), NO MUESTRES TODAS LAS DEL AÑO.
+   - SI SOLICITA UNA CANTIDAD ESPECÍFICA (EJEMPLO: 'LAS PRÓXIMAS 3 QUINCENAS' O 'PRÓXIMOS 2 FESTIVOS'), MUESTRA ÚNICAMENTE ESA CANTIDAD SOLICITADA EN ORDEN CRONOLÓGICO.
+   - SI PIDE 'TODAS LAS QUINCENAS' O 'TODO EL AÑO', MUESTRA LA LISTA COMPLETA DE TODO EL AÑO.
+   - SI EL EVENTO NO ESTÁ REGISTRADO, ACLARA QUE NO SE ENCUENTRA EN EL CALENDARIO Y MUESTRA LOS EVENTOS PRÓXIMOS QUE SÍ ESTÁN PROGRAMADOS.
+   - SOLO RECHAZA TEMAS COMPLETAMENTE AJENOS (CLIMA EXTERIOR, DEPORTES, COCINA). NO MUESTRES TABLAS DE HORARIOS SI LA PREGUNTA ES SOLO DE EVENTOS.
+5. REGLA DE EQUIVALENCIA: "Bonaice" y "Bono" (o "Bonos") son términos idénticos y equivalentes. Si la consulta menciona cualquiera de ellos, busca eventos registrados con las palabras "Bonaice" o "Bono".
+6. CONSULTAS DE PERSONA Y SUCURSAL ESPECÍFICA (Ejemplo: '¿Cuándo le toca en Valle a Conrado?', '¿Cuándo estará Roberto en Mitras?'):
+   - REVISA TODA LA PROGRAMACIÓN DE 52 SEMANAS DE ESA PERSONA EN EL SISTEMA.
+   - RESPONDE ÚNICAMENTE CON LAS FECHAS Y SEMANAS EN QUE ESA PERSONA ESPECÍFICA ESTARÁ TRABAJANDO EN ESA SUCURSAL/UBICACIÓN.
+   - NUNCA MUESTRES LA LISTA GENERAL DE QUIÉNES TRABAJAN EN ESA SUCURSAL SI LA PREGUNTA ES SOBRE UNA PERSONA EN ESPECÍFICO. SI NO TIENE TURNO REGISTRADO EN ESA SUCURSAL (EJ. FIJO EN OTRA O SIN ROTACIÓN), EXPLICÁLO CLARAMENTE.
+
+PERSONAL REGISTRADO (${peopleList.length} colaboradores):
+${peopleList.join(', ')}
+
+HORARIOS DEFINIDOS Y REGLAS DE ROTACIÓN:
+- Horario 1 (General Guardia): Lun-Vie Guardia (8:30-17:30), Sáb Valle (8:30-13:30), Dom Descanso. Rotativo semanalmente.
+- Horario 2 (General Valle): Lun-Vie Valle (8:30-17:30), Sáb Descanso, Dom Descanso. Rotativo semanalmente.
+- Horario 3 (General Mitras): Lun-Vie Mitras (8:30-17:30), Sáb Descanso, Dom Descanso. Rotativo semanalmente.
+- Horario 4 (Tarde Valle): Lun-Vie Valle (11:00-20:00), Sáb Descanso, Dom Descanso. Rotativo semanalmente.
+- Horario 5 (Tarde Mitras): Lun-Vie Mitras (11:00-20:00), Sáb Descanso, Dom Descanso. Rotativo semanalmente.
+- Horario 6 (Tarde Guardia): Lun-Vie Guardia (11:00-20:00), Sáb Descanso, Dom Descanso. Rotativo semanalmente.
+- Horario 7 (Fijo Mitras): Fernando Gómez -> Asignado FIJO a Mitras (8:30-17:30) en todo momento. No rota.
+- Horario 8 (Fijo Mitras): Roberto Lombart -> Asignado FIJO a Mitras (8:30-17:30) en todo momento. No rota.
+
+PROGRAMACIÓN DE GUARDIAS Y TURNOS DE TODO EL AÑO (52 SEMANAS):
+${fullYearAssignments}
+
+EVENTOS Y DÍAS FESTIVOS REGISTRADOS EN EL AÑO:
+${eventsFormatted}
+
+VACACIONES REGISTRADAS EN EL AÑO:
+${vacationsFormatted}
+
+CAMBIOS TEMPORALES DE UBICACIÓN REGISTRADOS:
+${JSON.stringify(state.locationChanges || {})}`;
+
+    return ctx;
+}
+
+function formatGeminiMarkdownToHTML(text) {
+    if (!text) return '';
+    let html = text
+        .replace(/```html?/gi, '')
+        .replace(/```/g, '')
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.*?)\*/g, '<em>$1</em>')
+        .replace(/^### (.*$)/gim, '<h4 style="margin:6px 0; color:var(--accent-cyan);">$1</h4>')
+        .replace(/^## (.*$)/gim, '<h3 style="margin:8px 0; color:var(--accent-violet);">$1</h3>')
+        .replace(/^\* (.*$)/gim, '• $1')
+        .replace(/^- (.*$)/gim, '• $1')
+        .replace(/\n/g, '<br>');
+    return html;
+}
+
+function appendAgentMessage(sender, htmlContent) {
+    const container = document.getElementById('agent-messages-container');
+    if (!container) return;
+
+    const div = document.createElement('div');
+    div.className = `agent-msg ${sender}`;
+    div.innerHTML = `<div class="msg-bubble">${htmlContent}</div>`;
+    container.appendChild(div);
+    container.scrollTop = container.scrollHeight;
+}
+
+// --- SCHEDULE ASSISTANT INTELLIGENT AGENT ENGINE (WITH CONVERSATIONAL CONTEXT) ---
+
+let agentContext = {
+    lastPerson: null,
+    lastLocation: null,
+    lastDate: null,
+    lastMonth: null,
+    lastIntent: null
+};
+
+function processAgentQuery(query) {
+    const text = query.toLowerCase().trim();
+    if (!text) return "Por favor, escribe una pregunta para ayudarte con los horarios.";
+
+    // 1. Identify all known people in system
+    const allKnownPeople = Array.from(new Set([...(state.employees || []), ...Object.values(state.assignments || {})]));
+    
+    // Explicit person search (match full name or first name)
+    let targetPerson = null;
+    for (const person of allKnownPeople) {
+        const fullLower = person.toLowerCase();
+        const firstName = fullLower.split(' ')[0].toLowerCase();
+        if (text.includes(fullLower) || (firstName.length >= 3 && text.includes(firstName))) {
+            targetPerson = person;
+            break;
+        }
+    }
+
+    // Explicit self-reference ("me", "mi", "mis", "yo")
+    const isSelfRef = /\b(me|mi|mis|yo)\b/i.test(text);
+    if (!targetPerson && isSelfRef) {
+        const select = document.getElementById('individualPersonSelect');
+        if (select && select.value) {
+            targetPerson = select.value;
+        } else if (allKnownPeople.length > 0) {
+            targetPerson = allKnownPeople[0];
+        }
+    }
+
+    // Pronoun / Anaphora detection
+    const hasPronoun = /\b(él|ella|ellos|ellas|su|sus|lo|la|los|las|de él|de ella|con él|con ella|su lugar|su guardia|su turno)\b/i.test(text);
+    if (!targetPerson && (hasPronoun || isFollowUpQuery(text)) && agentContext.lastPerson) {
+        targetPerson = agentContext.lastPerson;
+    }
+
+    // 2. Identify Locations & Statuses
+    let targetLoc = null;
+    if (text.includes('valle')) targetLoc = 'valle';
+    else if (text.includes('mitras')) targetLoc = 'mitras';
+    else if (text.includes('guardia') || text.includes('guardias')) targetLoc = 'guardia';
+    else if (text.includes('descanso') || text.includes('descansan') || text.includes('libre') || text.includes('libres') || text.includes('franco')) targetLoc = 'descanso';
+
+    if (!targetLoc && isFollowUpQuery(text) && agentContext.lastLocation) {
+        targetLoc = agentContext.lastLocation;
+    }
+
+    // 3. Identify Dates, Days, Weeks, and Months
+    let targetDate = agentParseDateFromText(text);
+    let targetMonth = agentParseMonthFromText(text);
+    let targetWeekOffset = agentParseWeekOffsetFromText(text);
+
+    if (!targetDate && !targetMonth && targetWeekOffset === null && isFollowUpQuery(text)) {
+        if (agentContext.lastDate) targetDate = agentContext.lastDate;
+        if (agentContext.lastMonth) targetMonth = agentContext.lastMonth;
+    }
+
+    // 4. Check query relevance & Intent Classification
+    const isScheduleKeyword = /\b(horario|horarios|turno|turnos|guardia|guardias|valle|mitras|descanso|descansan|libre|libres|vacacion|vacaciones|asueto|asuetos|festivo|festivos|feriado|puente|cubre|cubrir|reemplaza|suple|oficina|sucursal|trabaja|trabajan|está|esta|estarán|estara|quién|quien|quiénes|quienes|personal|empleado|empleados|equipo|todos|evento|eventos|aviso|avisos|anuncio|anuncios|quincena|quincenas|pago|pagos|bono|bonos|bonaice|cumpleaños)\b/i.test(text);
+
+    const isAllStatusIntent = text.includes('todos') || text.includes('cada quien') || text.includes('resumen general') || text.includes('programacion general') || text.includes('dónde están') || text.includes('donde estan') || text.includes('oficina');
+    const isReplacementIntent = text.includes('cubre') || text.includes('cubrir') || text.includes('reemplaza') || text.includes('reemplazo') || text.includes('suple') || text.includes('su lugar') || text.includes('en vez de') || text.includes('sustituye');
+    const isVacationIntent = text.includes('vacacion') || text.includes('vacaciones') || text.includes('ausente') || text.includes('ausencias') || text.includes('días libres') || text.includes('dias libres') || text.includes('libre') || text.includes('libres');
+    const isEventIntent = text.includes('asueto') || text.includes('festivo') || text.includes('feriado') || text.includes('asuetos') || text.includes('festivos') || text.includes('puente') || text.includes('evento') || text.includes('eventos') || text.includes('aviso') || text.includes('avisos') || text.includes('quincena') || text.includes('pago') || text.includes('pagos') || text.includes('bono') || text.includes('bonaice') || text.includes('anuncio') || text.includes('anuncios');
+    const isGuardiaIntent = text.includes('guardia') || text.includes('guardias') || text.includes('semanas') || text.includes('proximas') || text.includes('próximas') || text.includes('cuándo le toca') || text.includes('toca guardia');
+    const isPersonLocationQuery = targetPerson && (text.includes('dónde') || text.includes('donde') || text.includes('trabaja') || text.includes('estará') || text.includes('estara') || text.includes('horario') || text.includes('turno') || text.includes('ubicacion') || text.includes('ubicación'));
+
+    // If query matches no person, no location, no date, no follow-up context and has no schedule keywords -> Off-topic query!
+    if (!targetPerson && !targetLoc && !targetDate && !targetMonth && targetWeekOffset === null && !isScheduleKeyword && !isFollowUpQuery(text)) {
+        return `🤖 No encontré información sobre <strong>"${escapeHTML(query)}"</strong> en los registros de la aplicación.<br><br>Solo cuento con datos sobre <strong>horarios, guardias, ubicaciones de sucursales (Valle / Mitras), vacaciones y eventos / quincenas / avisos</strong> del personal.`;
+    }
+
+    // RESOLVE INTENT
+    let intent = null;
+    if (targetPerson && targetLoc && targetLoc !== 'guardia') intent = 'PERSON_SPECIFIC_LOCATION_TIMELINE';
+    else if (isReplacementIntent) intent = 'REPLACEMENT';
+    else if (isVacationIntent) intent = 'VACATIONS';
+    else if (isEventIntent) intent = 'EVENTS';
+    else if (isPersonLocationQuery) intent = 'PERSON_LOCATION';
+    else if (targetLoc || (text.includes('quien') || text.includes('quién') || text.includes('quienes') || text.includes('quiénes') || text.includes('personal') || text.includes('gente'))) intent = 'LOCATION_DATE';
+    else if (isGuardiaIntent) intent = 'GUARDIA';
+    else if (isAllStatusIntent) intent = 'ALL_STATUS';
+    else if (targetPerson) intent = 'PERSON_SUMMARY';
+    else if (isFollowUpQuery(text) && agentContext.lastIntent) intent = agentContext.lastIntent;
+
+    if (!intent) {
+        if (targetPerson) intent = 'PERSON_SUMMARY';
+        else if (targetLoc) intent = 'LOCATION_DATE';
+        else if (isScheduleKeyword) intent = 'ALL_STATUS';
+        else {
+            return `🤖 No encontré información sobre <strong>"${escapeHTML(query)}"</strong> en los registros de la aplicación.<br><br>Solo cuento con datos sobre <strong>horarios, guardias, ubicaciones de sucursales (Valle / Mitras), vacaciones y eventos / quincenas / avisos</strong> del personal.`;
+        }
+    }
+
+    // ROUTING TO INTENT HANDLERS
+    let response = '';
+
+    switch (intent) {
+        case 'PERSON_SPECIFIC_LOCATION_TIMELINE':
+            response = agentHandlePersonSpecificLocationTimeline(targetPerson || agentContext.lastPerson, targetLoc, text);
+            break;
+        case 'PERSON_LOCATION':
+            response = agentHandlePersonLocationQuery(targetPerson || agentContext.lastPerson, text, targetDate, targetWeekOffset);
+            break;
+        case 'REPLACEMENT':
+            response = agentHandleReplacementQuery(targetPerson || agentContext.lastPerson, text, targetDate || agentContext.lastDate);
+            break;
+        case 'VACATIONS':
+            response = agentHandleVacationsQuery(targetPerson || agentContext.lastPerson, text);
+            break;
+        case 'EVENTS':
+            response = agentHandleEventsQuery(text);
+            break;
+        case 'LOCATION_DATE':
+            response = agentHandleLocationDateQuery(text, targetLoc || agentContext.lastLocation || 'valle', targetDate || agentContext.lastDate, targetMonth || agentContext.lastMonth, targetWeekOffset);
+            break;
+        case 'GUARDIA':
+            response = agentHandleGuardiaQuery(targetPerson, text, targetMonth);
+            break;
+        case 'ALL_STATUS':
+            response = agentHandleAllStatus(targetWeekOffset !== null ? targetWeekOffset : (state.currentWeekOffset || 0));
+            break;
+        case 'PERSON_SUMMARY':
+            response = agentHandlePersonSummary(targetPerson || agentContext.lastPerson);
+            break;
+        default:
+            response = `🤖 No encontré información sobre <strong>"${escapeHTML(query)}"</strong> en la aplicación.`;
+            break;
+    }
+
+    // UPDATE CONTEXT MEMORY
+    if (targetPerson) agentContext.lastPerson = targetPerson;
+    if (targetLoc) agentContext.lastLocation = targetLoc;
+    if (targetDate) agentContext.lastDate = targetDate;
+    if (targetMonth) agentContext.lastMonth = targetMonth;
+    if (intent) agentContext.lastIntent = intent;
+
+    return response;
+}
+
+function isFollowUpQuery(text) {
+    return text.startsWith('y ') || text.startsWith('¿y ') || text.startsWith('pero ') || text.startsWith('¿quién ') || text.startsWith('quien ') || text.includes('el resto') || text.includes('los demás') || text.includes('diciembre') || text.includes('noviembre') || text.includes('octubre') || text.includes('proxima semana') || text.includes('próxima semana');
+}
+
+function agentParseMonthFromText(text) {
+    const months = {
+        'enero': 0, 'febrero': 1, 'marzo': 2, 'abril': 3,
+        'mayo': 4, 'junio': 5, 'julio': 6, 'agosto': 7,
+        'septiembre': 8, 'octubre': 9, 'noviembre': 10, 'diciembre': 11
+    };
+    for (const [mName, mIdx] of Object.entries(months)) {
+        if (text.includes(mName)) {
+            return { monthIndex: mIdx, monthName: mName };
+        }
+    }
+    return null;
+}
+
+function agentHandlePersonSpecificLocationTimeline(personName, targetLoc, text) {
+    if (!personName) return agentHandleAllStatus(state.currentWeekOffset || 0);
+
+    const locUpper = (targetLoc || 'VALLE').toUpperCase();
+    const currentOffset = state.currentWeekOffset || 0;
+    const maxWeeks = agentParseTimeframeMaxWeeks(text);
+
+    let periodLabel = 'Todo el Año (52 Semanas)';
+    if (text.includes('2 meses')) periodLabel = 'Próximos 2 Meses';
+    else if (text.includes('3 meses')) periodLabel = 'Próximos 3 Meses';
+    else if (text.includes('4 meses')) periodLabel = 'Próximos 4 Meses';
+    else if (text.includes('1 mes') || text.includes('un mes')) periodLabel = 'Próximo Mes';
+    else if (maxWeeks < 50) periodLabel = `Próximas ${maxWeeks} Semanas`;
+
+    const matchingWeeks = [];
+
+    for (let w = currentOffset; w < Math.min(52, currentOffset + maxWeeks); w++) {
+        const schId = getScheduleForPerson(personName, w);
+        const sch = scheduleData.find(s => s.id === schId);
+        if (!sch) continue;
+
+        const locChange = getEmployeeLocationChange(personName, w);
+        const displaySch = locChange ? applyLocationChangeToSchedule(sch, locChange) : sch;
+
+        const days = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo'];
+        const matchedDays = [];
+
+        days.forEach((dayKey, dayIdx) => {
+            const dayInfo = displaySch[dayKey];
+            if (dayInfo && dayInfo.location === targetLoc) {
+                const vDays = getVacationDaysInWeek(personName, w);
+                if (!vDays.includes(dayIdx)) {
+                    const dayNamesShort = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+                    matchedDays.push(dayNamesShort[dayIdx]);
+                }
+            }
+        });
+
+        if (matchedDays.length > 0) {
+            const dateRange = getWeekDateRange(w);
+            matchingWeeks.push({
+                weekNumber: w + 1,
+                dateRange: dateRange,
+                days: matchedDays,
+                locChange: locChange,
+                schName: sch.name
+            });
+        }
+    }
+
+    let html = `📍 <strong>Fechas y Semanas asignadas a ${locUpper} para ${personName} (${periodLabel})</strong>:<br><br>`;
+
+    if (matchingWeeks.length > 0) {
+        matchingWeeks.forEach(item => {
+            const dayText = item.days.length === 7 || item.days.length === 5 ? 'Toda la semana (Lun-Vie)' : `Días ${item.days.join(', ')}`;
+            const tempBadge = item.locChange ? ` 🔄 <em>(Cambio temporal: ${item.locChange.reason})</em>` : '';
+            html += `• 📅 <strong>Semana ${item.weekNumber}</strong> (${item.dateRange}): ${dayText}${tempBadge}<br>`;
+        });
+    } else {
+        const currentSchId = getScheduleForPerson(personName, currentOffset);
+        if (currentSchId >= 7) {
+            const currentSch = scheduleData.find(s => s.id === currentSchId);
+            const fixedLoc = currentSch && currentSch.lunes ? currentSch.lunes.location.toUpperCase() : 'OTRA SUCURSAL';
+            html += `<strong>${personName}</strong> tiene asignación FIJA en <strong>${fixedLoc}</strong> (${currentSch ? currentSch.name : 'Fijo'}), por lo que no tiene turnos programados en <strong>${locUpper}</strong> ${periodLabel}.`;
+        } else {
+            html += `No se encontraron fechas o semanas asignadas a <strong>${locUpper}</strong> para <strong>${personName}</strong> en el periodo de ${periodLabel}.`;
+        }
+    }
+
+    html += `<br><br><small style="opacity:0.8;">💡 Puedes preguntar por todo el año: <em>"¿qué fechas le toca ${locUpper} a ${personName} en todo el año?"</em></small>`;
+    return html;
+}
+
+function agentParseWeekOffsetFromText(text) {
+    const current = state.currentWeekOffset || 0;
+    if (text.includes('esta semana')) return current;
+    if (text.includes('proxima semana') || text.includes('próxima semana') || text.includes('siguiente semana')) return current + 1;
+    if (text.includes('la otra semana') || text.includes('en 2 semanas')) return current + 2;
+    
+    const match = text.match(/semana (\d+)/i);
+    if (match) {
+        const num = parseInt(match[1], 10);
+        return Math.max(0, num - 1);
+    }
+    return null;
+}
+
+function agentHandlePersonLocationQuery(personName, text, targetDate, targetWeekOffset) {
+    if (!personName) return agentHandleAllStatus(state.currentWeekOffset || 0);
+
+    const weekOffset = targetWeekOffset !== null ? targetWeekOffset : (state.currentWeekOffset || 0);
+    const dateRange = getWeekDateRange(weekOffset);
+    const schId = getScheduleForPerson(personName, weekOffset);
+    const sch = scheduleData.find(s => s.id === schId);
+
+    let html = `📍 <strong>Ubicación y Horario de ${personName} (Semana ${weekOffset + 1} - ${dateRange})</strong>:<br><br>`;
+
+    if (sch) {
+        const locChange = getEmployeeLocationChange(personName, weekOffset);
+        const displaySch = locChange ? applyLocationChangeToSchedule(sch, locChange) : sch;
+
+        if (displaySch.lunes) {
+            const locName = displaySch.lunes.location.toUpperCase();
+            html += `• 🏢 <strong>Sucursal Asignada</strong>: <strong>${locName}</strong> (${displaySch.lunes.time})<br>`;
+            html += `• 📋 <strong>Nombre del Horario</strong>: ${sch.name}${sch.id >= 7 ? ' <em>(Fijo)</em>' : ' <em>(Rotativo)</em>'}<br>`;
+        }
+
+        const vDays = getVacationDaysInWeek(personName, weekOffset);
+        if (vDays.length > 0) {
+            const dayNames = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+            html += `• 🏖️ <strong>Vacaciones esta semana</strong>: Días ${vDays.map(d => dayNames[d]).join(', ')}<br>`;
+        }
+
+        if (locChange) {
+            html += `• 🔄 <strong>Cambio Temporal</strong>: Asignado a ${locChange.newLocation.toUpperCase()} (${locChange.reason})<br>`;
+        }
+    } else {
+        html += `No se encontró un turno activo asignado a <strong>${personName}</strong> para ese periodo.`;
+    }
+
+    html += `<br><small style="opacity:0.8;">💡 Puedes preguntar: <em>"¿cuándo le toca guardia?"</em> o <em>"¿quién lo cubre?"</em></small>`;
+    return html;
+}
+
+function agentHandleAllStatus(weekOffset) {
+    const dateRange = getWeekDateRange(weekOffset);
+    const peopleList = Array.from(new Set([...(state.employees || []), ...Object.values(state.assignments || {})])).sort();
+
+    let html = `📊 <strong>Resumen de Asignaciones (Semana ${weekOffset + 1} - ${dateRange})</strong>:<br><br>`;
+
+    peopleList.forEach(p => {
+        const schId = getScheduleForPerson(p, weekOffset);
+        const sch = scheduleData.find(s => s.id === schId);
+        if (sch) {
+            const locChange = getEmployeeLocationChange(p, weekOffset);
+            const displaySch = locChange ? applyLocationChangeToSchedule(sch, locChange) : sch;
+            const locName = displaySch.lunes ? displaySch.lunes.location.toUpperCase() : 'NO ASIGNADO';
+            const vDays = getVacationDaysInWeek(p, weekOffset);
+            const vacBadge = vDays.length > 0 ? ' 🏖️ <em>(Vacaciones)</em>' : '';
+            const tempBadge = locChange ? ' 🔄 <em>(Cambio)</em>' : '';
+
+            html += `• <strong>${p}</strong>: 📍 ${locName} (${sch.name})${vacBadge}${tempBadge}<br>`;
+        }
+    });
+
+    html += `<br><small style="opacity:0.8;">💡 Puedes preguntar por alguien en específico: <em>"¿dónde está Roberto?"</em> o <em>"¿quién va a Valle?"</em></small>`;
+    return html;
+}
+
+function isFollowUpQuery(text) {
+    return text.startsWith('y ') || text.startsWith('¿y ') || text.startsWith('pero ') || text.startsWith('¿quién ') || text.startsWith('quien ') || text.includes('el resto') || text.includes('los demás') || text.includes('diciembre') || text.includes('noviembre') || text.includes('octubre') || text.includes('proxima semana') || text.includes('próxima semana');
+}
+
+function agentParseMonthFromText(text) {
+    const months = {
+        'enero': 0, 'febrero': 1, 'marzo': 2, 'abril': 3,
+        'mayo': 4, 'junio': 5, 'julio': 6, 'agosto': 7,
+        'septiembre': 8, 'octubre': 9, 'noviembre': 10, 'diciembre': 11
+    };
+    for (const [mName, mIdx] of Object.entries(months)) {
+        if (text.includes(mName)) {
+            return { monthIndex: mIdx, monthName: mName };
+        }
+    }
+    return null;
+}
+
+function agentParseTimeframeMaxWeeks(text) {
+    if (text.includes('todo el año') || text.includes('todo el anio') || text.includes('del año') || text.includes('del anio') || text.includes('año completo') || text.includes('anio completo') || text.includes('12 meses') || text.includes('1 año') || text.includes('un año') || text.includes('anual') || text.includes('el año') || text.includes('el anio')) {
+        return 52;
+    }
+    if (text.includes('6 meses') || text.includes('medio año') || text.includes('semestre')) {
+        return 26;
+    }
+    if (text.includes('4 meses')) return 17;
+    if (text.includes('3 meses')) return 13;
+    if (text.includes('2 meses')) return 8;
+    if (text.includes('1 mes') || text.includes('un mes') || text.includes('4 semanas')) return 4;
+
+    const monthMatch = text.match(/(\d+)\s*meses?/i);
+    if (monthMatch) {
+        const months = parseInt(monthMatch[1], 10);
+        return Math.min(52, Math.max(1, Math.round(months * 4.33)));
+    }
+
+    const weekMatch = text.match(/(\d+)\s*semanas?/i);
+    if (weekMatch) {
+        return Math.min(52, Math.max(1, parseInt(weekMatch[1], 10)));
+    }
+
+    return 8;
+}
+
+function agentHandleGuardiaQuery(personName, text, monthTarget) {
+    let maxWeeks = agentParseTimeframeMaxWeeks(text);
+
+    const currentOffset = state.currentWeekOffset || 0;
+    const dayNamesShort = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+
+    if (!personName) {
+        let periodLabel = maxWeeks >= 50 ? 'Todo el Año (52 Semanas)' : `Próximas ${maxWeeks} Semanas`;
+        let html = `🛡️ <strong>Programación General de Guardias (${periodLabel})</strong>:<br><br>`;
+        const peopleList = Array.from(new Set([...(state.employees || []), ...Object.values(state.assignments || {})])).sort();
+
+        peopleList.forEach(p => {
+            const guardiaWeeks = [];
+            for (let w = currentOffset; w <= currentOffset + maxWeeks; w++) {
+                const weekDate = new Date(state.startDate);
+                weekDate.setDate(weekDate.getDate() + (w * 7));
+                if (monthTarget && weekDate.getMonth() !== monthTarget.monthIndex) continue;
+
+                const guardiaDays = [];
+                for (let d = 0; d < 7; d++) {
+                    const schId = getScheduleForPerson(p, w, d);
+                    const sch = scheduleData.find(s => s.id === schId);
+                    if (sch) {
+                        const locChange = getEmployeeLocationChange(p, w);
+                        const displaySch = locChange ? applyLocationChangeToSchedule(sch, locChange) : sch;
+                        const daysArr = ['lunes','martes','miercoles','jueves','viernes','sabado','domingo'];
+                        if (displaySch[daysArr[d]] && displaySch[daysArr[d]].location === 'guardia') {
+                            guardiaDays.push(dayNamesShort[d]);
+                        }
+                    }
+                }
+                if (guardiaDays.length > 0) {
+                    const dateRange = getWeekDateRange(w);
+                    guardiaWeeks.push(`Semana ${w + 1} (${dateRange})`);
+                }
+            }
+            if (guardiaWeeks.length > 0) {
+                html += `• <strong>${p}</strong> (${guardiaWeeks.length} semanas):<br>&nbsp;&nbsp;&nbsp;` + guardiaWeeks.join('<br>&nbsp;&nbsp;&nbsp;') + '<br><br>';
+            }
+        });
+
+        html += `<small style="opacity:0.8;">💡 Puedes preguntar: <em>"¿quién cubre a [Nombre]?"</em> o <em>"¿quién estará en Valle?"</em></small>`;
+        return html || 'No se encontraron turnos de guardia registrados en el periodo consultado.';
+    }
+
+    let titleText = monthTarget ? `en ${monthTarget.monthName.toUpperCase()}` : (maxWeeks >= 50 ? `(Todo el Año - 52 Semanas)` : `(Próximas ${maxWeeks} Semanas)`);
+    let html = `🛡️ <strong>Guardias para ${personName} ${titleText}</strong>:<br><br>`;
+    const matchWeeks = [];
+
+    for (let w = currentOffset; w <= currentOffset + maxWeeks; w++) {
+        const weekDate = new Date(state.startDate);
+        weekDate.setDate(weekDate.getDate() + (w * 7));
+        if (monthTarget && weekDate.getMonth() !== monthTarget.monthIndex) continue;
+
+        const guardiaDays = [];
+        for (let d = 0; d < 7; d++) {
+            const schId = getScheduleForPerson(personName, w, d);
+            const sch = scheduleData.find(s => s.id === schId);
+            if (sch) {
+                const locChange = getEmployeeLocationChange(personName, w);
+                const displaySch = locChange ? applyLocationChangeToSchedule(sch, locChange) : sch;
+                const daysArr = ['lunes','martes','miercoles','jueves','viernes','sabado','domingo'];
+                if (displaySch[daysArr[d]] && displaySch[daysArr[d]].location === 'guardia') {
+                    guardiaDays.push(dayNamesShort[d]);
+                }
+            }
+        }
+        if (guardiaDays.length > 0) {
+            const dateRange = getWeekDateRange(w);
+            matchWeeks.push(`• <strong>Semana ${w + 1}</strong> (${dateRange}): Días ${guardiaDays.join(', ')}`);
+        }
+    }
+
+    if (matchWeeks.length > 0) {
+        html += matchWeeks.join('<br>');
+    } else {
+        html += `No se encontraron turnos de guardia asignados a <strong>${personName}</strong> ${monthTarget ? 'en ' + monthTarget.monthName : 'en el periodo de ' + maxWeeks + ' semanas'}.`;
+    }
+
+    html += `<br><br><small style="opacity:0.8;">💡 Puedes preguntar: <em>"¿quién lo va a cubrir?"</em> o <em>"¿cuándo sale de vacaciones?"</em></small>`;
+
+    return html;
+}
+
+function agentHandleLocationDateQuery(text, targetLoc, targetDate, targetMonth) {
+    const locUpper = (targetLoc || 'VALLE').toUpperCase();
+
+    if (targetDate) {
+        const dateCopy = new Date(targetDate);
+        dateCopy.setHours(0,0,0,0);
+        const diffDays = Math.floor((dateCopy - state.startDate) / (1000 * 60 * 60 * 24));
+        const targetOffset = Math.floor(diffDays / 7);
+        const dayIndex = (dateCopy.getDay() + 6) % 7;
+        const formattedDateStr = dateCopy.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+
+        const matchedPeople = [];
+
+        scheduleData.forEach(sch => {
+            const pData = getPersonForSchedule(sch.id, targetOffset, dayIndex);
+            if (pData && pData.name) {
+                const personName = pData.name;
+                const vacationDays = getVacationDaysInWeek(personName, targetOffset);
+                if (vacationDays.includes(dayIndex)) return;
+
+                const locChange = getEmployeeLocationChange(personName, targetOffset);
+                const displaySch = locChange ? applyLocationChangeToSchedule(sch, locChange) : sch;
+                const daysArr = ['lunes','martes','miercoles','jueves','viernes','sabado','domingo'];
+                const dayInfo = displaySch[daysArr[dayIndex]];
+
+                if (dayInfo && dayInfo.location === targetLoc) {
+                    matchedPeople.push({
+                        name: personName,
+                        time: dayInfo.time,
+                        isTemp: pData.isTemp
+                    });
+                }
+            }
+        });
+
+        let html = `📍 <strong>Personal en ${locUpper} para el ${formattedDateStr}</strong>:<br><br>`;
+        if (matchedPeople.length > 0) {
+            matchedPeople.forEach(p => {
+                html += `• <strong>${p.name}</strong> (${p.time})${p.isTemp ? ' 🔄 <em>(Temporal)</em>' : ''}<br>`;
+            });
+        } else {
+            html += `No hay personal asignado a <strong>${locUpper}</strong> para esa fecha.`;
+        }
+        html += `<br><small style="opacity:0.8;">💡 Puedes preguntar: <em>"¿quién estará en Mitras ese día?"</em> o <em>"¿quién lo cubre?"</em></small>`;
+        return html;
+    }
+
+    if (targetMonth) {
+        let html = `📍 <strong>Personal asignado a ${locUpper} en ${targetMonth.monthName.toUpperCase()}</strong>:<br><br>`;
+        const currentOffset = state.currentWeekOffset || 0;
+        let foundAny = false;
+
+        for (let w = currentOffset; w <= currentOffset + 12; w++) {
+            const weekDate = new Date(state.startDate);
+            weekDate.setDate(weekDate.getDate() + (w * 7));
+            if (weekDate.getMonth() !== targetMonth.monthIndex) continue;
+
+            foundAny = true;
+            const dateRange = getWeekDateRange(w);
+            html += `📅 <strong>Semana ${w + 1} (${dateRange})</strong>:<br>`;
+
+            scheduleData.forEach(sch => {
+                const pData = getPersonForSchedule(sch.id, w, 0);
+                if (pData && pData.name) {
+                    const personName = pData.name;
+                    const locChange = getEmployeeLocationChange(personName, w);
+                    const displaySch = locChange ? applyLocationChangeToSchedule(sch, locChange) : sch;
+                    if (displaySch.lunes && displaySch.lunes.location === targetLoc) {
+                        html += `&nbsp;&nbsp;&nbsp;• <strong>${personName}</strong> (${displaySch.lunes.time})<br>`;
+                    }
+                }
+            });
+            html += `<br>`;
+        }
+
+        if (!foundAny) {
+            html += `No se encontraron registros para ${locUpper} en el mes de ${targetMonth.monthName}.`;
+        }
+        html += `<small style="opacity:0.8;">💡 Puedes preguntar: <em>"¿quién estará en Mitras?"</em> o <em>"¿y las guardias?"</em></small>`;
+        return html;
+    }
+
+    // Default current week
+    const currentOffset = state.currentWeekOffset || 0;
+    const dateRange = getWeekDateRange(currentOffset);
+    let html = `📍 <strong>Personal en ${locUpper} esta semana (${dateRange})</strong>:<br><br>`;
+
+    scheduleData.forEach(sch => {
+        const pData = getPersonForSchedule(sch.id, currentOffset, 0);
+        if (pData && pData.name) {
+            const personName = pData.name;
+            const locChange = getEmployeeLocationChange(personName, currentOffset);
+            const displaySch = locChange ? applyLocationChangeToSchedule(sch, locChange) : sch;
+            if (displaySch.lunes && displaySch.lunes.location === targetLoc) {
+                html += `• <strong>${personName}</strong> (${displaySch.lunes.time})<br>`;
+            }
+        }
+    });
+
+    html += `<br><small style="opacity:0.8;">💡 Puedes especificar una fecha como: <em>"¿quiénes estarán en ${locUpper} el 20 de noviembre?"</em></small>`;
+    return html;
+}
+
+function agentHandleReplacementQuery(personName, text, targetDate) {
+    if (!personName) {
+        return `🔄 Por favor especifica a qué persona te refieres o pregúntame primero por alguien (ej. <em>"¿qué semanas le toca guardia a Roberto Lombart?"</em>).`;
+    }
+
+    const currentOffset = state.currentWeekOffset || 0;
+    let html = `🔄 <strong>Cobertura y Suplencias para ${personName}</strong>:<br><br>`;
+
+    // Check vacations
+    const vDays = getVacationDaysInWeek(personName, currentOffset);
+    const locChange = getEmployeeLocationChange(personName, currentOffset);
+
+    if (vDays.length > 0) {
+        html += `🏖️ <strong>${personName}</strong> tiene días de vacaciones esta semana.<br>`;
+    }
+
+    if (locChange) {
+        html += `📍 Tiene un cambio de ubicación asignado a: <strong>${locChange.newLocation.toUpperCase()}</strong> (${locChange.reason})<br><br>`;
+    }
+
+    // Find who covers Guardia or primary schedule
+    const schId = getScheduleForPerson(personName, currentOffset);
+    const dateRange = getWeekDateRange(currentOffset);
+
+    html += `📅 <strong>Asignación actual (Semana ${currentOffset + 1} - ${dateRange})</strong>:<br>`;
+
+    const peopleList = Array.from(new Set([...(state.employees || []), ...Object.values(state.assignments || {})]));
+    const othersInGuardia = [];
+
+    peopleList.forEach(p => {
+        if (p === personName) return;
+        const pSchId = getScheduleForPerson(p, currentOffset);
+        const pLocChange = getEmployeeLocationChange(p, currentOffset);
+        const pSch = scheduleData.find(s => s.id === pSchId);
+        const displaySch = pLocChange ? applyLocationChangeToSchedule(pSch, pLocChange) : pSch;
+
+        if (displaySch && displaySch.lunes && displaySch.lunes.location === 'guardia') {
+            othersInGuardia.push(p);
+        }
+    });
+
+    if (othersInGuardia.length > 0) {
+        html += `• El personal asignado a <strong>GUARDIA</strong> esta semana para apoyar/cubrir es: <strong>${othersInGuardia.join(', ')}</strong>.<br>`;
+    } else {
+        html += `• Todo el personal restante se encuentra operando en sus ubicaciones fijas (Valle / Mitras).<br>`;
+    }
+
+    html += `<br><small style="opacity:0.8;">💡 Puedes preguntar: <em>"¿dónde estará ${personName} en diciembre?"</em></small>`;
+    return html;
+}
+
+function agentHandleVacationsQuery(personName, text) {
+    let maxWeeks = agentParseTimeframeMaxWeeks(text);
+    const currentOffset = state.currentWeekOffset || 0;
+    let periodText = maxWeeks >= 50 ? 'en Todo el Año (52 Semanas)' : `en las Próximas ${maxWeeks} Semanas`;
+
+    if (!personName) {
+        let html = `🏖️ <strong>Resumen de Vacaciones Próximas (${periodText})</strong>:<br><br>`;
+        let foundAny = false;
+
+        const peopleList = Array.from(new Set([...(state.employees || []), ...Object.values(state.assignments || {})])).sort();
+
+        peopleList.forEach(p => {
+            const vacWeeks = [];
+            for (let w = currentOffset; w <= currentOffset + maxWeeks; w++) {
+                const days = getVacationDaysInWeek(p, w);
+                if (days.length > 0) {
+                    const dateRange = getWeekDateRange(w);
+                    vacWeeks.push(`Semana ${w + 1} (${dateRange})`);
+                }
+            }
+            if (vacWeeks.length > 0) {
+                foundAny = true;
+                html += `• <strong>${p}</strong>:<br>&nbsp;&nbsp;&nbsp;` + vacWeeks.join('<br>&nbsp;&nbsp;&nbsp;') + '<br>';
+            }
+        });
+
+        if (!foundAny) {
+            html += `No hay días de vacaciones programados ${periodText}.`;
+        }
+        html += `<br><small style="opacity:0.8;">💡 Puedes preguntar: <em>"¿quién cubre a [Nombre]?"</em></small>`;
+        return html;
+    }
+
+    let html = `🏖️ <strong>Vacaciones Programadas para ${personName} (${periodText})</strong>:<br><br>`;
+    const vacWeeks = [];
+
+    for (let w = currentOffset; w <= currentOffset + maxWeeks; w++) {
+        const days = getVacationDaysInWeek(personName, w);
+        if (days.length > 0) {
+            const dateRange = getWeekDateRange(w);
+            const dayNamesShort = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+            const names = days.map(d => dayNamesShort[d]).join(', ');
+            vacWeeks.push(`• <strong>Semana ${w + 1}</strong> (${dateRange}): Días ${names}`);
+        }
+    }
+
+    if (vacWeeks.length > 0) {
+        html += vacWeeks.join('<br>');
+    } else {
+        html += `No se encontraron días de vacaciones registrados para <strong>${personName}</strong> ${periodText}.`;
+    }
+
+    html += `<br><br><small style="opacity:0.8;">💡 Puedes preguntar: <em>"¿quién lo va a cubrir?"</em> o <em>"¿cuándo le toca guardia?"</em></small>`;
+
+    return html;
+}
+
+function agentHandleEventsQuery(queryText) {
+    if (!state.events || Object.keys(state.events).length === 0) {
+        return `📅 <strong>Eventos y Avisos de la Empresa</strong>:<br><br>No hay eventos, días festivos, quincenas o avisos registrados actualmente en la aplicación. Puedes agregar o consultar eventos en el menú <strong>"Eventos y Avisos"</strong>.`;
+    }
+
+    const queryLower = (queryText || '').toLowerCase().trim();
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const allEvents = [];
+
+    Object.entries(state.events).forEach(([key, value]) => {
+        if (!value) return;
+        const text = value.text || '';
+        const type = value.type || 'notice';
+        const dateStr = value.date || (key.match(/^\d{4}-\d{2}-\d{2}$/) ? key : null);
+
+        let dateObj = null;
+        if (dateStr) {
+            try { dateObj = parseLocalDate(dateStr); } catch (e) { }
+        }
+
+        allEvents.push({
+            dateStr: dateStr,
+            dateObj: dateObj,
+            text: text,
+            type: type,
+            guardiaStart: value.guardiaStart,
+            guardiaEnd: value.guardiaEnd,
+            raw: value
+        });
+    });
+
+    if (allEvents.length === 0) {
+        return `📅 No hay eventos o avisos registrados actualmente en la aplicación.`;
+    }
+
+    // Sort events chronologically
+    allEvents.sort((a, b) => {
+        if (!a.dateObj) return 1;
+        if (!b.dateObj) return -1;
+        return a.dateObj - b.dateObj;
+    });
+
+    // Identify matching category/terms
+    const searchTerms = ['quincena', 'bonaice', 'bono', 'pago', 'asueto', 'festivo', 'reunion', 'anuncio', 'cumpleaños', 'evento', 'aviso'];
+    let matchedTerm = searchTerms.find(term => queryLower.includes(term));
+
+    let filteredEvents = allEvents;
+    if (matchedTerm && matchedTerm !== 'evento' && matchedTerm !== 'aviso') {
+        const synonyms = (matchedTerm === 'bonaice' || matchedTerm === 'bono') ? ['bonaice', 'bono'] : [matchedTerm];
+        filteredEvents = allEvents.filter(e => {
+            const textLower = e.text.toLowerCase();
+            const typeLower = e.type.toLowerCase();
+            return synonyms.some(syn => textLower.includes(syn) || typeLower.includes(syn));
+        });
+    }
+
+    // Filter upcoming events (today or future)
+    const isPastAllowed = queryLower.includes('pasad') || queryLower.includes('anterior') || queryLower.includes('historial');
+    let upcomingEvents = filteredEvents;
+    if (!isPastAllowed) {
+        const futureOnly = filteredEvents.filter(e => e.dateObj && e.dateObj >= today);
+        if (futureOnly.length > 0) {
+            upcomingEvents = futureOnly;
+        }
+    }
+
+    // Detect quantity requested
+    let requestedCount = null;
+    if (queryLower.includes('todas') || queryLower.includes('todos') || queryLower.includes('año') || queryLower.includes('anio') || queryLower.includes('completo')) {
+        requestedCount = 999;
+    } else {
+        const wordToNum = { 'un': 1, 'una': 1, 'dos': 2, 'tres': 3, 'cuatro': 4, 'cinco': 5, 'seis': 6 };
+        const numMatch = queryLower.match(/\b(\d+|un|una|dos|tres|cuatro|cinco|seis)\s*(quincena|quincenas|evento|eventos|festivo|festivos|aviso|avisos|pago|pagos)\b/i);
+        if (numMatch) {
+            const rawVal = numMatch[1].toLowerCase();
+            requestedCount = wordToNum[rawVal] || parseInt(rawVal, 10) || 1;
+        } else if (queryLower.includes('proxima') || queryLower.includes('próxima') || queryLower.includes('siguiente') || queryLower.includes('cuando es') || queryLower.includes('cuándo es') || queryLower.includes('que dia es') || queryLower.includes('qué día es')) {
+            requestedCount = 1;
+        }
+    }
+
+    // Default to 1 (only the next upcoming one) if searching a specific term like quincena without specifying quantity
+    if (requestedCount === null && matchedTerm) {
+        requestedCount = 1;
+    }
+
+    const limit = requestedCount !== null ? requestedCount : 999;
+    const finalEvents = upcomingEvents.slice(0, limit);
+
+    const typeIcons = {
+        'holiday': '🎉',
+        'payday': '💰',
+        'alert': '🚨',
+        'notice': '📢'
+    };
+
+    const typeNames = {
+        'holiday': 'Día Festivo / Asueto',
+        'payday': 'Quincena / Pago',
+        'alert': 'Alerta Especial',
+        'notice': 'Aviso / Evento'
+    };
+
+    if (finalEvents.length > 0) {
+        let categoryTitle = matchedTerm && matchedTerm !== 'evento' && matchedTerm !== 'aviso' ? matchedTerm.toUpperCase() : 'EVENTOS / AVISOS';
+        let countTitle = finalEvents.length === 1 ? 'Próxima' : (limit < 900 ? `Próximas ${finalEvents.length}` : 'Programados');
+
+        let html = `📅 <strong>${countTitle} ${categoryTitle}</strong>:<br><br>`;
+        finalEvents.forEach(evt => {
+            const icon = typeIcons[evt.type] || '📌';
+            const typeLabel = typeNames[evt.type] || evt.type;
+            const dateFormatted = evt.dateObj ? evt.dateObj.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : (evt.dateStr || 'Sin fecha');
+
+            html += `${icon} <strong>${evt.text}</strong><br>`;
+            html += `&nbsp;&nbsp;&nbsp;• 📅 <strong>Fecha</strong>: ${dateFormatted}<br>`;
+            html += `&nbsp;&nbsp;&nbsp;• 🏷️ <strong>Categoría</strong>: ${typeLabel}<br>`;
+            if (evt.guardiaStart && evt.guardiaEnd) {
+                html += `&nbsp;&nbsp;&nbsp;• 🕒 <strong>Horario Especial de Guardia</strong>: ${evt.guardiaStart} - ${evt.guardiaEnd}<br>`;
+            }
+            html += `<br>`;
+        });
+
+        if (upcomingEvents.length > finalEvents.length) {
+            html += `<small style="opacity:0.8;">💡 Hay ${upcomingEvents.length - finalEvents.length} eventos más este año. Puedes preguntar por: <em>"próximas ${upcomingEvents.length} quincenas"</em> o <em>"todas las quincenas"</em>.</small>`;
+        }
+        return html;
+    } else {
+        let html = `🤖 No encontré una próxima fecha registrada para <strong>"${escapeHTML(matchedTerm || queryText)}"</strong> a partir de hoy.<br><br>`;
+        html += `📌 <strong>Eventos actualmente registrados en el sistema:</strong><br><br>`;
+        allEvents.forEach(evt => {
+            const icon = typeIcons[evt.type] || '📌';
+            html += `${icon} <strong>${evt.text}</strong> (${evt.dateStr || 'Fecha general'})<br>`;
+        });
+        return html;
+    }
+}
+
+function agentHandlePersonSummary(personName) {
+    if (!personName) {
+        return `👤 Por favor indica el nombre de la persona para mostrarte su resumen.`;
+    }
+
+    const currentOffset = state.currentWeekOffset || 0;
+    const schId = getScheduleForPerson(personName, currentOffset);
+    const dateRange = getWeekDateRange(currentOffset);
+
+    let html = `👤 <strong>Estado Completo de ${personName} (Semana Actual - ${dateRange})</strong>:<br><br>`;
+
+    if (schId) {
+        const sch = scheduleData.find(s => s.id === schId);
+        html += `• 📋 <strong>Horario Asignado</strong>: ${sch ? sch.name : 'Horario ' + schId}<br>`;
+
+        const vacationDays = getVacationDaysInWeek(personName, currentOffset);
+        if (vacationDays.length > 0) {
+            html += `• 🏖️ <strong>Vacaciones</strong>: Días de vacaciones esta semana.<br>`;
+        }
+
+        const locChange = getEmployeeLocationChange(personName, currentOffset);
+        if (locChange) {
+            html += `• 📍 <strong>Cambio de Ubicación</strong>: A ${locChange.newLocation.toUpperCase()} (${locChange.reason})<br>`;
+        }
+
+        // Show next week preview
+        const nextSchId = getScheduleForPerson(personName, currentOffset + 1);
+        const nextSch = scheduleData.find(s => s.id === nextSchId);
+        const nextDateRange = getWeekDateRange(currentOffset + 1);
+        if (nextSch) {
+            html += `• 🔮 <strong>Próxima Semana (${nextDateRange})</strong>: ${nextSch.name}<br>`;
+        }
+    } else {
+        html += `No se encontró un horario activo para <strong>${personName}</strong> en la semana actual.`;
+    }
+
+    html += `<br><small style="opacity:0.8;">💡 Puedes preguntar: <em>"¿qué semanas le toca guardia?"</em> o <em>"¿cuándo sale de vacaciones?"</em></small>`;
+
+    return html;
+}
+
+function agentGetFallbackResponse(targetPerson, text) {
+    let personMention = targetPerson ? ` (relacionado con <strong>${targetPerson}</strong>)` : '';
+    return `🤖 Entendí tu consulta${personMention}, pero necesito un poco más de detalle.<br><br>
+    Intenta con alguna de estas preguntas:<br>
+    • <strong>"¿Qué semanas le toca guardia en los próximos 2 meses?"</strong><br>
+    • <strong>"¿Y en diciembre?"</strong><br>
+    • <strong>"¿Quién lo va a cubrir?"</strong><br>
+    • <strong>"¿Quiénes estarán en Valle el 20 de noviembre?"</strong><br>
+    • <strong>"En los asuetos siguientes ¿a quiénes les toca la guardia?"</strong>`;
+}
+
+function agentParseDateFromText(text) {
+    const today = new Date();
+    today.setHours(0,0,0,0);
+
+    if (text.includes('hoy')) return today;
+    if (text.includes('mañana') || text.includes('manana')) {
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        return tomorrow;
+    }
+
+    const months = {
+        'enero': 0, 'febrero': 1, 'marzo': 2, 'abril': 3,
+        'mayo': 4, 'junio': 5, 'julio': 6, 'agosto': 7,
+        'septiembre': 8, 'octubre': 9, 'noviembre': 10, 'diciembre': 11
+    };
+
+    for (const [mName, mIdx] of Object.entries(months)) {
+        if (text.includes(mName)) {
+            const dayMatch = text.match(/\b(\d{1,2})\b/);
+            if (dayMatch) {
+                const dayNum = parseInt(dayMatch[1], 10);
+                const year = today.getFullYear();
+                let d = new Date(year, mIdx, dayNum);
+                if (d < today && (today.getMonth() - mIdx > 6)) {
+                    d = new Date(year + 1, mIdx, dayNum);
+                }
+                return d;
+            }
+        }
+    }
+
+    const isoMatch = text.match(/\b(\d{4})-(\d{2})-(\d{2})\b/);
+    if (isoMatch) {
+        return new Date(parseInt(isoMatch[1]), parseInt(isoMatch[2]) - 1, parseInt(isoMatch[3]));
+    }
+
+    return null;
 }
